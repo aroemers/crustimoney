@@ -1,6 +1,6 @@
 # PEG parser
 
-A Clojure library for simple, unambigues parsing of structured text.
+A Clojure library for simple, unambigues parsing of structured text, based on [Parsing Expression Grammars](http://portal.acm.org/citation.cfm?doid=964001.964011).
 
 
 ## Install
