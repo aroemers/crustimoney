@@ -29,7 +29,7 @@ The first three are considered terminals. A vector denotes a sequence, and may b
 An example map of rules is the following:
 
 ```clojure
-(def calc 
+(def calc
   {:expr          [ :sum ]
    :sum           [ :product :sum-op :sum / :product ]
    :product       [ :value :product-op :product / :value ]
@@ -62,6 +62,7 @@ As one can see, the AST is a direct derivative of the parsing rules, except for 
 * Improve the reporting of parse errors, instead of reporting all possible errors.
 * Improve the readability of the source, by splitting some large functions.
 * Add support for *, + and ? modifiers, by adding rule rewriting.
+* Decide whether rules that might recurse always return a vector or not. Currently it does not (as can be seen by looking at the `:product` values in the example AST).
 
 
 ## License
