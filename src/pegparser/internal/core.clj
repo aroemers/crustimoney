@@ -1,7 +1,7 @@
 (ns pegparser.internal.core)
 
 (defrecord State
-  [rules remainder line-nr current as-terminal])
+  [rules remainder pos current as-terminal errors errors-pos])
 
 (defn succes
   [content new-state]
@@ -10,12 +10,12 @@
      :new-state new-state}})
 
 (defn error
-  [content remainder line-nr]
-  (let [near (apply str (take 5 (take-while #(not (= \newline %)) remainder)))
-        near (if (empty? near) "end of line" (str "'" near "'"))]
-    (-> (format (if (empty? remainder) "%s on line %d at end of file" "%s on line %d near %s")
-                content line-nr near)
-        vector)))
+  [content {:keys [pos errors errors-pos] :as state}]
+  (let [[errors errors-pos] (cond (= pos errors-pos) [(conj errors content) errors-pos]
+                                  (> pos errors-pos) [#{content} pos]
+                                  :else [errors errors-pos])]
+    {:errors errors
+     :errors-pos errors-pos}))
 
 (declare parse-terminal)
 (declare parse-nonterminal)
@@ -24,8 +24,7 @@
   [vect {:keys [current as-terminal] :as state}]
   (loop [vect vect
          new-state state
-         result [nil nil]
-         errors []]
+         result [nil nil]]
     (let [v (first vect)]
       (if (or (nil? v) (= v /))
         (succes (if (second result)
@@ -50,18 +49,17 @@
                 :else [parse-terminal (fn [pr] result)])]
           (let [parse-result (parse-fn v new-state)]
             (if-let [succes (:succes parse-result)]
-              (recur (rest vect) (:new-state succes) (combine-fn (:content succes)) errors)
-              (let [next-choice (drop-while #(not (= / %)) vect)
-                    errors (concat parse-result errors)]
+              (recur (rest vect) (:new-state succes) (combine-fn (:content succes)))
+              (let [next-choice (drop-while #(not (= / %)) vect)]
                 (if (empty? next-choice)
-                  errors
-                  (recur (rest next-choice) state [nil nil] errors))))))))))
+                  parse-result
+                  (recur (rest next-choice) (merge state parse-result) [nil nil]))))))))))
 
 (defn regex? [v]
   (instance? java.util.regex.Pattern v))
 
 (defn parse-terminal
-  [expression {:keys [remainder line-nr] :as state}]
+  [expression {:keys [remainder pos] :as state}]
   (let [[result match-type-str] (cond
           (char? expression) [(when (= expression (first remainder)) (str expression)) "character"]
           (string? expression) [(when (.startsWith remainder expression) expression) "string"]
@@ -71,9 +69,8 @@
                                            (class expression)))))]
     (if result
       (succes result (assoc state :remainder (subs remainder (count result))
-                                  :line-nr (+ line-nr (count (filter #(= \newline %) result)))))
-      (error (format "expected %s '%s'" match-type-str expression)
-                     remainder line-nr))))
+                                  :pos (+ pos (count result))))
+      (error (format "expected %s '%s'" match-type-str expression) state))))
 
 (defn parse-nonterminal
   [nonterminal {:keys [rules as-terminal] :as state}]

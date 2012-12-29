@@ -59,7 +59,8 @@ As one can see, the AST is a direct derivative of the parsing rules, except for 
 ## Todo
 
 * Extend this documentation and compare it with other Clojure PEG parsers.
-* Improve the reporting of parse errors, instead of reporting all possible errors.
+* ~~Improve the reporting of parse errors, instead of reporting all possible errors.~~ Done!
+* Mention line and column number of parse errors, instead of the overall character position.
 * Improve the readability of the source, by splitting some large functions.
 * Add support for *, + and ? modifiers, by adding rule rewriting.
 * Decide whether rules that might recurse always return a vector or not. Currently it does not (as can be seen by looking at the `:product` values in the example AST).
