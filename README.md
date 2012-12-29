@@ -71,7 +71,7 @@ Sometimes one wants terminals that cannot be defined by standard regular express
    :paren-close   \)})
 ```
 
-Above rule map parses any text, as long as the parentheses match correctly. But more importantly, the `:parens` part is regarded as a terminal, as can be seen when one evaluates an arbitrary expression:
+Above rule map parses any text, as long as the parentheses match correctly. But more importantly, the `:parens` part is regarded as a terminal, as can be seen when one parses an arbitrary expression:
 
 ```clojure
 => (parse nested :root "((foo)bar(baz))woz")
@@ -80,7 +80,7 @@ Above rule map parses any text, as long as the parentheses match correctly. But 
 
 ### Parse errors
 
-In case on supplies an expression that cannot be parsed, the result is as follows:
+In case one supplies an expression that cannot be parsed, the result is as follows:
 
 ```clojure
 => (parse calc :expr "2+3-10*") ; notice the missing part at the end.
