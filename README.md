@@ -3,11 +3,13 @@
 A Clojure library for simple, unambiguous parsing of structured text, based on [Parsing Expression Grammars](http://portal.acm.org/citation.cfm?doid=964001.964011).
 
 
-## Install
+## Adding it to your project
 
-Since there has not been an official release yet, one has to "build" the library yourself. This requires [leiningen 2](https://github.com/technomancy/leiningen). Type the following in a terminal, while in the root of this project.
+Since there has not been an official release yet, the library has to be "build" by yourself. This requires [leiningen 2](https://github.com/technomancy/leiningen) and [maven 3](https://maven.apache.org). Type the following commands in a terminal:
 
 ```bash
+$ git clone git://github.com/aroemers/pegparser.git
+$ cd pegparser
 $ lein jar
 $ mvn install:install-file -Dfile=target/pegparser-0.1.0-SNAPSHOT.jar -DgroupId=pegparser -DartifactId=pegparser -Dversion=0.1.0-SNAPSHOT -Dpackaging=jar
 ```
