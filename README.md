@@ -58,6 +58,11 @@ Above rules can parse simple arithmatic. Calling the `pegparser.parse/parse` fun
 
 As one can see, the AST is a direct derivative of the parsing rules, except for the fact that recursive rules are nicely wrapped in a single vector, instead of being nested.
 
+Note that PEG parsers have "greedy" parsing expressions by definition (and again, choices are prioritized). This means the following two things:
+
+* Expressions cannot be left recursive. For example a rule like `{:x [ :x \a / \b ]}` will never terminate. This is however a minor limitation, in return for very clear parsing semantics, since every expression can be rewritten to not being left recursive.
+* Expressions like `{:x [ \a :x / \a ]}` will always fail, since all the `a` characters will be consumed by the first choice. This however can be rewritten by adding an extra rule: `{:x [ \a :y ]  :y [ \a :y / ]}`.
+
 ### Non-terminals as terminals
 
 Sometimes one wants terminals that cannot be defined by standard regular expressions, e.g.  correctly nested parentheses. This can easily be defined using non-terminals, but this complicates the resulting AST. Therefore the library supports non-terminals that act like terminals. One achieves this by appending a `-` sign to the name of the rule. For example:
@@ -86,7 +91,7 @@ In case one supplies an expression that cannot be parsed, the result is as follo
 => (parse calc :expr "2+3-10*") ; notice the missing part at the end.
 {:error
   {:errors #{"expected character '('"
-            "expected a character sequence that matches '[0-9]+'"},
+             "expected a character sequence that matches '[0-9]+'"},
    :line 1, :column 8, :pos 7}}
 
 => (parse nested :root "((foo)bar(") ; notice the last paren.
@@ -133,6 +138,7 @@ Whitespace needs to be defined explicit in the grammar. The `pegparser.parse/wit
 * Decide whether rules that might recurse always return a vector or not. Currently it does not (as can be seen by looking at the `:product` values in the `calc` example AST).
 * Decide whether non-terminal rules that act like terminals (using the `-` sign) should also include the terminals _inside_ the vector in the parse result. Currently it does not, which is why the `nested` example needs explicit `:non-paren`, `:paren-open` and `:paren-close` rules.
 * Add support for internationalization of error messages.
+* Add a function that checks the grammar for issues like left-recursion.
 
 
 ## License
