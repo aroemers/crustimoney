@@ -44,13 +44,12 @@ Above rules can parse simple arithmatic. Calling the `pegparser.parse/parse` fun
 ```clojure
 => (parse calc :expr "2+3-10*15")
 {:succes
- {:content
-  {:sum
-   [{:sum-op "+", :product {:value {:number "2"}}}
-    {:sum-op "-", :product {:value {:number "3"}}}
-    {:product
-     [{:product-op "*", :value {:number "10"}}
-      {:value {:number "15"}}]}]}}}
+ {:sum
+  [{:sum-op "+", :product {:value {:number "2"}}}
+   {:sum-op "-", :product {:value {:number "3"}}}
+   {:product
+    [{:product-op "*", :value {:number "10"}}
+     {:value {:number "15"}}]}]}}
 ```
 
 As one can see, the AST is a direct derivative of the parsing rules, except for the fact that recursive rules are nicely wrapped in a single vector, instead of being nested.
