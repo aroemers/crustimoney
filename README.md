@@ -116,7 +116,7 @@ Whitespace needs to be defined explicit in the grammar. The `pegparser.parse/wit
   {:errors #{"expected a character sequence that matches '\\s+'"},
    :line 1, :column 6, :pos 5}}
 
-=> parse hello :hello "hello  world ")
+=> (parse hello :hello "hello  world ") ; notice the space at the end.
 {:error
   {:errors #{"expected EOF"},
    :line 1, :column 13, :pos 12}}
@@ -132,6 +132,7 @@ Whitespace needs to be defined explicit in the grammar. The `pegparser.parse/wit
 * Add support for *, + and ? modifiers, by adding rule rewriting.
 * Decide whether rules that might recurse always return a vector or not. Currently it does not (as can be seen by looking at the `:product` values in the `calc` example AST).
 * Decide whether non-terminal rules that act like terminals (using the `-` sign) should also include the terminals _inside_ the vector in the parse result. Currently it does not, which is why the `nested` example needs explicit `:non-paren`, `:paren-open` and `:paren-close` rules.
+* Add support for internationalization of error messages.
 
 
 ## License
