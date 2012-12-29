@@ -99,13 +99,36 @@ In case one supplies an expression that cannot be parsed, the result is as follo
 
 The `:errors` key contains a set of possible errors on the specified `:line` at the specified `:column`. The `:pos` key contains the overall character position of the errors in the text, starting at 0.
 
+### Whitespace
+
+Whitespace needs to be defined explicit in the grammar. The `pegparser.parse/with-spaces` function is a small helper function for sequences that have mandatory whitespace between the items. For example:
+
+```clojure
+=> (def hello
+     {:hello (with-spaces "hello" :name)
+      :name  #"[a-z]+"})
+
+=> (parse hello :hello "hello  world")
+{:succes {:name "world"}}
+
+=> (parse hello :hello "helloworld")
+{:error
+  {:errors #{"expected a character sequence that matches '\\s+'"},
+   :line 1, :column 6, :pos 5}}
+
+=> parse hello :hello "hello  world ")
+{:error
+  {:errors #{"expected EOF"},
+   :line 1, :column 13, :pos 12}}
+```
+
 
 ## Todo
 
 * Extend this documentation and compare it with other Clojure PEG parsers.
 * ~~Improve the reporting of parse errors, instead of reporting all possible errors.~~ Done!
 * ~~Mention line and column number of parse errors, instead of the overall character position.~~ Done!
-* Improve the readability of the source, by splitting some large functions.
+* Improve the readability of the source, by splitting some large functions and adding documentation.
 * Add support for *, + and ? modifiers, by adding rule rewriting.
 * Decide whether rules that might recurse always return a vector or not. Currently it does not (as can be seen by looking at the `:product` values in the `calc` example AST).
 * Decide whether non-terminal rules that act like terminals (using the `-` sign) should also include the terminals _inside_ the vector in the parse result. Currently it does not, which is why the `nested` example needs explicit `:non-paren`, `:paren-open` and `:paren-close` rules.
