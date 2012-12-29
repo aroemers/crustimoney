@@ -60,8 +60,8 @@ As one can see, the AST is a direct derivative of the parsing rules, except for 
 
 Note that PEG parsers have "greedy" parsing expressions by definition (and again, choices are prioritized). This means the following two things:
 
-* Expressions cannot be left recursive. For example a rule like `{:x [ :x \a / \b ]}` will never terminate. This is however a minor limitation, in return for very clear parsing semantics, since every expression can be rewritten to not being left recursive.
-* Expressions like `{:x [ \a :x / \a ]}` will always fail, since all the `a` characters will be consumed by the first choice. This however can be rewritten by adding an extra rule: `{:x [ \a :y ]  :y [ \a :y / ]}`.
+* Expressions cannot be left recursive. For example, a rule like `{:x [ :x \a / \b ]}` will never terminate. This is however a minor limitation, in return for clear parsing semantics, since every grammar can be rewritten to not being left recursive.
+* Expressions like `{:x [ \a :x / \a ]}` will always fail, since all the `a` characters will be consumed by the first choice. This however can be rewritten by adding an extra rule: `{:x [ \a :y ], :y [ \a :y / ]}`.
 
 ### Non-terminals as terminals
 
