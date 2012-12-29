@@ -28,6 +28,8 @@ The parsing rules are defined in a map. The key is a keyword denoting the rule's
 
 The first three are considered terminals. A vector denotes a sequence, and may be nested. A vector may contain any of the terminals, but also keywords to refer to other rules and the choice operator `/`. Any terminal in the vector is parsed, but do not end up in the resulting AST. As is standard in PEG parsers, the choices are prioritized, i.e. the first succesfully parsed choice is used.
 
+### Simple example
+
 An example map of rules is the following:
 
 ```clojure
@@ -56,16 +58,43 @@ Above rules can parse simple arithmatic. Calling the `pegparser.parse/parse` fun
 
 As one can see, the AST is a direct derivative of the parsing rules, except for the fact that recursive rules are nicely wrapped in a single vector, instead of being nested.
 
+### Non-terminals as terminals
+
+Sometimes one wants terminals that cannot be defined by standard regular expressions, e.g.  correctly nested parentheses. This can easily be defined using non-terminals, but this complicates the resulting AST. Therefore the library supports non-terminals that act like terminals. One achieves this by appending a `-` sign to the name of the rule. For example:
+
+```clojure
+(def nested
+  {:root          [ :parens ]
+   :parens-       [ :non-paren :parens / :paren-open :parens :paren-close :parens / ]
+   :non-paren     #"[^\(\)]"
+   :paren-open    \(
+   :paren-close   \)})
+```
+
+Above rule map parses any text, as long as the parentheses match correctly. But more importantly, the `:parens` part is regarded as a terminal, as can be seen when one evaluates an arbitrary expression:
+
+```clojure
+=> (parse nested :root "((foo)bar(baz))woz")
+{:succes {:parens "((foo)bar(baz))woz"}}
+```
+
+### Parse errors
+
 In case on supplies an expression that cannot be parsed, the result is as follows:
 
 ```clojure
 => (parse calc :expr "2+3-10*") ; notice the missing part at the end.
 {:error
- {:errors #{"expected character '('"
+  {:errors #{"expected character '('"
             "expected a character sequence that matches '[0-9]+'"},
-  :line 1,
-  :column 8,
-  :pos 7}}
+   :line 1, :column 8, :pos 7}}
+
+=> (parse nested :root "((foo)bar(") ; notice the last paren.
+{:error
+  {:errors #{"expected character ')'"
+             "expected character '('"
+             "expected a character sequence that matches '[^\\(\\)]'"},
+   :line 1, :column 11, :pos 10}}
 ```
 
 The `:errors` key contains a set of possible errors on the specified `:line` at the specified `:column`. The `:pos` key contains the overall character position of the errors in the text, starting at 0.
@@ -78,7 +107,8 @@ The `:errors` key contains a set of possible errors on the specified `:line` at 
 * ~~Mention line and column number of parse errors, instead of the overall character position.~~ Done!
 * Improve the readability of the source, by splitting some large functions.
 * Add support for *, + and ? modifiers, by adding rule rewriting.
-* Decide whether rules that might recurse always return a vector or not. Currently it does not (as can be seen by looking at the `:product` values in the example AST).
+* Decide whether rules that might recurse always return a vector or not. Currently it does not (as can be seen by looking at the `:product` values in the `calc` example AST).
+* Decide whether non-terminal rules that act like terminals (using the `-` sign) should also include the terminals _inside_ the vector in the parse result. Currently it does not, which is why the `nested` example needs explicit `:non-paren`, `:paren-open` and `:paren-close` rules.
 
 
 ## License
