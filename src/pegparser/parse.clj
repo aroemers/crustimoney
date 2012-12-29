@@ -3,11 +3,26 @@
 
 (defn parse
   [rules start text]
-  (core/parse-nonterminal start (core/map->State {:rules rules
-                                                  :remainder text
-                                                  :pos 0
-                                                  :errors #{}
-                                                  :errors-pos 0})))
+  (let [result (core/parse-nonterminal start (core/map->State {:rules rules
+                                                               :remainder text
+                                                               :pos 0
+                                                               :errors #{}
+                                                               :errors-pos 0}))]
+    (if-let [succes (:succes result)]
+      (if (empty? (get-in succes [:new-state :remainder]))
+        {:succes (:content succes)}
+        (let [errors-pos (get-in succes [:new-state :errors-pos])
+              [line column] (core/line-and-column errors-pos text)]
+          {:error {:errors (get-in succes [:new-state :errors])
+                   :line line
+                   :column column
+                   :pos errors-pos}}))
+      (let [errors-pos (:errors-pos result)
+            [line column] (core/line-and-column errors-pos text)]
+        {:error {:errors (:errors result)
+                 :line line
+                 :column column
+                 :pos errors-pos}}))))
 
 (defn with-spaces
   [& items]

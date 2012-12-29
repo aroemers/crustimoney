@@ -35,21 +35,20 @@
                 new-state)
         (let [[parse-fn combine-fn] (cond
                 (vector? v) [parse-vector
-                             #(if as-terminal
-                                [nil (str (second result) %)]
-                                (if (vector? %)
-                                  [(first result) (into [] (concat % (second result)))]
-                                  [(merge (first result) %) (second result)]))]
+                             #(if (vector? %)
+                                [(first result) (into [] (concat % (second result)))]
+                                [(merge (first result) %) (second result)])]
                 (keyword? v) [parse-nonterminal
-                              #(if as-terminal
-                                 [{} (str (second result) %)]
-                                 (if (= current v)
-                                   [(first result) (if (vector? %) % (if (empty? %) [] (vector %)))]
-                                   [(assoc (first result) v %) (second result)]))]
+                              #(if (= current v)
+                                 [(first result) (if (vector? %) % (if (empty? %) [] (vector %)))]
+                                 [(assoc (first result) v %) (second result)])]
                 :else [parse-terminal (fn [pr] result)])]
           (let [parse-result (parse-fn v new-state)]
             (if-let [succes (:succes parse-result)]
-              (recur (rest vect) (:new-state succes) (combine-fn (:content succes)))
+              (recur (rest vect) (:new-state succes)
+                     (if as-terminal
+                       [nil (str (second result) (:content succes))]
+                       (combine-fn (:content succes))))
               (let [next-choice (drop-while #(not (= / %)) vect)]
                 (if (empty? next-choice)
                   parse-result
@@ -81,3 +80,10 @@
       (parse-vector expression (assoc state :current nonterminal
                                             :as-terminal as-terminal))
       (parse-terminal expression state))))
+
+(defn line-and-column
+  [pos text]
+  (let [text (subs text 0 pos)
+        line (inc (count (filter #(= \newline %) text)))
+        column (inc (count (take-while #(not (= \newline %)) (reverse text))))]
+    [line column]))
