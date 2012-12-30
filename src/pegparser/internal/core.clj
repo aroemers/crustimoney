@@ -62,7 +62,9 @@
   (let [[result match-type-str] (cond
           (char? expression) [(when (= expression (first remainder)) (str expression)) "character"]
           (string? expression) [(when (.startsWith remainder expression) expression) "string"]
-          (regex? expression) [(re-find (re-pattern (str "^" (.pattern expression))) remainder)
+          (regex? expression) [(when-let [match (re-find (re-pattern (str "^" (.pattern expression)))
+                                                         remainder)]
+                                 (if (vector? match) (first match) match))
                                "a character sequence that matches"]
           :else (throw (Exception. (format "An instance of %s is not a valid parsing expression."
                                            (class expression)))))]

@@ -38,8 +38,8 @@ An example map of rules is the following:
    :sum           [ :product :sum-op :sum / :product ]
    :product       [ :value :product-op :product / :value ]
    :value         [ :number / \( :expr \) ]
-   :sum-op        #"(?:\+|-)"
-   :product-op    #"(?:\*|/)"
+   :sum-op        #"(\+|-)"
+   :product-op    #"(\*|/)"
    :number        #"[0-9]+"})
 ```
 
@@ -109,9 +109,9 @@ The `:errors` key contains a set of possible errors on the specified `:line` at 
 Whitespace needs to be defined explicit in the grammar. The `pegparser.parse/with-spaces` function is a small helper function for sequences that have mandatory whitespace between the items. For example:
 
 ```clojure
-=> (def hello
-     {:hello (with-spaces "hello" :name)
-      :name  #"[a-z]+"})
+(def hello
+  {:hello (with-spaces "hello" :name)
+   :name  #"[a-z]+"})
 
 => (parse hello :hello "hello  world")
 {:succes {:name "world"}}
@@ -121,7 +121,7 @@ Whitespace needs to be defined explicit in the grammar. The `pegparser.parse/wit
   {:errors #{"expected a character sequence that matches '\\s+'"},
    :line 1, :column 6, :pos 5}}
 
-=> (parse hello :hello "hello  world ") ; notice the space at the end.
+=> (parse hello :hello "hello world ") ; notice the space at the end.
 {:error
   {:errors #{"expected EOF"},
    :line 1, :column 13, :pos 12}}
