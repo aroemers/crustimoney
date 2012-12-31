@@ -104,7 +104,7 @@ The `:errors` key contains a set of possible errors on the specified `:line` at 
 
 ### Whitespace
 
-Whitespace needs to be defined explicit in the grammar. The `pegparser.parse/with-spaces` function is a small helper function for sequences that have mandatory whitespace between the items. For example:
+Whitespace needs to be defined explicitly in the grammar. The `pegparser.parse/with-spaces` function is a small helper function for sequences that have mandatory whitespace between the items. For example:
 
 ```clojure
 (def hello
@@ -137,6 +137,7 @@ Whitespace needs to be defined explicit in the grammar. The `pegparser.parse/wit
 * Decide whether non-terminal rules that act like terminals (using the `-` sign) should also include the terminals _inside_ the vector in the parse result. Currently it does not, which is why the `nested` example needs explicit `:non-paren`, `:paren-open` and `:paren-close` rules.
 * Add support for internationalization of error messages.
 * Add a function that checks the grammar for issues like left-recursion.
+* Convert the core parsing functions for use in "trampoline", as to avoid stack overflows.
 
 
 ## License
