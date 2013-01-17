@@ -1,14 +1,50 @@
+;;;; The API functions for the library.
+;;;;
+;;;; This namespace contains the functions that should be called by the users
+;;;; of this library. The main function is 'parse'.
+
 (ns pegparser.parse
   (:require [pegparser.internal.core :as core]))
 
+
+;;; Private helper functions.
+
+(defn- make-error
+  "Create an error map based on the arguments."
+  [errors line column pos]
+  {:error {:errors errors
+           :line line
+           :column column
+           :pos pos}})
+
+
+;;; Main functions.
+
 (defn parse
+  "Parse the given `text` string using the specified `rules` map, starting from
+  the rule specified by the `start` keyword. See the documentation on how to
+  create a rules map.
+
+  This function returns either a map with either a `:succes` or an `:error` key
+  in it. The value of the `:succes` key is the abstract syntax tree (AST). See
+  the documentation on how this AST is stuctured.
+
+  The value of the `:error` key is a map with the following keys:
+
+  - `:errors` contains a set with possible parse errors.
+  - `:line`   contains the line number of where the error(s) occured.
+  - `:column` contains the column number of where the error(s) occured in the
+              line.
+  - `:pos`    contains the overall character position of where the error occured."
   [rules start text]
-  (let [result (core/parse-nonterminal start (core/map->State {:rules rules
-                                                               :remainder text
-                                                               :pos 0
-                                                               :errors #{}
-                                                               :errors-pos 0}))]
+  (let [init-state (core/map->State {:rules rules
+                                     :remainder text
+                                     :pos 0
+                                     :errors #{}
+                                     :errors-pos 0})
+        result (core/parse-nonterminal start init-state)]
     (if-let [succes (:succes result)]
+      ;; Check whether all the text has been parsed.
       (if (empty? (get-in succes [:new-state :remainder]))
         {:succes (:content succes)}
         (let [errors (get-in succes [:new-state :errors])
@@ -17,70 +53,13 @@
                             (get-in succes [:new-state :errors-pos]))
               errors (if (empty? errors) #{"expected EOF"} errors)
               [line column] (core/line-and-column errors-pos text)]
-          {:error {:errors errors
-                   :line line
-                   :column column
-                   :pos errors-pos}}))
+          (make-error errors line column pos)))
       (let [errors-pos (:errors-pos result)
             [line column] (core/line-and-column errors-pos text)]
-        {:error {:errors (:errors result)
-                 :line line
-                 :column column
-                 :pos errors-pos}}))))
+        (make-error (:errors result) line column pos)))))
 
 (defn with-spaces
+  "This function returns a vector with mandatory white-space between the
+  specified items."
   [& items]
   (into [] (interpose #"\s+" items)))
-
-(def rules
-  {:root          [ #"\s*\Z" / #"\s*" :toplevel :root ]
-   :toplevel      [ :association / :precedence ]
-
-   :association   [ (with-spaces "associate" :where "with" :what) [ :using / ] ]
-   :where         [ :where-field ]
-   :what          [ :what-new / :what-single / :what-retval ]
-   :using         [ #"\s+" (with-spaces "using" :fqn) ]
-
-   :where-field   (with-spaces "field" :fqn)
-
-   :what-new      (with-spaces "new" :fqn)
-   :what-single   (with-spaces "single" :fqn)
-   :what-retval   [ (with-spaces "retval" :fqn) :parameters ]
-
-   :parameters-   [ :paren-open :param-exprs :paren-close ]
-   :param-exprs   [ :param-expr :param-exprs / ]
-   :param-expr    [ :non-paren / :paren-open :param-exprs :paren-close ]
-   :non-paren     #"[^\(\)]"
-   :paren-open    \(
-   :paren-close   \)
-
-   :precedence    (with-spaces "declare" "precedence" :prec-items)
-   :prec-items    [ :fqn #"\s*,\s*" :prec-items / :fqn ]
-
-   :fqn           #"[A-Za-z0-9\.\$_]+" })
-
-; (def rules
-;   {:root          [ #"\s*\Z" / #"\s*" :toplevel :root ]
-;    :toplevel      [ :association / :precedence ]
-
-;    :association   [ (with-spaces "associate" :where "with" :what) :using? ]
-;    :where         [ :where-field ]
-;    :what          [ :what-new / :what-single / :what-retval ]
-;    :using         [ #"\s+" (with-spaces "using" :fqn) ]
-
-;    :where-field   (with-spaces "field" :fqn)
-
-;    :what-new      (with-spaces "new" :fqn)
-;    :what-single   (with-spaces "single" :fqn)
-;    :what-retval   [ (with-spaces "retval" :fqn) :parameters ]
-
-;    :parameters-   [ :paren-open :param-expr* :paren-close ]
-;    :param-expr    [ :non-paren / [ :paren-open :param-expr* :paren-close ] ]
-;    :non-paren     #"[^\(\)]"
-;    :paren-open    \(
-;    :paren-close   \)
-
-;    :precedence    (with-spaces "declare" "precedence" :prec-items)
-;    :prec-items    [ [ :fqn #"\s*,\s*" :prec-items ] / :fqn ]
-
-;    :fqn           #"[A-Za-z0-9\.\$_]+" })
