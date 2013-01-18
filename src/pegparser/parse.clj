@@ -4,7 +4,8 @@
 ;;;; of this library. The main function is 'parse'.
 
 (ns pegparser.parse
-  (:require [pegparser.internal.core :as core]))
+  (:require [pegparser.internal.core :as core])
+  (:use [pegparser.internal.utils]))
 
 
 ;;; Private helper functions.
@@ -12,10 +13,7 @@
 (defn- make-error
   "Create an error map based on the arguments."
   [errors line column pos]
-  {:error {:errors errors
-           :line line
-           :column column
-           :pos pos}})
+  {:error (mapify errors line column pos)})
 
 
 ;;; Main functions.
