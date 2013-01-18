@@ -58,10 +58,8 @@ Above rules can parse simple arithmatic. Calling the `pegparser.parse/parse` fun
 
 As one can see, the AST is a direct derivative of the parsing rules, except for the fact that recursive rules are nicely wrapped in a single vector, instead of being nested.
 
-Note that PEG parsers have "greedy" parsing expressions by definition (and again, choices are prioritized). This means the following two things:
+Note that PEG parsers have "greedy" parsing expressions by definition. This means that expressions cannot be left recursive. For example, a rule like `{:x [ :x \a / \b ]}` will never terminate. This is however a minor limitation, in return for clear parsing semantics, since every grammar can be rewritten to not being left recursive.
 
-* Expressions cannot be left recursive. For example, a rule like `{:x [ :x \a / \b ]}` will never terminate. This is however a minor limitation, in return for clear parsing semantics, since every grammar can be rewritten to not being left recursive.
-* Expressions like `{:x [ \a :x / \a ]}` will always fail, since all the `a` characters will be consumed by the first choice. This however can be rewritten by adding an extra rule: `{:x [ \a :y ], :y [ \a :y / ]}`.
 
 ### Non-terminals as terminals
 
@@ -106,7 +104,7 @@ The `:errors` key contains a set of possible errors on the specified `:line` at 
 
 ### Whitespace
 
-Whitespace needs to be defined explicit in the grammar. The `pegparser.parse/with-spaces` function is a small helper function for sequences that have mandatory whitespace between the items. For example:
+Whitespace needs to be defined explicitly in the grammar. The `pegparser.parse/with-spaces` function is a small helper function for sequences that have mandatory whitespace between the items. For example:
 
 ```clojure
 (def hello
@@ -139,6 +137,7 @@ Whitespace needs to be defined explicit in the grammar. The `pegparser.parse/wit
 * Decide whether non-terminal rules that act like terminals (using the `-` sign) should also include the terminals _inside_ the vector in the parse result. Currently it does not, which is why the `nested` example needs explicit `:non-paren`, `:paren-open` and `:paren-close` rules.
 * Add support for internationalization of error messages.
 * Add a function that checks the grammar for issues like left-recursion.
+* Convert the core parsing functions for use in "trampoline", as to avoid stack overflows.
 
 
 ## License
