@@ -1,21 +1,38 @@
+;;;; Internal parsing functions.
+;;;;
+;;;; This namespace contains the internal parse functions. These are not
+;;;; intended to be called directly by the user.
+
 (ns pegparser.internal.core)
 
+
+;;; The data structures used by the parse functions.
+
+;; The State record is merely here for documentation purposes of what the state
+;; contains, and may yield some performance gains.
 (defrecord State
   [rules remainder pos current as-terminal errors errors-pos])
 
 (defn succes
+  "Make a new succes map based on the parameters."
   [content new-state]
   {:succes
     {:content content
      :new-state new-state}})
 
 (defn error
+  "Given an error `content` string and the current state, a map is returned with
+  the `:errors` and the `:errors-pos`. Based on the given state, only the
+  \"deepest\" errors remain."
   [content {:keys [pos errors errors-pos] :as state}]
   (let [[errors errors-pos] (cond (= pos errors-pos) [(conj errors content) errors-pos]
                                   (> pos errors-pos) [#{content} pos]
                                   :else [errors errors-pos])]
     {:errors errors
      :errors-pos errors-pos}))
+
+
+;;; The actual parsing functions.
 
 (declare parse-terminal)
 (declare parse-nonterminal)

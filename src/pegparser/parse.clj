@@ -53,10 +53,10 @@
                             (get-in succes [:new-state :errors-pos]))
               errors (if (empty? errors) #{"expected EOF"} errors)
               [line column] (core/line-and-column errors-pos text)]
-          (make-error errors line column pos)))
+          (make-error errors line column errors-pos)))
       (let [errors-pos (:errors-pos result)
             [line column] (core/line-and-column errors-pos text)]
-        (make-error (:errors result) line column pos)))))
+        (make-error (:errors result) line column errors-pos)))))
 
 (defn with-spaces
   "This function returns a vector with mandatory white-space between the
