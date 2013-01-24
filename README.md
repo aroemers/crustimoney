@@ -33,13 +33,13 @@ A Clojure library for simple, unambiguous parsing of structured text (like long 
 Since there has not been an official release yet, the library has to be "build" by yourself. This requires [leiningen 2](https://github.com/technomancy/leiningen) and [maven 3](https://maven.apache.org). Type the following commands in a terminal:
 
 ```bash
-$ git clone git://github.com/aroemers/pegparser.git
-$ cd pegparser
+$ git clone git://github.com/aroemers/crustimoney.git
+$ cd crustimoney
 $ lein jar
-$ mvn install:install-file -Dfile=target/pegparser-0.1.0-SNAPSHOT.jar -DgroupId=pegparser -DartifactId=pegparser -Dversion=0.1.0-SNAPSHOT -Dpackaging=jar
+$ mvn install:install-file -Dfile=target/crustimoney-0.1.0-SNAPSHOT.jar -DgroupId=crustimoney -DartifactId=crustimoney -Dversion=0.1.0-SNAPSHOT -Dpackaging=jar
 ```
 
-Now you can add `[pegparser 0.1.0-SNAPSHOT]` to the dependencies in your project.clj.
+Now you can add `[crustimoney 0.1.0-SNAPSHOT]` to the dependencies in your project.clj.
 
 
 ## Usage
@@ -68,7 +68,7 @@ An example map of rules is the following:
    :number        #"[0-9]+"})
 ```
 
-Above rules can parse simple arithmatic. Calling the `pegparser.parse/parse` function with these rules and an expression would yield the following:
+Above rules can parse simple arithmatic. Calling the `crustimoney.parse/parse` function with these rules and an expression would yield the following:
 
 ```clojure
 => (parse calc :expr "2+3-10*15")
@@ -129,7 +129,7 @@ The `:errors` key contains a set of possible errors on the specified `:line` at 
 
 ### Whitespace
 
-Whitespace needs to be defined explicitly in the grammar. The `pegparser.parse/with-spaces` function is a small helper function for sequences that have mandatory whitespace between the items. For example:
+Whitespace needs to be defined explicitly in the grammar. The `crustimoney.parse/with-spaces` function is a small helper function for sequences that have mandatory whitespace between the items. For example:
 
 ```clojure
 (def hello

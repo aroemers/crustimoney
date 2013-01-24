@@ -3,9 +3,9 @@
 ;;;; This namespace contains the functions that should be called by the users
 ;;;; of this library. The main function is 'parse'.
 
-(ns pegparser.parse
-  (:require [pegparser.internal.core :as core])
-  (:use [pegparser.internal.utils]))
+(ns crustimoney.parse
+  (:require [crustimoney.internal.core :as core])
+  (:use [crustimoney.internal.utils]))
 
 
 ;;; Private helper functions.

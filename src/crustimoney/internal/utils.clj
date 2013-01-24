@@ -1,6 +1,6 @@
 ;;;; Utility functions.
 
-(ns pegparser.internal.utils)
+(ns crustimoney.internal.utils)
 
 
 (defn regex? [v]

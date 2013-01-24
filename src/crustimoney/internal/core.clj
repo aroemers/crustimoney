@@ -3,8 +3,8 @@
 ;;;; This namespace contains the internal parse functions. These are not
 ;;;; intended to be called directly by the user.
 
-(ns pegparser.internal.core
-  (:use [pegparser.internal.utils]))
+(ns crustimoney.internal.core
+  (:use [crustimoney.internal.utils]))
 
 
 ;;; The data structures used by the parse functions.
