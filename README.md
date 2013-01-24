@@ -1,18 +1,18 @@
 # Crustimoney
 
-<img src="http://www.us.penguingroup.com/static/pages/yr/minisites/winniethepooh/images/pooh_back.gif" align="right"/>
+<img src="http://github.com/aroemers/crustimoney/pooh_back.gif" align="right"/>
 > > "Terrible and Sad," said Pooh, "because Eeyore, who is a friend of mine, has lost
 > > his tail. And he's Moping about it. So could you very kindly tell me how to find it
-> > for him?" 
+> > for him?"
 > >
-> > "Well," said Owl, "the customary procedure in such cases is as follows." 
+> > "Well," said Owl, "the customary procedure in such cases is as follows."
 > >
-> > "What does <strong>Crustimoney</strong> Proseedcake mean?" said Pooh. "For I am a Bear of Very Little 
-> > Brain, and long words Bother me." 
+> > "What does <strong>Crustimoney</strong> Proseedcake mean?" said Pooh. "For I am a Bear of Very Little
+> > Brain, and long words Bother me."
 > >
-> > "It means the Thing to Do." 
+> > "It means the Thing to Do."
 > >
-> > "As long as it means that, I don't mind," said Pooh humbly. 
+> > "As long as it means that, I don't mind," said Pooh humbly.
 >
 > How much it may seem unthinkable for anyone who has read this far, many
 > Ursinologists discarded Poohs message without any critique, and even took it as
