@@ -1,6 +1,6 @@
 # Crustimoney
 
-<img src="http://github.com/aroemers/crustimoney/pooh_back.gif" align="right"/>
+<img src="https://raw.github.com/aroemers/crustimoney/master/pooh_back.gif" align="right"/>
 > > "Terrible and Sad," said Pooh, "because Eeyore, who is a friend of mine, has lost
 > > his tail. And he's Moping about it. So could you very kindly tell me how to find it
 > > for him?"
