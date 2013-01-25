@@ -14,11 +14,10 @@
 > >
 > > "As long as it means that, I don't mind," said Pooh humbly.
 >
-> How much it may seem unthinkable for anyone who has read this far, many
+> How unthinkable it may seem for anyone who has read this far, many
 > Ursinologists discarded Poohs message without any critique, and even took it as
 > evidence for his linguistic limitations. Of course, it is nothing less than a very
-> effective dramatisation of Wittgensteins <i>Tractatus Logico-Philosophicus</i>, which
-> starts as follows:
+> effective dramatisation of Wittgensteins <i>Tractatus Logico-Philosophicus</i>, which begins as follows:
 >
 > > The meaning of simple characters (words) need to be clarified, if one wants to
 > > understand them.
