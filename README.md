@@ -24,10 +24,9 @@
 >
 > ~ Pooh and the Philosophers
 
-A Clojure library for simple, unambiguous parsing of structured text (like long words), based on [Parsing Expression Grammars](http://portal.acm.org/citation.cfm?doid=964001.964011).
+Crustimoney is a Clojure library for simple, unambiguous parsing of structured text (like long words), based on [Parsing Expression Grammars](http://portal.acm.org/citation.cfm?doid=964001.964011).
 
-
-## Adding it to your project
+## Installation
 
 Since there has not been an official release yet, the library has to be "build" by yourself. This requires [leiningen 2](https://github.com/technomancy/leiningen) and [maven 3](https://maven.apache.org). Type the following commands in a terminal:
 
@@ -156,6 +155,7 @@ Whitespace needs to be defined explicitly in the grammar. The `crustimoney.parse
 * ~~Improve the reporting of parse errors, instead of reporting all possible errors.~~ Done!
 * ~~Mention line and column number of parse errors, instead of the overall character position.~~ Done!
 * ~~Improve the readability of the source, by splitting some large functions and adding documentation.~~ Done!
+* Add extensive test cases and release initial version.
 * Add support for *, + and ? modifiers, by adding rule rewriting.
 * Decide whether rules that might recurse always return a vector or not. Currently it does not (as can be seen by looking at the `:product` values in the `calc` example AST).
 * Decide whether non-terminal rules that act like terminals (using the `-` sign) should also include the terminals _inside_ the vector in the parse result. Currently it does not, which is why the `nested` example needs explicit `:non-paren`, `:paren-open` and `:paren-close` rules.
