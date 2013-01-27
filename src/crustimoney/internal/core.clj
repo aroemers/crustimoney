@@ -1,9 +1,6 @@
-;;;; Internal parsing functions.
-;;;;
-;;;; This namespace contains the internal parse functions. These are not
-;;;; intended to be called directly by the user.
-
 (ns crustimoney.internal.core
+  "This namespace contains the internal parse functions. These are not
+  intended to be called directly by the user."
   (:use [crustimoney.internal.utils]))
 
 
