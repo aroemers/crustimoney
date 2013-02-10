@@ -151,17 +151,7 @@ Whitespace needs to be defined explicitly in the grammar. The `crustimoney.parse
 
 ## Todo
 
-* Extend this documentation and compare it with other Clojure PEG parsers.
-* ~~Improve the reporting of parse errors, instead of reporting all possible errors.~~ Done!
-* ~~Mention line and column number of parse errors, instead of the overall character position.~~ Done!
-* ~~Improve the readability of the source, by splitting some large functions and adding documentation.~~ Done!
-* Add extensive test cases and release initial version.
-* Add support for *, + and ? modifiers, by adding rule rewriting.
-* Decide whether rules that might recurse always return a vector or not. Currently it does not (as can be seen by looking at the `:product` values in the `calc` example AST).
-* Decide whether non-terminal rules that act like terminals (using the `-` sign) should also include the terminals _inside_ the vector in the parse result. Currently it does not, which is why the `nested` example needs explicit `:non-paren`, `:paren-open` and `:paren-close` rules.
-* Add support for internationalization of error messages.
-* Add a function that checks the grammar for issues like left-recursion.
-* Convert the core parsing functions for use in "trampoline", as to avoid stack overflows.
+Todo items have moved to the [issues](https://github.com/aroemers/crustimoney/issues).
 
 
 ## License
