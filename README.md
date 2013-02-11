@@ -26,6 +26,15 @@
 
 Crustimoney is a Clojure library for simple, unambiguous parsing of structured text (like long words), based on [Parsing Expression Grammars](http://portal.acm.org/citation.cfm?doid=964001.964011).
 
+## Features
+
+* Simple way of defining grammars, that can be changed at runtime.
+* Non-terminal expressions that can act as terminals, for extra power that regular expressions cannot provide.
+* Easily traversable AST result, "flattening" any recursively parsed items.
+* No use of macros, just plain data structures and functions.
+* Error messages that contain the line and column number, as well as the overall character position of the error.
+* Internationalisation (i18n) of error messages possible.
+
 ## Installation
 
 Since there has not been an official release yet, the library has to be "build" by yourself. This requires [leiningen 2](https://github.com/technomancy/leiningen) and [maven 3](https://maven.apache.org). Type the following commands in a terminal:
@@ -148,6 +157,18 @@ Whitespace needs to be defined explicitly in the grammar. The `crustimoney.parse
    :line 1, :column 13, :pos 12}}
 ```
 
+### Internationalisation
+
+Crustimoney includes a simple i18n scheme. The installation of any new text takes place at runtime, under the control of the client code. Using the `crustimoney.i18n/i18n-merge` function, one can supply a map of messages. Look at the default `crustimoney.i18n/lang-en` for the supported keys. Currently there is one other language map supplied with crustimoney; the dutch `lang-nl`. More translations are welcome. 
+
+For an example, see the following code:
+
+```clojure
+(i18n-merge lang-nl)
+
+=> (parse {:fb #"foo|bar"} :fb "foofoo")
+{:error {:errors #{"verwachtte einde van tekst"}, :line 1, :column 4, :pos 3}}
+```
 
 ## Todo
 
