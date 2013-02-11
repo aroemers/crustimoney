@@ -5,7 +5,8 @@
 
 (ns crustimoney.parse
   (:require [crustimoney.internal.core :as core])
-  (:use [crustimoney.internal.utils]))
+  (:use [crustimoney.internal.utils]
+        [crustimoney.i18n :only (i18n)]))
 
 
 ;;; Private helper functions.
@@ -49,7 +50,7 @@
               errors-pos (if (empty? errors)
                             (get-in succes [:new-state :pos])
                             (get-in succes [:new-state :errors-pos]))
-              errors (if (empty? errors) #{"expected EOF"} errors)
+              errors (if (empty? errors) #{(i18n :expected-eof)} errors)
               [line column] (core/line-and-column errors-pos text)]
           (make-error errors line column errors-pos)))
       (let [errors-pos (:errors-pos result)

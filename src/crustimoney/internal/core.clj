@@ -1,7 +1,8 @@
 (ns crustimoney.internal.core
   "This namespace contains the internal parse functions. These are not
   intended to be called directly by the user."
-  (:use [crustimoney.internal.utils]))
+  (:use [crustimoney.internal.utils]
+        [crustimoney.i18n :only (i18n)]))
 
 
 ;;; The data structures used by the parse functions.
@@ -132,16 +133,15 @@
           (when-let [match (re-find (re-pattern (str "^" (.pattern expression)))
                                                 remainder)]
             (if (vector? match) (first match) match))
-        :else (throw (Exception. (format (str "An instance of %s is not a "
-                                              "valid parsing expression.")
-                                         (class expression))))))
+        :else (throw (Exception. (i18n :invalid-parsing-expr
+                                       (class expression))))))
 
 (defn terminal-expression-name
   "Returns the human readable name of the type of terminal parsing `expression`."
   [expression]
-  (cond (char? expression) "character"
-        (string? expression) "string"
-        (regex? expression) "a character sequence that matches"))
+  (cond (char? expression) (i18n :char-terminal)
+        (string? expression) (i18n :string-terminal)
+        (regex? expression) (i18n :regex-terminal)))
 
 (defn parse-terminal
   "The actual terminal parsing function. It returns a succes or an error, as
@@ -150,9 +150,9 @@
   (if-let [result (parse-terminal-expression expression remainder)]
     (succes result (assoc state :remainder (subs remainder (count result))
                                 :pos (+ pos (count result))))
-    (error (format "expected %s '%s'"
-                   (terminal-expression-name expression)
-                   expression)
+    (error (i18n :expected-terminal
+                 (terminal-expression-name expression)
+                 expression)
            state)))
 
 
