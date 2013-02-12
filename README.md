@@ -28,7 +28,7 @@ Crustimoney is a Clojure library for simple, unambiguous parsing of structured t
 
 ## Features
 
-* Simple way of defining grammars, that can be changed at runtime.
+* A simple, BNF-like way of defining grammars, that can be changed at runtime.
 * Non-terminal expressions that can act as terminals, for extra power that regular expressions cannot provide.
 * Easily traversable AST result, "flattening" any recursively parsed items.
 * No use of macros, just plain data structures and functions.
