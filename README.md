@@ -37,13 +37,13 @@ Crustimoney is a Clojure library for simple, unambiguous parsing of structured t
 
 ## Installation
 
-Since there has not been an official release yet, the library has to be "build" by yourself. This requires [leiningen 2](https://github.com/technomancy/leiningen) and [maven 3](https://maven.apache.org). Type the following commands in a terminal:
+Since there has not been an official release yet, the library has to be "build" by yourself. This requires [leiningen 2](https://github.com/technomancy/leiningen). Type the following commands in a terminal:
 
 ```bash
 $ git clone git://github.com/aroemers/crustimoney.git
 $ cd crustimoney
 $ lein jar
-$ mvn install:install-file -Dfile=target/crustimoney-0.1.0-SNAPSHOT.jar -DgroupId=crustimoney -DartifactId=crustimoney -Dversion=0.1.0-SNAPSHOT -Dpackaging=jar
+$ lein install
 ```
 
 Now you can add `[crustimoney 0.1.0-SNAPSHOT]` to the dependencies in your project.clj.
@@ -159,7 +159,7 @@ Whitespace needs to be defined explicitly in the grammar. The `crustimoney.parse
 
 ### Internationalisation
 
-Crustimoney includes a simple i18n scheme. The installation of any new text takes place at runtime, under the control of the client code. Using the `crustimoney.i18n/i18n-merge` function, one can supply a map of messages. Look at the default `crustimoney.i18n/lang-en` for the supported keys. Currently there is one other language map supplied with crustimoney; the dutch `lang-nl`. More translations are welcome. 
+Crustimoney includes a simple i18n scheme. The installation of any new text takes place at runtime, under the control of the client code. Using the `crustimoney.i18n/i18n-merge` function, one can supply a map of messages. Look at the default `crustimoney.i18n/lang-en` for the supported keys. Currently there is one other language map supplied with crustimoney; the dutch `lang-nl`. More translations are welcome.
 
 For an example, see the following code:
 
