@@ -37,16 +37,7 @@ Crustimoney is a Clojure library for simple, unambiguous parsing of structured t
 
 ## Installation
 
-Since there has not been an official release yet, the library has to be "build" by yourself. This requires [leiningen 2](https://github.com/technomancy/leiningen). Type the following commands in a terminal:
-
-```bash
-$ git clone git://github.com/aroemers/crustimoney.git
-$ cd crustimoney
-$ lein jar
-$ lein install
-```
-
-Now you can add `[crustimoney 0.1.0-SNAPSHOT]` to the dependencies in your project.clj.
+Add `[crustimoney 0.1.0]` to the dependencies in your project.clj of [leiningen 2](https://github.com/technomancy/leiningen).
 
 
 ## Usage

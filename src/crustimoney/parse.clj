@@ -1,9 +1,6 @@
-;;;; The API functions for the library.
-;;;;
-;;;; This namespace contains the functions that should be called by the users
-;;;; of this library. The main function is 'parse'.
-
 (ns crustimoney.parse
+  "This namespace contains the functions that should be called by the users
+  of this library. The main function is `parse`."
   (:require [crustimoney.internal.core :as core])
   (:use [crustimoney.internal.utils]
         [crustimoney.i18n :only (i18n)]))

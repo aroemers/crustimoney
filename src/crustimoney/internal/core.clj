@@ -49,7 +49,12 @@
   ;; Check if the non-terminal should be regarded as a terminal. If so, then
   ;; append it to the second item of the tuple.
   (if as-terminal
-    [nil (str (second vector-result) content)]
+    ;; If the parse result was in a map, then get the text value and add that
+    ;; to the current text. Otherwise, add the content to the current text
+    ;; directly.
+    (if (map? content)
+      [nil (str (second vector-result) (first (vals content)))]
+      [nil (str (second vector-result) content)])
     ;; Add the content to the vector-result based on the type of vector item.
     (cond (vector? item)
           (if (vector? content)
@@ -67,10 +72,10 @@
 (defn vector-result-to-succes
   "Convert a `vector-result` datastructure to a succes structure, using the
   `succes` function."
-  [vector-result state]
+  [vector-result {:keys [current] :as state}]
   (succes (if (second vector-result)
             (if (empty? (first vector-result))
-              (second vector-result)
+              (hash-map current (second vector-result))
               (into [] (cons (first vector-result) (second vector-result))))
             (first vector-result))
           state))
