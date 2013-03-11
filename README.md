@@ -165,6 +165,10 @@ For an example, see the following code:
 
 Todo items have moved to the [issues](https://github.com/aroemers/crustimoney/issues).
 
+## Build status
+
+* Master branch: [![Build Status](https://travis-ci.org/aroemers/crustimoney.png?branch=master)](https://travis-ci.org/aroemers/crustimoney)
+
 
 ## License
 
