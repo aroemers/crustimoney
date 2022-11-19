@@ -1,0 +1,5 @@
+/.clj-kondo/
+/.lein-repl-history
+/.lsp/
+**/*.~undo-tree~
+/target/

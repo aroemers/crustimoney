@@ -88,8 +88,13 @@
 
          :foo (combinators/literal \"foo\")
 
-         :bar (combinators/literal \"bar\")}"
-  [parsers]
+         :bar (combinators/literal \"bar\")}
+
+  The macro allows for multiple parser maps to be supplied. This way
+  a map could refer to entries from another map. For example:
+
+  (rmap basics {:entity-id (ref :uuid)})"
+  [& parsers]
   `(let [parsers# (atom nil)
          ~'ref    (#'ref-fn parsers#)]
-     (reset! parsers# ~parsers)))
+     (reset! parsers# (merge ~@parsers))))

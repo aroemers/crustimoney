@@ -26,10 +26,9 @@
   This function resolves the clojure.core.cache library dynamically;
   you'll need to add the dependency to it yourself."
   [cache]
-  (require 'clojure.core.cache)
-  (let [has? (resolve 'clojure.core.cache/has?)
-        hit  (resolve 'clojure.core.cache/hit)
-        miss (resolve 'clojure.core.cache/miss)]
+  (let [has? (requiring-resolve 'clojure.core.cache/has?)
+        hit  (requiring-resolve 'clojure.core.cache/hit)
+        miss (requiring-resolve 'clojure.core.cache/miss)]
     (fn
       ([_text parser index]
        (when (has? cache [parser index])
