@@ -93,8 +93,27 @@
   The macro allows for multiple parser maps to be supplied. This way
   a map could refer to entries from another map. For example:
 
-  (rmap basics {:entity-id (ref :uuid)})"
+  (rmap basics
+        {:entity-id (ref :uuid)
+         :created-at (ref :timestamp)})"
   [& parsers]
   `(let [parsers# (atom nil)
          ~'ref    (#'ref-fn parsers#)]
      (reset! parsers# (merge ~@parsers))))
+
+;;; Improved version of recursive grammars?
+
+(def ^:dynamic *parsers*)
+
+(defn ref [key]
+  (fn [& args]
+    (if-let [parser (get *parsers* key)]
+      (apply parser args)
+      (throw (ex-info "Reference to unknown parser" {:key key})))))
+
+(defn parse-grammar
+  ([grammar root-key text]
+   (parse-grammar grammar root-key text nil))
+  ([grammar root-key text opts]
+   (binding [*parsers* grammar]
+     (parse (get grammar root-key) text opts))))
