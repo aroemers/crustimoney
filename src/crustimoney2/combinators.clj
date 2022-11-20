@@ -59,7 +59,7 @@
     ([_text index result state]
      (if (r/success? result)
        (let [state (update state :children conj result)]
-         (r/->push parser (:end result) state))
+         (r/->push parser (r/success->end result) state))
        (let [end (or (some-> state :children last r/success->end) index)]
          (r/->success index end (:children state)))))))
 
