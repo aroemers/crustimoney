@@ -1,7 +1,7 @@
 (ns crustimoney2.string-grammar
   (:require [crustimoney2.core :as core]
-            [crustimoney2.combinators :refer :all]))
-
+            [crustimoney2.combinators :refer :all]
+            [crustimoney2.results :as r]))
 
 (def grammar
   (core/rmap
@@ -42,4 +42,39 @@
                     (ref :chain))}))
 
 (defn parse [text]
-  (core/parse (:choice grammar) text))
+  (core/parse (eof (:choice grammar)) text))
+
+(defmulti parser-for
+  (fn [node]
+    (r/success->name node)))
+
+(defn create [text]
+  (let [result (parse text)]
+    (if (list? result)
+      (throw (ex-info "Failed to parse grammar" {:errors (distinct result)}))
+      (let [root-node (first (r/success->children result))]
+        (parser-for root-node)))))
+
+(defmethod parser-for :non-terminal
+  [node]
+  (core/ref (keyword (r/success->attr node :value))))
+
+(defmethod parser-for :string
+  [node]
+  (literal (r/success->attr node :value)))
+
+(defmethod parser-for :group
+  [node]
+  (parser-for (first (r/success->children node))))
+
+(defmethod parser-for :character-class
+  [node]
+  (regex (r/success->attr node :value)))
+
+(defmethod parser-for :chain
+  [node]
+  (apply chain (map parser-for (r/success->children node))))
+
+(defmethod parser-for :choice
+  [node]
+  (apply choice (map parser-for (r/success->children node))))
