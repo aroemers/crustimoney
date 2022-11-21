@@ -10,7 +10,7 @@
   (core/rmap
    {:non-terminal (with-name :non-terminal
                     (with-value
-                      (regex "[a-zA-Z_]+")))
+                      (regex "[a-zA-Z_-]+")))
 
     :literal (chain (literal "'")
                     (with-name :literal
@@ -21,7 +21,7 @@
     :group-name (chain (literal ":")
                        (with-name :group-name
                          (with-value
-                           (regex "[a-z]+"))))
+                           (regex "[a-zA-Z_-]+"))))
 
     :group (with-name :group
              (chain (literal "(")
