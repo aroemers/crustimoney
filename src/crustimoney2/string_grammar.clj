@@ -1,7 +1,10 @@
 (ns crustimoney2.string-grammar
-  (:require [crustimoney2.core :as core]
+  (:refer-clojure :exclude [ref])
+  (:require [crustimoney2.core :as core :refer [ref]]
             [crustimoney2.combinators :refer :all]
             [crustimoney2.results :as r]))
+
+;;; Grammar definition
 
 (def grammar
   (core/rmap
@@ -9,11 +12,11 @@
                     (with-value
                       (regex "[a-zA-Z_]+")))
 
-    :string (chain (literal "'")
-                   (with-name :string
-                     (with-value
-                       (regex "[^']*")))
-                   (literal "'"))
+    :literal (chain (literal "'")
+                    (with-name :literal
+                      (with-value
+                        (regex "[^']*")))
+                    (literal "'"))
 
     :group (chain (literal "(")
                   (with-name :group
@@ -26,7 +29,7 @@
 
     :expr (choice (ref :non-terminal)
                   (ref :group)
-                  (ref :string)
+                  (ref :literal)
                   (ref :character-class))
 
     :chain (choice (with-name :chain
@@ -39,27 +42,29 @@
                       (chain (repeat+ (chain (ref :chain)
                                              (literal "/")))
                              (ref :chain)))
-                    (ref :chain))}))
+                    (ref :chain))
 
-(defn parse [text]
-  (core/parse (eof (:choice grammar)) text))
+    :root (eof (ref :choice))}))
+
+
+;;; Parse result processing
 
 (defmulti parser-for
   (fn [node]
     (r/success->name node)))
 
 (defn create [text]
-  (let [result (parse text)]
+  (let [result (core/parse (:root grammar) text)]
     (if (list? result)
       (throw (ex-info "Failed to parse grammar" {:errors (distinct result)}))
       (let [root-node (first (r/success->children result))]
-        (parser-for root-node)))))
+        (core/rmap (parser-for root-node))))))
 
 (defmethod parser-for :non-terminal
   [node]
   (core/ref (keyword (r/success->attr node :value))))
 
-(defmethod parser-for :string
+(defmethod parser-for :literal
   [node]
   (literal (r/success->attr node :value)))
 

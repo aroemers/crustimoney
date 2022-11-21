@@ -1,8 +1,9 @@
 (ns crustimoney2.core
   "The main parsing functions."
+  (:refer-clojure :exclude [ref])
   (:require [crustimoney2.results :as r]))
 
-;;; Post success processing
+;;; Internals
 
 (defn- keep-named-children
   "Process a success result by keeping only the named children, merged
@@ -21,8 +22,10 @@
   "Use the given parser to parse the supplied text string. The result
   will either be a success (a hiccup-style vector) or a list of
   errors. By default only named nodes are kept in a success
-  result (the root node is allowed to be nameless). The parse function
-  takes an optional options map, with the following options:
+  result (the root node is allowed to be nameless).
+
+  The parse function takes an optional options map, with the following
+  options:
 
   :index (default: 0)
   The index at which to start parsing in the text.
@@ -39,6 +42,7 @@
    (let [start-index  (:index opts 0)
          cache        (:cache opts (constantly nil))
          post-success (if (:keep-nameless opts) identity keep-named-children)]
+     ;; Main parsing loop
      (loop [stack  [(r/->push parser start-index)]
             result nil
             state  nil]
@@ -73,47 +77,18 @@
 
 ;;; Recursive grammar definition
 
-(defn- ref-fn [parsers]
-  (fn [key]
+(def ^:dynamic ^:no-doc *parsers*)
+
+(defn ref [key]
+  (when-not (bound? #'*parsers*)
+    (throw (ex-info "Cannot use ref function outside rmap macro" {})))
+  (let [parsers *parsers*]
     (fn [& args]
       (if-let [parser (get @parsers key)]
         (apply parser args)
         (throw (ex-info "Reference to unknown parser" {:key key}))))))
 
-(defmacro rmap
-  "Create a map of parsers that can recursively refer to other entries
-  by using the (ref :some-key) function. For example:
-
-  (rmap {:root (combinators/choice (ref :foo) (ref :bar))
-
-         :foo (combinators/literal \"foo\")
-
-         :bar (combinators/literal \"bar\")}
-
-  The macro allows for multiple parser maps to be supplied. This way
-  a map could refer to entries from another map. For example:
-
-  (rmap basics
-        {:entity-id (ref :uuid)
-         :created-at (ref :timestamp)})"
-  [& parsers]
-  `(let [parsers# (atom nil)
-         ~'ref    (#'ref-fn parsers#)]
-     (reset! parsers# (merge ~@parsers))))
-
-;;; Improved version of recursive grammars?
-
-(def ^:dynamic *parsers*)
-
-(defn ref [key]
-  (fn [& args]
-    (if-let [parser (get *parsers* key)]
-      (apply parser args)
-      (throw (ex-info "Reference to unknown parser" {:key key})))))
-
-(defn parse-grammar
-  ([grammar root-key text]
-   (parse-grammar grammar root-key text nil))
-  ([grammar root-key text opts]
-   (binding [*parsers* grammar]
-     (parse (get grammar root-key) text opts))))
+(defmacro rmap [grammar]
+  `(let [grammar# (atom nil)]
+     (binding [*parsers* grammar#]
+       (reset! grammar# ~grammar))))

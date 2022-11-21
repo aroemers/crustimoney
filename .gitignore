@@ -3,3 +3,4 @@
 /.lsp/
 **/*.~undo-tree~
 /target/
+/.nrepl-port
