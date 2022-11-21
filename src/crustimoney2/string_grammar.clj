@@ -18,10 +18,17 @@
                         (regex "[^']*")))
                     (literal "'"))
 
-    :group (chain (literal "(")
-                  (with-name :group
-                    (ref :choice))
-                  (literal ")"))
+    :group-name (chain (literal ":")
+                       (with-name :group-name
+                         (with-value
+                           (regex "[a-z]+"))))
+
+    :group (with-name :group
+             (chain (literal "(")
+                    (maybe (chain (ref :group-name)
+                                  (literal " ")))
+                    (ref :choice)
+                    (literal ")")))
 
     :character-class (with-name :character-class
                        (with-value
@@ -70,7 +77,11 @@
 
 (defmethod parser-for :group
   [node]
-  (parser-for (first (r/success->children node))))
+  (let [[child1 child2] (r/success->children node)]
+    (if (= (r/success->name child1) :group-name)
+      (with-name (keyword (r/success->attr child1 :value))
+        (parser-for child2))
+      (parser-for child1))))
 
 (defmethod parser-for :character-class
   [node]
