@@ -82,13 +82,17 @@
 (defn ref [key]
   (when-not (bound? #'*parsers*)
     (throw (ex-info "Cannot use ref function outside rmap macro" {})))
+  (swap! *parsers* assoc key nil)
   (let [parsers *parsers*]
     (fn [& args]
-      (if-let [parser (get @parsers key)]
-        (apply parser args)
-        (throw (ex-info "Reference to unknown parser" {:key key}))))))
+      (apply (get @parsers key) args))))
+
+(defn ^:no-doc rmap* [f]
+  (binding [*parsers* (atom nil)]
+    (let [result (swap! *parsers* merge (f))]
+      (if-let [unknown-refs (seq (remove result (keys result)))]
+        (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unknown-refs}))
+        result))))
 
 (defmacro rmap [grammar]
-  `(let [grammar# (atom nil)]
-     (binding [*parsers* grammar#]
-       (reset! grammar# ~grammar))))
+  `(rmap* (fn [] ~grammar)))
