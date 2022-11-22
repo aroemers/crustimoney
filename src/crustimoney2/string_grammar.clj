@@ -65,7 +65,7 @@
     (if (list? result)
       (throw (ex-info "Failed to parse grammar" {:errors (distinct result)}))
       (let [root-node (first (r/success->children result))]
-        (core/rmap (parser-for root-node))))))
+        (core/rmap {:root (parser-for root-node)})))))
 
 (defmethod parser-for :non-terminal
   [node]
