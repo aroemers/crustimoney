@@ -80,8 +80,8 @@
 (def ^:dynamic ^:no-doc *parsers*)
 
 (defn ref [key]
-  (when-not (bound? #'*parsers*)
-    (throw (ex-info "Cannot use ref function outside rmap macro" {})))
+  (assert (bound? #'*parsers*)
+    "Cannot use ref function outside rmap macro")
   (swap! *parsers* assoc key nil)
   (let [parsers *parsers*]
     (fn [& args]
