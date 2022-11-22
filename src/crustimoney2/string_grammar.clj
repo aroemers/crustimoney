@@ -39,11 +39,19 @@
                   (ref :literal)
                   (ref :character-class))
 
+    :lookahead (choice (with-name :lookahead
+                         (chain (with-name :operand
+                                  (with-value
+                                    (choice (literal "!")
+                                            (literal "&"))))
+                                (ref :expr)))
+                       (ref :expr))
+
     :chain (choice (with-name :chain
-                     (chain (repeat+ (chain (ref :expr)
+                     (chain (repeat+ (chain (ref :lookahead)
                                             (literal " ")))
-                            (ref :expr)))
-                   (ref :expr))
+                            (ref :lookahead)))
+                   (ref :lookahead))
 
     :choice (choice (with-name :choice
                       (chain (repeat+ (chain (ref :chain)
@@ -94,3 +102,11 @@
 (defmethod parser-for :choice
   [node]
   (apply choice (map parser-for (r/success->children node))))
+
+(defmethod parser-for :lookahead
+  [node]
+  (let [[operand expr] (r/success->children node)
+        parser         (parser-for expr)]
+    (case (r/success->attr operand :value)
+      "!" (negate parser)
+      "&" (lookahead parser))))

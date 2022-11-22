@@ -71,8 +71,9 @@
     ([_text index]
      (r/->push parser index))
 
-    ([_text index result _state]
-     (when-not (r/success? result)
+    ([text index result _state]
+     (if (r/success? result)
+       (list (r/->error :unexpected-match index {:text (r/success->text result text)}))
        (r/->success index index)))))
 
 ;;; Extra combinators
@@ -110,8 +111,9 @@
      (r/->push parser index))
 
     ([_text index result _state]
-     (when (r/success? result)
-       (r/->success index index)))))
+     (if (r/success? result)
+       (r/->success index index)
+       (list (r/->error :failed-lookahead index))))))
 
 (defn maybe
   "Try to parse the given parser, but succeed anyway."
