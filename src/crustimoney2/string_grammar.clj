@@ -65,7 +65,18 @@
                              (ref :chain)))
                     (ref :chain))
 
-    :root (eof (ref :choice))}))
+    :rule (with-name :rule
+            (chain (with-name :rule-name
+                     (ref :non-terminal))
+                   (literal " <- ")
+                   (ref :choice)
+                   (maybe (literal "\n"))))
+
+    :root (with-name :root
+            (eof (choice (with-name :rules
+                           (repeat+ (ref :rule)))
+                         (with-name :no-rules
+                           (chain (ref :choice))))))}))
 
 
 ;;; Parse result processing
@@ -78,8 +89,25 @@
   (let [result (core/parse (:root grammar) text)]
     (if (list? result)
       (throw (ex-info "Failed to parse grammar" {:errors (distinct result)}))
-      (let [root-node (first (r/success->children result))]
-        (core/rmap {:root (parser-for root-node)})))))
+      (core/rmap (parser-for result)))))
+
+(defmethod parser-for :root
+  [node]
+  (-> node r/success->children first parser-for))
+
+(defmethod parser-for :rules
+  [node]
+  (into {} (map parser-for (r/success->children node))))
+
+(defmethod parser-for :no-rules
+  [node]
+  {:root (parser-for (first (r/success->children node)))})
+
+(defmethod parser-for :rule
+  [node]
+  (let [[child1 child2] (r/success->children node)
+        rule-name       (keyword (r/success->attr child1 :value))]
+    [rule-name (parser-for child2)]))
 
 (defmethod parser-for :non-terminal
   [node]
