@@ -39,13 +39,19 @@
                   (ref :literal)
                   (ref :character-class))
 
+    :quantified (choice (with-name :quantified
+                          (chain (ref :expr)
+                                 (with-name :operand
+                                   (with-value
+                                     (regex "[?+*]")))))
+                        (ref :expr))
+
     :lookahead (choice (with-name :lookahead
                          (chain (with-name :operand
                                   (with-value
-                                    (choice (literal "!")
-                                            (literal "&"))))
-                                (ref :expr)))
-                       (ref :expr))
+                                    (regex "[&!]")))
+                                (ref :quantified)))
+                       (ref :quantified))
 
     :chain (choice (with-name :chain
                      (chain (repeat+ (chain (ref :lookahead)
@@ -110,3 +116,12 @@
     (case (r/success->attr operand :value)
       "!" (negate parser)
       "&" (lookahead parser))))
+
+(defmethod parser-for :quantified
+  [node]
+  (let [[expr operand] (r/success->children node)
+        parser         (parser-for expr)]
+    (case (r/success->attr operand :value)
+      "?" (maybe parser)
+      "+" (repeat+ parser)
+      "*" (repeat* parser))))
