@@ -1,8 +1,17 @@
 (ns crustimoney2.string-grammar
   (:refer-clojure :exclude [ref])
-  (:require [crustimoney2.core :as core :refer [ref]]
+  (:require [clojure.string :as str]
+            [crustimoney2.core :as core :refer [ref]]
             [crustimoney2.combinators :refer :all]
             [crustimoney2.results :as r]))
+
+;;; Value transformers
+
+(defn unescape-quotes [s]
+  (str/replace s "''" "'"))
+
+(defn unescape-brackets [s]
+  (str/replace s "]]" "]"))
 
 ;;; Grammar definition
 
@@ -14,8 +23,8 @@
 
     :literal (chain (literal "'")
                     (with-name :literal
-                      (with-value
-                        (regex "[^']*")))
+                      (with-value unescape-quotes
+                        (regex "(''|[^'])*")))
                     (literal "'"))
 
     :group-name (chain (literal ":")
@@ -31,8 +40,8 @@
                     (literal ")")))
 
     :character-class (with-name :character-class
-                       (with-value
-                         (regex #"\[[^]]*]")))
+                       (with-value unescape-brackets
+                         (regex #"\[(]]|[^]])*]")))
 
     :expr (choice (ref :non-terminal)
                   (ref :group)
@@ -153,3 +162,13 @@
       "?" (maybe parser)
       "+" (repeat+ parser)
       "*" (repeat* parser))))
+
+(def superdogfood
+  "non-terminal <- (:non-terminal [a-zA-Z_-]+)
+literal <- '''' (:literal (''''''/[^'])*) ''''
+group-name <- ':' (:group-name [a-zA-Z_-]+)
+group <- (:group '(' (group-name ' ')? choice ')')
+character-class <- (:character-class '[' (']]'/[^]]])* ']')
+expr <- non-terminal/group/literal/character-class
+chain <- (:chain (expr ' ')+ expr)/expr
+choice <- (:choice (chain '/')+ chain)/chain")
