@@ -17,7 +17,7 @@
 
 (def grammar
   (core/rmap
-   {:space (regex "[ \t]+")
+   {:space (regex "[ \t]*")
 
     :whitespace (regex #"\s*")
 
@@ -31,6 +31,13 @@
                         (regex "(''|[^'])*")))
                     (literal "'"))
 
+    :character-class (with-name :character-class
+                       (with-value unescape-brackets
+                         (regex #"\[(]]|[^]])*]")))
+
+    :end-of-file (with-name :end-of-file
+                   (literal "$"))
+
     :group-name (chain (literal ":")
                        (with-name :group-name
                          (with-value
@@ -38,17 +45,11 @@
 
     :group (with-name :group
              (chain (literal "(")
-                    (maybe (chain (ref :group-name)
-                                  (ref :space)))
+                    (maybe (ref :group-name))
+                    (ref :space)
                     (ref :choice)
+                    (ref :space)
                     (literal ")")))
-
-    :character-class (with-name :character-class
-                       (with-value unescape-brackets
-                         (regex #"\[(]]|[^]])*]")))
-
-    :end-of-file (with-name :end-of-file
-                   (literal "$"))
 
     :expr (choice (ref :non-terminal)
                   (ref :group)
@@ -71,25 +72,25 @@
                        (ref :quantified))
 
     :chain (choice (with-name :chain
-                     (chain (repeat+ (chain (ref :lookahead)
-                                            (ref :space)))
-                            (ref :lookahead)))
+                     (chain (ref :lookahead)
+                            (repeat+ (chain (ref :space)
+                                            (ref :lookahead)))))
                    (ref :lookahead))
 
     :choice (choice (with-name :choice
-                      (chain (repeat+ (chain (ref :chain)
-                                             (maybe (ref :space))
+                      (chain (ref :chain)
+                             (repeat+ (chain (ref :space)
                                              (literal "/")
-                                             (maybe (ref :space))))
-                             (ref :chain)))
+                                             (ref :space)
+                                             (ref :chain)))))
                     (ref :chain))
 
     :rule (with-name :rule
             (chain (with-name :rule-name
                      (ref :non-terminal))
-                   (maybe (ref :space))
+                   (ref :space)
                    (literal "<-")
-                   (maybe (ref :space))
+                   (ref :space)
                    (ref :choice)))
 
     :root (with-name :root
@@ -183,7 +184,7 @@
   (eof (literal "")))
 
 (def superdogfood "
-  space           <- [ \t]+
+  space           <- [ \t]*
   whitespace      <- [\\s]*
 
   non-terminal    <- (:non-terminal [a-zA-Z_-]+)
@@ -192,15 +193,15 @@
   end-of-file     <- (:end-of-file '$')
 
   group-name      <- ':' (:group-name [a-zA-Z_-]+)
-  group           <- (:group '(' (group-name space)? choice ')')
+  group           <- (:group '(' group-name? space choice space ')')
 
   expr            <- non-terminal / group / literal / character-class / end-of-file
 
   quantified      <- (:quantified expr (:operand [?+*])) / expr
   lookahead       <- (:lookahead (:operand [&!]) quantified) / quantified
 
-  chain           <- (:chain (lookahead space)+ lookahead) / lookahead
-  choice          <- (:choice (chain space? '/' space?)+ chain) / chain
+  chain           <- (:chain lookahead (space lookahead)+) / lookahead
+  choice          <- (:choice chain (space '/' space chain)+) / chain
 
-  rule            <- (:rule (:rule-name non-terminal) space? '<-' space? choice)
+  rule            <- (:rule (:rule-name non-terminal) space '<-' space choice)
   root            <- (:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $")
