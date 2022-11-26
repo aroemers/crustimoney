@@ -47,10 +47,14 @@
                        (with-value unescape-brackets
                          (regex #"\[(]]|[^]])*]")))
 
+    :end-of-file (with-name :end-of-file
+                   (literal "$"))
+
     :expr (choice (ref :non-terminal)
                   (ref :group)
                   (ref :literal)
-                  (ref :character-class))
+                  (ref :character-class)
+                  (ref :end-of-file))
 
     :quantified (choice (with-name :quantified
                           (chain (ref :expr)
@@ -174,6 +178,10 @@
       "+" (repeat+ parser)
       "*" (repeat* parser))))
 
+(defmethod parser-for :end-of-file
+  [_node]
+  (eof (literal "")))
+
 (def superdogfood "
   space           <- [ \t]+
   whitespace      <- [\\s]*
@@ -181,11 +189,12 @@
   non-terminal    <- (:non-terminal [a-zA-Z_-]+)
   literal         <- '''' (:literal ('''''' / [^'])*) ''''
   character-class <- (:character-class '[' (']]' / [^]]])* ']')
+  end-of-file     <- (:end-of-file '$')
 
   group-name      <- ':' (:group-name [a-zA-Z_-]+)
   group           <- (:group '(' (group-name space)? choice ')')
 
-  expr            <- non-terminal / group / literal / character-class
+  expr            <- non-terminal / group / literal / character-class / end-of-file
 
   quantified      <- (:quantified expr (:operand [?+*])) / expr
   lookahead       <- (:lookahead (:operand [&!]) quantified) / quantified
@@ -194,4 +203,4 @@
   choice          <- (:choice (chain space? '/' space?)+ chain) / chain
 
   rule            <- (:rule (:rule-name non-terminal) space? '<-' space? choice)
-  root            <- (:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace))")
+  root            <- (:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $")
