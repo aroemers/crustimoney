@@ -7,15 +7,15 @@
 
 ;;; Value transformers
 
-(defn unescape-quotes [s]
+(defn- unescape-quotes [s]
   (str/replace s "''" "'"))
 
-(defn unescape-brackets [s]
+(defn- unescape-brackets [s]
   (str/replace s "]]" "]"))
 
 ;;; Grammar definition
 
-(def grammar
+(def ^:private grammar
   (core/rmap
    {:space (regex "[ \t]*")
 
@@ -103,18 +103,11 @@
                                   (ref :choice)
                                   (ref :whitespace))))))}))
 
-
 ;;; Parse result processing
 
-(defmulti parser-for
+(defmulti ^:no-doc parser-for
   (fn [node]
     (r/success->name node)))
-
-(defn create [text]
-  (let [result (core/parse (:root grammar) text)]
-    (if (list? result)
-      (throw (ex-info "Failed to parse grammar" {:errors (distinct result)}))
-      (core/rmap (parser-for result)))))
 
 (defmethod parser-for :root
   [node]
@@ -183,7 +176,53 @@
   [_node]
   (eof (literal "")))
 
-(def superdogfood "
+;;; Public namespace API
+
+(defn create-parser
+  "Create a parser based on a string-based grammar definition. If the
+  definition contains multiple rules, a map of parsers is returned.
+  Optionally an existing map of parsers can be supplied, which can be
+  used by the string grammar. The following definition describes the
+  string grammar synxtax in itself:
+
+    space           <- [ \t]*
+    whitespace      <- [\\s]*
+
+    non-terminal    <- (:non-terminal [a-zA-Z_-]+)
+    literal         <- '''' (:literal ('''''' / [^'])*) ''''
+    character-class <- (:character-class '[' (']]' / [^]]])* ']')
+    end-of-file     <- (:end-of-file '$')
+
+    group-name      <- ':' (:group-name [a-zA-Z_-]+)
+    group           <- (:group '(' group-name? space choice space ')')
+
+    expr            <- non-terminal / group / literal / character-class / end-of-file
+
+    quantified      <- (:quantified expr (:operand [?+*])) / expr
+    lookahead       <- (:lookahead (:operand [&!]) quantified) / quantified
+
+    chain           <- (:chain lookahead (space lookahead)+) / lookahead
+    choice          <- (:choice chain (space '/' space chain)+) / chain
+
+    rule            <- (:rule (:rule-name non-terminal) space '<-' space choice)
+    rules           <- (:rules (whitespace rule whitespace)+)
+    no-rules        <- (:no-rules whitespace choice whitespace)
+    root            <- (:root rules / no-rules) $
+
+  To capture nodes in the parse result (i.e. the functionality of
+  `combinators/with-name`), you need to use named groups."
+  ([text]
+   (create-parser text nil))
+  ([text other-parsers]
+   (let [result (core/parse (:root grammar) text)]
+     (if (list? result)
+       (throw (ex-info "Failed to parse grammar" {:errors (distinct result)}))
+       (let [rmap (core/rmap (merge other-parsers (parser-for result)))]
+         (cond-> rmap (= (count rmap) 1) (-> vals first)))))))
+
+;;; I heard you like string grammars...
+
+(def ^:private superdogfood "
   space           <- [ \t]*
   whitespace      <- [\\s]*
 
