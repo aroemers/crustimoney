@@ -88,7 +88,7 @@
         (list (r/->error :expected-match index {:regex re}))))))
 
 (defn repeat+
-  "Eagerly try to match the parser as many times as possible, excepting
+  "Eagerly try to match the parser as many times as possible, expecting
   at least one match."
   [parser]
   (fn
