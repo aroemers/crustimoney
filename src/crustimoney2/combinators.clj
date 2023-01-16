@@ -127,19 +127,28 @@
          (r/->success index index)))))
 
 (defn eof
-  "Succeed only if the entire text has been parsed when the given parser
-  is done (successfully)."
-  [parser]
-  (fn
-    ([_text index]
-     (r/->push parser index))
+  "Succeed only if the entire text has been parsed. Optionally another
+  parser can be wrapped, after which the check is done when that parser
+  is done (successfully). This means that `(chain a-parser eof)` behaves
+  the same as `(eof a-parser)`, though the latter form evaluates to the
+  result of the wrapped parser, whereas the former eof creates its own
+  (empty) success."
+  ([text index]
+   (if (= (count text) index)
+     (r/->success index index)
+     (list (r/->error :eof-not-reached index))))
 
-    ([text _index result _state]
-     (if (r/success? result)
-       (if (= (r/success->end result) (count text))
-         result
-         (list (r/->error :eof-not-reached (r/success->end result))))
-       result))))
+  ([parser]
+   (fn
+     ([_text index]
+      (r/->push parser index))
+
+     ([text _index result _state]
+      (if (r/success? result)
+        (if (= (r/success->end result) (count text))
+          result
+          (list (r/->error :eof-not-reached (r/success->end result))))
+        result)))))
 
 ;;; Result wrappers
 

@@ -174,7 +174,7 @@
 
 (defmethod parser-for :end-of-file
   [_node]
-  (eof (literal "")))
+  eof)
 
 ;;; Public namespace API
 
