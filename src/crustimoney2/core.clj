@@ -79,7 +79,11 @@
 
 (def ^:dynamic ^:no-doc *parsers*)
 
-(defn ref [key]
+(defn ref
+  "Creates a parser function that wraps another parser function, which
+  is referred to by the given key. Needs to be called within the
+  lexical scope of `rmap`."
+  [key]
   (assert (bound? #'*parsers*)
     "Cannot use ref function outside rmap macro")
   (swap! *parsers* assoc key nil)
@@ -94,5 +98,12 @@
         (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unknown-refs}))
         result))))
 
-(defmacro rmap [grammar]
+(defmacro rmap
+  "Takes (something that evaluates to) a map, in which the entries can
+  refer to each other using the `ref` function. In other words, a
+  recursive map. For example:
+
+  (rmap {:foo  (literal \"foo\")
+         :root (chain (ref :foo) \"bar\")})"
+  [grammar]
   `(rmap* (fn [] ~grammar)))
