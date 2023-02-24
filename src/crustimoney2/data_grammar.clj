@@ -128,7 +128,7 @@
    choices            (literal / regex / \"alice\" \"bob\")
    zero-to-many       (literal *)
    one-to-many        (\"bar\"+)
-   zero-to-one        (\"foo\" \"bar\"?)
+   zero-to-one        (\"foo\" \"bar\"?) ; bar is optional here
    lookahead          (& regex)
    negative-lookahead (!\"alice\")
    eof                $
