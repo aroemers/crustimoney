@@ -24,8 +24,8 @@
     [:my-namespace/my-uuid-parser uuid])
   ```
 
-  The vector refers to a resolveable function (following the
-  conventions of the combinators) with the first keyword, and its
+  The vector refers to a resolveable combinator function (following
+  the conventions of the combinators) with the first keyword, and its
   arguments."
   (fn [data]
     (type data)))

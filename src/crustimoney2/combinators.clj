@@ -16,11 +16,13 @@
 
   For this reason, a parser function has the following signature:
 
+  ```
   (fn
     ([text index]
       ...)
     ([text index result state]
      ...))
+  ```
 
   The 2-arity variant is called when the parser was pushed onto the
   stack. It receives the entire text and the index it should begin
@@ -31,7 +33,10 @@
 
   Both arities can return a success, a list of errors, or a push. The
   `crustimoney2.results` namespace should be used for creating and
-  reading these results."
+  reading these results.
+
+  Before you write your own combinator, do realise that the provided
+  combinators are complete in the sense that they can parse any text."
   (:require [crustimoney2.results :as r]))
 
 ;;; Primitives

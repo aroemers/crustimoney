@@ -24,7 +24,7 @@
   errors. By default only named nodes are kept in a success
   result (the root node is allowed to be nameless).
 
-  The parse function takes an optional options map, with the following
+  The parse function can take an options map, with the following
   options:
 
   :index (default: 0)
@@ -35,7 +35,7 @@
 
   :keep-nameless (default: false)
   Set this to true if nameless success nodes should be kept in the
-  parse result."
+  parse result. Can be useful when debugging."
   ([parser text]
    (parse parser text nil))
   ([parser text opts]
