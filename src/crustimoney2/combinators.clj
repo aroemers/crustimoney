@@ -1,5 +1,37 @@
 (ns crustimoney2.combinators
-  "Parsers combinator functions."
+  "Parsers combinator functions.
+
+  Each combinator functions creates a parser function that is suitable
+  for use with core's main parse function, and many take other parser
+  functions as their argument; they are composable.
+
+  If you want to implement your own parser combinator, read on.
+  Otherwise, just look at the docstrings of the combinators
+  themselves.
+
+  The parsers returned by the combinators do not call other parsers
+  directly, as this could lead to stack overflows. So next to a
+  `success` or `error` result, it can also return a `push` result.
+  This pushes another parser onto the virtual stack.
+
+  For this reason, a parser function has the following signature:
+
+  (fn
+    ([text index]
+      ...)
+    ([text index result state]
+     ...))
+
+  The 2-arity variant is called when the parser was pushed onto the
+  stack. It receives the entire text and the index it should begin
+  parsing. If it returns a `push` result, the 4-arity variant is
+  called when that parser is done. It again receives the text and the
+  original index, but also the result of the pushed parser and any
+  state that was pushed with it.
+
+  Both arities can return a success, a list of errors, or a push. The
+  `crustimoney2.results` namespace should be used for creating and
+  reading these results."
   (:require [crustimoney2.results :as r]))
 
 ;;; Primitives

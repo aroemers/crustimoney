@@ -1,4 +1,6 @@
 (ns crustimoney2.string-grammar
+  "Create a parser based on a string grammar. The grammar is translated
+  into combinators."
   (:refer-clojure :exclude [ref])
   (:require [clojure.string :as str]
             [crustimoney2.core :as core :refer [ref]]
