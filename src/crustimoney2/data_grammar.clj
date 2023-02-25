@@ -63,7 +63,7 @@
 
 (defmethod combinator-tree-for clojure.lang.IPersistentVector
   [data]
-  [(first data) (combinator-tree-for (second data))])
+  (into [(first data)] (map combinator-tree-for (rest data))))
 
 (defmethod combinator-tree-for clojure.lang.IPersistentList
   [data]
@@ -96,6 +96,12 @@
   [data]
   [:literal (str data)])
 
+(deftype ^:no-doc Plain [data])
+
+(defmethod combinator-tree-for Plain
+  [plain]
+  (.data plain))
+
 
 ;;; Tree to parser
 
@@ -113,8 +119,9 @@
         (core/rmap (map-kv identity tree-to-parser tree))
 
         (vector? tree)
-        (let [combinator (key-to-combinator (first tree))]
-          (apply combinator (map tree-to-parser (rest tree))))
+        (if-let [combinator (key-to-combinator (first tree))]
+          (apply combinator (map tree-to-parser (rest tree)))
+          (throw (ex-info "combinator-key does not resolve" {:key (first tree)})))
 
         :otherwise
         tree))
@@ -128,19 +135,30 @@
   supplied, which can refered to by the data grammar. The following
   example shows what a data grammar looks like:
 
-  {literal            \"foo\"
+  {;; terminals
+   literal            \"foo\"
    character          \\c
    regex              #\"[a-z]\"
+   eof                $
+
+   ;; refs and grouping
    reference          literal
    chain              (literal regex)
    choices            (literal / regex / \"alice\" \"bob\")
+   named              (:my-name literal / \"the end\" $)
+
+   ;; quantifiers
    zero-to-many       (literal *)
    one-to-many        (\"bar\"+)
    zero-to-one        (\"foo\" \"bar\"?) ; bar is optional here
+
+   ;; lookaheads
    lookahead          (& regex)
    negative-lookahead (!\"alice\")
-   eof                $
-   named              (:my-name one-to-many \"the end\" $)}"
+
+   ;; direct combinator calls
+   combinator-call       [:with-value (:bax \"bar\" / \"baz\")]
+   combinator-plain-data [:with-error #crust/plain :fail! \"foo\"]}"
   ([data]
    (create-parser data nil))
   ([data other-parsers]
