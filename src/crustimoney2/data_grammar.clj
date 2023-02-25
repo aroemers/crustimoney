@@ -158,7 +158,8 @@
 
    ;; direct combinator calls
    combinator-call       [:with-value (:bax \"bar\" / \"baz\")]
-   combinator-plain-data [:with-error #crust/plain :fail! \"foo\"]}"
+   combinator-plain-data [:with-error #crust/plain :fail! \"foo\"]
+   custom-combinator     [:my.app/my-combinator literal]}"
   ([data]
    (create-parser data nil))
   ([data other-parsers]
