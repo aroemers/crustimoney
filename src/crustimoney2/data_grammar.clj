@@ -12,16 +12,15 @@
 ;;; Parser tree generator
 
 (defmulti combinator-tree-for
-  "Low-level function which translates the data grammar into an
-  intermediary representation of the parser combinators it will result
-  in. Can be useful for debugging, or adding your own data type.
+  "Low-level (multi method) function which translates the data grammar
+  into an intermediary representation of the parser combinators it
+  will result in. Can be useful for debugging, or adding your own data
+  type.
 
   In the latter case, add your type like so:
 
-  ```
-  (defmethod combinator-tree-for java.util.Date [date]
-    [:my-namespace/my-flexible-date-parser date])
-  ```
+    (defmethod combinator-tree-for java.util.Date [date]
+      [:my-namespace/my-flexible-date-parser date])
 
   The vector refers to a resolveable combinator function (following
   the conventions of the combinators) with the first keyword, and its
