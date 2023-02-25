@@ -21,8 +21,8 @@
     -  [`ref`](#crustimoney2.core/ref) - Creates a parser function that wraps another parser function, which is referred to by the given key.
     -  [`rmap`](#crustimoney2.core/rmap) - Takes (something that evaluates to) a map, in which the entries can refer to each other using the <code>ref</code> function.
 -  [`crustimoney2.data-grammar`](#crustimoney2.data-grammar)  - Create a parser based on a data grammar.
-    -  [`combinator-tree-for`](#crustimoney2.data-grammar/combinator-tree-for) - Low-level (multi method) function which translates the data grammar into an intermediary representation of the parser combinators it will result in.
     -  [`create-parser`](#crustimoney2.data-grammar/create-parser) - Create a parser based on a data grammar definition.
+    -  [`vector-tree-for`](#crustimoney2.data-grammar/vector-tree-for) - Low-level (multi method) function which translates the data grammar into an intermediary vector-based representation.
 -  [`crustimoney2.results`](#crustimoney2.results)  - Result constructors and predicates.
     -  [`->error`](#crustimoney2.results/->error) - Create an error result, given an error key and an index.
     -  [`->push`](#crustimoney2.results/->push) - Create a push value, given a parser function and an index.
@@ -345,29 +345,6 @@ Create a parser based on a data grammar. The data is translated into
 
 
 
-## <a name="crustimoney2.data-grammar/combinator-tree-for">`combinator-tree-for`</a><a name="crustimoney2.data-grammar/combinator-tree-for"></a>
-
-
-
-
-Low-level (multi method) function which translates the data grammar
-  into an intermediary representation of the parser combinators it
-  will result in. Can be useful for debugging, or adding your own data
-  type.
-
-  In the latter case, add your type like so:
-
-    (defmethod combinator-tree-for java.util.Date [date]
-      [:my-namespace/my-flexible-date-parser date])
-
-  The vector refers to a resolveable combinator function (following
-  the conventions of the combinators) with the first keyword, and its
-  arguments.
-
-  To see which data types are already supported, use `(methods
-  conbinator-tree-for)`
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L14-L32">Source</a></sub></p>
-
 ## <a name="crustimoney2.data-grammar/create-parser">`create-parser`</a><a name="crustimoney2.data-grammar/create-parser"></a>
 ``` clojure
 
@@ -408,7 +385,26 @@ Create a parser based on a data grammar definition. If a map with
      custom-combinator     [:my.app/my-combinator literal]}
 
   To capture nodes in the parse result, you need to use named groups.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L105-L146">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L101-L142">Source</a></sub></p>
+
+## <a name="crustimoney2.data-grammar/vector-tree-for">`vector-tree-for`</a><a name="crustimoney2.data-grammar/vector-tree-for"></a>
+
+
+
+
+Low-level (multi method) function which translates the data grammar
+  into an intermediary vector-based representation. See
+  [`crustimoney2.vector-grammar`](#crustimoney2.vector-grammar) for more on this format. This can be
+  useful for debugging, or adding your own data type.
+
+  In the latter case, add your type like so:
+
+    (defmethod vector-tree-for java.util.Date [date]
+      [:my-namespace/my-flexible-date-parser date])
+
+  To see which data types are already supported, use `(methods
+  conbinator-tree-for)`
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L14-L28">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.results">crustimoney2.results</a>

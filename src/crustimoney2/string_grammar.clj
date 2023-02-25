@@ -108,74 +108,74 @@
 
 ;;; Parse result processing
 
-(defmulti ^:no-doc combinator-tree-for
+(defmulti ^:no-doc vector-tree-for
   (fn [node]
     (r/success->name node)))
 
-(defmethod combinator-tree-for :root
+(defmethod vector-tree-for :root
   [node]
-  (-> node r/success->children first combinator-tree-for))
+  (-> node r/success->children first vector-tree-for))
 
-(defmethod combinator-tree-for :rules
+(defmethod vector-tree-for :rules
   [node]
-  (into {} (map combinator-tree-for (r/success->children node))))
+  (into {} (map vector-tree-for (r/success->children node))))
 
-(defmethod combinator-tree-for :no-rules
+(defmethod vector-tree-for :no-rules
   [node]
-  {:root (combinator-tree-for (first (r/success->children node)))})
+  {:root (vector-tree-for (first (r/success->children node)))})
 
-(defmethod combinator-tree-for :rule
+(defmethod vector-tree-for :rule
   [node]
   (let [[child1 child2] (r/success->children node)
         rule-name       (keyword (r/success->attr child1 :value))]
-    [rule-name (combinator-tree-for child2)]))
+    [rule-name (vector-tree-for child2)]))
 
-(defmethod combinator-tree-for :non-terminal
+(defmethod vector-tree-for :non-terminal
   [node]
   [:ref (keyword (r/success->attr node :value))])
 
-(defmethod combinator-tree-for :literal
+(defmethod vector-tree-for :literal
   [node]
   [:literal (r/success->attr node :value)])
 
-(defmethod combinator-tree-for :group
+(defmethod vector-tree-for :group
   [node]
   (let [[child1 child2] (r/success->children node)]
     (if (= (r/success->name child1) :group-name)
       [:with-name (keyword (r/success->attr child1 :value))
-       (combinator-tree-for child2)]
-      (combinator-tree-for child1))))
+       (vector-tree-for child2)]
+      (vector-tree-for child1))))
 
-(defmethod combinator-tree-for :character-class
+(defmethod vector-tree-for :character-class
   [node]
   [:regex (r/success->attr node :value)])
 
-(defmethod combinator-tree-for :chain
+(defmethod vector-tree-for :chain
   [node]
-  (into [:chain] (map combinator-tree-for (r/success->children node))))
+  (into [:chain] (map vector-tree-for (r/success->children node))))
 
-(defmethod combinator-tree-for :choice
+(defmethod vector-tree-for :choice
   [node]
-  (into [:choice] (map combinator-tree-for (r/success->children node))))
+  (into [:choice] (map vector-tree-for (r/success->children node))))
 
-(defmethod combinator-tree-for :lookahead
+(defmethod vector-tree-for :lookahead
   [node]
   (let [[operand expr] (r/success->children node)
-        parser         (combinator-tree-for expr)]
+        parser         (vector-tree-for expr)]
     (case (r/success->attr operand :value)
       "!" [:negate parser]
       "&" [:lookahead parser])))
 
-(defmethod combinator-tree-for :quantified
+(defmethod vector-tree-for :quantified
   [node]
   (let [[expr operand] (r/success->children node)
-        parser         (combinator-tree-for expr)]
+        parser         (vector-tree-for expr)]
     (case (r/success->attr operand :value)
       "?" [:maybe parser]
       "+" [:repeat+ parser]
       "*" [:repeat* parser])))
 
-(defmethod combinator-tree-for :end-of-file
+(defmethod vector-tree-for :end-of-file
   [_node]
   [:eof])
 
@@ -219,7 +219,7 @@
    (let [result (core/parse (:root grammar) text)]
      (if (list? result)
        (throw (ex-info "Failed to parse grammar" {:errors (distinct result)}))
-       (-> (combinator-tree-for result)
+       (-> (vector-tree-for result)
            (cond-> other-parsers (merge other-parsers))
            (vector-grammar/create-parser))))))
 

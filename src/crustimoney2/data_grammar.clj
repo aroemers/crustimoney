@@ -11,33 +11,29 @@
 
 ;;; Parser tree generator
 
-(defmulti combinator-tree-for
+(defmulti vector-tree-for
   "Low-level (multi method) function which translates the data grammar
-  into an intermediary representation of the parser combinators it
-  will result in. Can be useful for debugging, or adding your own data
-  type.
+  into an intermediary vector-based representation. See
+  `crustimoney2.vector-grammar` for more on this format. This can be
+  useful for debugging, or adding your own data type.
 
   In the latter case, add your type like so:
 
-    (defmethod combinator-tree-for java.util.Date [date]
+    (defmethod vector-tree-for java.util.Date [date]
       [:my-namespace/my-flexible-date-parser date])
-
-  The vector refers to a resolveable combinator function (following
-  the conventions of the combinators) with the first keyword, and its
-  arguments.
 
   To see which data types are already supported, use `(methods
   conbinator-tree-for)`"
   (fn [data]
     (type data)))
 
-(defmethod combinator-tree-for :default
+(defmethod vector-tree-for :default
   [data]
   (throw (ex-info (str "Unknown data type: " (class data)) {:class (class data) :data data})))
 
-(defmethod combinator-tree-for clojure.lang.IPersistentMap
+(defmethod vector-tree-for clojure.lang.IPersistentMap
   [data]
-  (map-kv (comp keyword name) combinator-tree-for data))
+  (map-kv (comp keyword name) vector-tree-for data))
 
 (defn- wrap-quantifiers [data]
   (->> data
@@ -59,44 +55,44 @@
                    (conj a e)))
                ())))
 
-(defmethod combinator-tree-for clojure.lang.IPersistentVector
+(defmethod vector-tree-for clojure.lang.IPersistentVector
   [data]
-  (into [(first data)] (map combinator-tree-for (rest data))))
+  (into [(first data)] (map vector-tree-for (rest data))))
 
-(defmethod combinator-tree-for clojure.lang.IPersistentList
+(defmethod vector-tree-for clojure.lang.IPersistentList
   [data]
   (if (keyword? (first data))
-    [:with-name (first data) (combinator-tree-for (apply list (rest data)))]
+    [:with-name (first data) (vector-tree-for (apply list (rest data)))]
     (let [choices (->> data (partition-by #{'/}) (take-nth 2) (map (partial apply list)))]
       (if (= (count choices) 1)
         (let [wrapped (-> data wrap-quantifiers wrap-lookahead)]
           (if (= (count wrapped) 1)
-            (combinator-tree-for (first wrapped))
-            (into [:chain] (map combinator-tree-for wrapped))))
-        (into [:choice] (map combinator-tree-for choices))))))
+            (vector-tree-for (first wrapped))
+            (into [:chain] (map vector-tree-for wrapped))))
+        (into [:choice] (map vector-tree-for choices))))))
 
-(defmethod combinator-tree-for clojure.lang.Symbol
+(defmethod vector-tree-for clojure.lang.Symbol
   [data]
   (let [ref-name (str data)]
     (case ref-name
       "$" [:eof]
       [:ref (keyword ref-name)])))
 
-(defmethod combinator-tree-for java.lang.String
+(defmethod vector-tree-for java.lang.String
   [data]
   [:literal data])
 
-(defmethod combinator-tree-for java.util.regex.Pattern
+(defmethod vector-tree-for java.util.regex.Pattern
   [data]
   [:regex data])
 
-(defmethod combinator-tree-for java.lang.Character
+(defmethod vector-tree-for java.lang.Character
   [data]
   [:literal (str data)])
 
 (deftype ^:no-doc Plain [data])
 
-(defmethod combinator-tree-for Plain
+(defmethod vector-tree-for Plain
   [plain]
   (.data plain))
 
@@ -141,7 +137,7 @@
   ([data other-parsers]
    (assert (or (nil? other-parsers) (map? data))
            "data must be a map when supplying other parsers")
-   (-> (combinator-tree-for data)
+   (-> (vector-tree-for data)
        (cond-> other-parsers (merge other-parsers))
        (vector-grammar/create-parser))))
 
