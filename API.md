@@ -300,12 +300,12 @@ Use the given parser to parse the supplied text string. The result
   The parse function can take an options map, with the following
   options:
 
-  :index - the index at which to start parsing in the text, default 0.
+  `:index` - the index at which to start parsing in the text, default 0.
 
-  :cache - the packrat caching function to use, see the caching
+  `:cache` - the packrat caching function to use, see the caching
   namespaces, default nil.
 
-  :keep-nameless - set this to true if nameless success nodes should
+  `:keep-nameless` - set this to true if nameless success nodes should
   be kept in the parse result, for debugging, defaults to false.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L21-L85">Source</a></sub></p>
 
