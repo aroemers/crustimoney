@@ -20,13 +20,16 @@
   In the latter case, add your type like so:
 
   ```
-  (defmethod combinator-tree-for java.util.UUID [uuid]
-    [:my-namespace/my-uuid-parser uuid])
+  (defmethod combinator-tree-for java.util.Date [date]
+    [:my-namespace/my-flexible-date-parser date])
   ```
 
   The vector refers to a resolveable combinator function (following
   the conventions of the combinators) with the first keyword, and its
-  arguments."
+  arguments.
+
+  To see which data types are already supported, use `(methods
+  conbinator-tree-for)`"
   (fn [data]
     (type data)))
 
@@ -89,6 +92,10 @@
   [data]
   [:regex data])
 
+(defmethod combinator-tree-for java.lang.Character
+  [data]
+  [:literal (str data)])
+
 
 ;;; Tree to parser
 
@@ -122,6 +129,7 @@
   example shows what a data grammar looks like:
 
   {literal            \"foo\"
+   character          \\c
    regex              #\"[a-z]\"
    reference          literal
    chain              (literal regex)
