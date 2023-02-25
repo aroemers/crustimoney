@@ -11,18 +11,16 @@
 
   The parsers returned by the combinators do not call other parsers
   directly, as this could lead to stack overflows. So next to a
-  `success` or `error` result, it can also return a `push` result.
-  This pushes another parser onto the virtual stack.
+  `->success` or `->error` result, it can also return a `->push`
+  result. This pushes another parser onto the virtual stack.
 
   For this reason, a parser function has the following signature:
 
-  ```
-  (fn
-    ([text index]
-      ...)
-    ([text index result state]
-     ...))
-  ```
+    (fn
+      ([text index]
+        ...)
+      ([text index result state]
+       ...))
 
   The 2-arity variant is called when the parser was pushed onto the
   stack. It receives the entire text and the index it should begin
@@ -209,9 +207,9 @@
         result))))
 
 (defn with-value
-  "Wrap the parser, adding a :value attribute to its success, containing
-  the matched text. Optionally takes a function f, applied to the text
-  value."
+  "Wrap the parser, adding a `:value` attribute to its success,
+  containing the matched text. Optionally takes a function f, applied
+  to the text value."
   ([parser]
    (with-value identity parser))
   ([f parser]

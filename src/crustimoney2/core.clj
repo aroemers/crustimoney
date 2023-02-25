@@ -24,18 +24,27 @@
   errors. By default only named nodes are kept in a success
   result (the root node is allowed to be nameless).
 
+  A success result looks like this:
+
+    [:name {:start 0, :end 3}
+     [:child-1 {:start 0, :end 2, :value \"aa\"}]
+     [:child-2 {:start 2, :end 3}]]
+
+  An error result looks like this:
+
+    ({:key :failed-lookahead, :at 0}
+     {:key :expected-literal, :at 0, :detail {:literal \"foo\"}})
+
   The parse function can take an options map, with the following
   options:
 
-  :index (default: 0)
-  The index at which to start parsing in the text.
+  :index - the index at which to start parsing in the text, default 0.
 
-  :cache (default: no caching)
-  The packrat caching function to use, see the caching namespaces.
+  :cache - the packrat caching function to use, see the caching
+  namespaces, default nil.
 
-  :keep-nameless (default: false)
-  Set this to true if nameless success nodes should be kept in the
-  parse result. Can be useful when debugging."
+  :keep-nameless - set this to true if nameless success nodes should
+  be kept in the parse result, for debugging, defaults to false."
   ([parser text]
    (parse parser text nil))
   ([parser text opts]

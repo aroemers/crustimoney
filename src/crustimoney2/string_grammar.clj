@@ -185,7 +185,7 @@
   definition contains multiple rules, a map of parsers is returned.
   Optionally an existing map of parsers can be supplied, which can be
   used by the string grammar. The following definition describes the
-  string grammar synxtax in itself:
+  string grammar syntax in itself:
 
     space           <- [ \t]*
     whitespace      <- [\\s]*
@@ -211,8 +211,7 @@
     no-rules        <- (:no-rules whitespace choice whitespace)
     root            <- (:root rules / no-rules) $
 
-  To capture nodes in the parse result (i.e. the functionality of
-  `combinators/with-name`), you need to use named groups."
+  To capture nodes in the parse result, you need to use named groups."
   ([text]
    (create-parser text nil))
   ([text other-parsers]
