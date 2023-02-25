@@ -2,13 +2,12 @@
   "Create a parser based on a data grammar. The data is translated into
   combinators."
   (:require [crustimoney2.core :as core]
-            [crustimoney2.combinators :refer :all]))
+            [crustimoney2.vector-grammar :as vector-grammar]))
 
 ;;; Utility functions
 
 (defn- map-kv [kf vf m]
   (reduce-kv (fn [a k v] (assoc a (kf k) (vf v))) {} m))
-
 
 ;;; Parser tree generator
 
@@ -102,30 +101,6 @@
   [plain]
   (.data plain))
 
-
-;;; Tree to parser
-
-(defn- key-to-combinator [key]
-  (case key
-    :ref core/ref
-    :eof (constantly eof)
-
-    (ns-resolve (or (some-> key namespace symbol)
-                    'crustimoney2.combinators)
-                (symbol (name key)))))
-
-(defn- tree-to-parser [tree]
-  (cond (map? tree)
-        (core/rmap (map-kv identity tree-to-parser tree))
-
-        (vector? tree)
-        (if-let [combinator (key-to-combinator (first tree))]
-          (apply combinator (map tree-to-parser (rest tree)))
-          (throw (ex-info "combinator-key does not resolve" {:key (first tree)})))
-
-        :otherwise
-        tree))
-
 ;;; Parser creation
 
 (defn create-parser
@@ -169,7 +144,9 @@
            "data must be a map when supplying other parsers")
    (-> (combinator-tree-for data)
        (cond-> other-parsers (merge other-parsers))
-       (tree-to-parser))))
+       (vector-grammar/create-parser))))
+
+;;; Eat your own dogfood
 
 (def ^:private superdogfood
   '{space      #"[ \t]*"

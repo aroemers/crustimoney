@@ -5,7 +5,8 @@
   (:require [clojure.string :as str]
             [crustimoney2.core :as core :refer [ref]]
             [crustimoney2.combinators :refer :all]
-            [crustimoney2.results :as r]))
+            [crustimoney2.results :as r]
+            [crustimoney2.vector-grammar :as vector-grammar]))
 
 ;;; Value transformers
 
@@ -107,76 +108,76 @@
 
 ;;; Parse result processing
 
-(defmulti ^:no-doc parser-for
+(defmulti ^:no-doc combinator-tree-for
   (fn [node]
     (r/success->name node)))
 
-(defmethod parser-for :root
+(defmethod combinator-tree-for :root
   [node]
-  (-> node r/success->children first parser-for))
+  (-> node r/success->children first combinator-tree-for))
 
-(defmethod parser-for :rules
+(defmethod combinator-tree-for :rules
   [node]
-  (into {} (map parser-for (r/success->children node))))
+  (into {} (map combinator-tree-for (r/success->children node))))
 
-(defmethod parser-for :no-rules
+(defmethod combinator-tree-for :no-rules
   [node]
-  {:root (parser-for (first (r/success->children node)))})
+  {:root (combinator-tree-for (first (r/success->children node)))})
 
-(defmethod parser-for :rule
+(defmethod combinator-tree-for :rule
   [node]
   (let [[child1 child2] (r/success->children node)
         rule-name       (keyword (r/success->attr child1 :value))]
-    [rule-name (parser-for child2)]))
+    [rule-name (combinator-tree-for child2)]))
 
-(defmethod parser-for :non-terminal
+(defmethod combinator-tree-for :non-terminal
   [node]
-  (core/ref (keyword (r/success->attr node :value))))
+  [:ref (keyword (r/success->attr node :value))])
 
-(defmethod parser-for :literal
+(defmethod combinator-tree-for :literal
   [node]
-  (literal (r/success->attr node :value)))
+  [:literal (r/success->attr node :value)])
 
-(defmethod parser-for :group
+(defmethod combinator-tree-for :group
   [node]
   (let [[child1 child2] (r/success->children node)]
     (if (= (r/success->name child1) :group-name)
-      (with-name (keyword (r/success->attr child1 :value))
-        (parser-for child2))
-      (parser-for child1))))
+      [:with-name (keyword (r/success->attr child1 :value))
+       (combinator-tree-for child2)]
+      (combinator-tree-for child1))))
 
-(defmethod parser-for :character-class
+(defmethod combinator-tree-for :character-class
   [node]
-  (regex (r/success->attr node :value)))
+  [:regex (r/success->attr node :value)])
 
-(defmethod parser-for :chain
+(defmethod combinator-tree-for :chain
   [node]
-  (apply chain (map parser-for (r/success->children node))))
+  (into [:chain] (map combinator-tree-for (r/success->children node))))
 
-(defmethod parser-for :choice
+(defmethod combinator-tree-for :choice
   [node]
-  (apply choice (map parser-for (r/success->children node))))
+  (into [:choice] (map combinator-tree-for (r/success->children node))))
 
-(defmethod parser-for :lookahead
+(defmethod combinator-tree-for :lookahead
   [node]
   (let [[operand expr] (r/success->children node)
-        parser         (parser-for expr)]
+        parser         (combinator-tree-for expr)]
     (case (r/success->attr operand :value)
-      "!" (negate parser)
-      "&" (lookahead parser))))
+      "!" [:negate parser]
+      "&" [:lookahead parser])))
 
-(defmethod parser-for :quantified
+(defmethod combinator-tree-for :quantified
   [node]
   (let [[expr operand] (r/success->children node)
-        parser         (parser-for expr)]
+        parser         (combinator-tree-for expr)]
     (case (r/success->attr operand :value)
-      "?" (maybe parser)
-      "+" (repeat+ parser)
-      "*" (repeat* parser))))
+      "?" [:maybe parser]
+      "+" [:repeat+ parser]
+      "*" [:repeat* parser])))
 
-(defmethod parser-for :end-of-file
+(defmethod combinator-tree-for :end-of-file
   [_node]
-  eof)
+  [:eof])
 
 ;;; Public namespace API
 
@@ -218,8 +219,9 @@
    (let [result (core/parse (:root grammar) text)]
      (if (list? result)
        (throw (ex-info "Failed to parse grammar" {:errors (distinct result)}))
-       (let [rmap (core/rmap (merge other-parsers (parser-for result)))]
-         (cond-> rmap (= (count rmap) 1) (-> vals first)))))))
+       (-> (combinator-tree-for result)
+           (cond-> other-parsers (merge other-parsers))
+           (vector-grammar/create-parser))))))
 
 ;;; I heard you like string grammars...
 

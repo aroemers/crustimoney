@@ -48,6 +48,8 @@
     -  [`with-success-name`](#crustimoney2.results/with-success-name) - Set the name of the success value.
 -  [`crustimoney2.string-grammar`](#crustimoney2.string-grammar)  - Create a parser based on a string grammar.
     -  [`create-parser`](#crustimoney2.string-grammar/create-parser) - Create a parser based on a string-based grammar definition.
+-  [`crustimoney2.vector-grammar`](#crustimoney2.vector-grammar)  - A basic data-driven parser generator.
+    -  [`create-parser`](#crustimoney2.vector-grammar/create-parser) - Create a parser based on a vector-driven combinator tree.
 
 -----
 # <a name="crustimoney2.caches">crustimoney2.caches</a>
@@ -365,7 +367,7 @@ Low-level function which translates the data grammar into an
 
   To see which data types are already supported, use `(methods
   conbinator-tree-for)`
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/main/src/crustimoney2/data_grammar.clj#L15-L34">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/main/src/crustimoney2/data_grammar.clj#L14-L33">Source</a></sub></p>
 
 ## <a name="crustimoney2.data-grammar/create-parser">`create-parser`</a><a name="crustimoney2.data-grammar/create-parser"></a>
 ``` clojure
@@ -407,7 +409,7 @@ Create a parser based on a data grammar definition. If a map with
      custom-combinator     [:my.app/my-combinator literal]}
 
   To capture nodes in the parse result, you need to use named groups.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/main/src/crustimoney2/data_grammar.clj#L131-L172">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/main/src/crustimoney2/data_grammar.clj#L106-L147">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.results">crustimoney2.results</a>
@@ -671,4 +673,37 @@ Create a parser based on a string-based grammar definition. If the
     root            <- (:root rules / no-rules) $
 
   To capture nodes in the parse result, you need to use named groups.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/main/src/crustimoney2/string_grammar.clj#L183-L222">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/main/src/crustimoney2/string_grammar.clj#L184-L224">Source</a></sub></p>
+
+-----
+# <a name="crustimoney2.vector-grammar">crustimoney2.vector-grammar</a>
+
+
+A basic data-driven parser generator.
+
+
+
+
+## <a name="crustimoney2.vector-grammar/create-parser">`create-parser`</a><a name="crustimoney2.vector-grammar/create-parser"></a>
+``` clojure
+
+(create-parser tree)
+```
+
+Create a parser based on a vector-driven combinator tree. For
+  example:
+
+    {:foobar [:chain [:ref :foo] [:ref :bar]]
+     :foo    [:literal "foo"]
+     :bar    [:with-name :bax
+              [:choice [:literal "bar"]
+                       [:literal "baz"]]]}
+
+  Each vector is expanded into the combinator invocation, referenced
+  by the keyword. If the keyword does not have a namespace,
+  [`crustimoney2.combinators`](#crustimoney2.combinators) is assumed.
+
+  This type of parser generator is not intended to use directly,
+  though you could. It is used as an intermediary format for the
+  string-based and data-based grammars.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/main/src/crustimoney2/vector_grammar.clj#L22-L49">Source</a></sub></p>
