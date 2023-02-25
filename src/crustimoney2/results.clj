@@ -90,6 +90,18 @@
   [error]
   (error :detail))
 
+(defn error->line-column
+  "Add a :line and :culumn key to the error."
+  [error text]
+  (loop [index  (:at error)
+         line   1
+         column nil]
+    (if (< index 1)
+      (assoc error :line line :column (or column (inc (:at error))))
+      (if (= (nth text (dec index)) \newline)
+        (recur (dec index) (inc line) (or column (- (:at error) (dec index))))
+        (recur (dec index) line column)))))
+
 (defn ->push
   "Create a push value, given a parser function and an index. Optionally
   a state object can be added."
