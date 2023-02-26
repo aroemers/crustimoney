@@ -122,7 +122,7 @@
 
 (defmethod vector-tree-for :no-rules
   [node]
-  {:root (vector-tree-for (first (r/success->children node)))})
+  (vector-tree-for (first (r/success->children node))))
 
 (defmethod vector-tree-for :rule
   [node]
