@@ -23,7 +23,7 @@
       [:my-namespace/my-flexible-date-parser date])
 
   To see which data types are already supported, use `(methods
-  conbinator-tree-for)`"
+  vector-tree-for)`"
   (fn [data]
     (type data)))
 

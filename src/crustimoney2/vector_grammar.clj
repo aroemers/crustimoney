@@ -1,5 +1,5 @@
 (ns crustimoney2.vector-grammar
-  "A basic data-driven parser generator."
+  "A basic vector-driven parser generator."
   (:require [crustimoney2.core :as core]
             [crustimoney2.combinators :as combinators]))
 
@@ -30,12 +30,13 @@
                        [:literal \"baz\"]]]}
 
   Each vector is expanded into the combinator invocation, referenced
-  by the keyword. If the keyword does not have a namespace,
-  `crustimoney2.combinators` is assumed.
+  by the first keyword. If the keyword does not have a namespace,
+  `crustimoney2.combinators` is assumed. Maps are walked as well,
+  wrapped in `crustimoney2.core/rmap`. Other data is left as-is.
 
-  This type of parser generator is not intended to use directly,
-  though you could. It is used as an intermediary format for the
-  string-based and data-based grammars."
+  This type of parser generator is not intended to be used directly,
+  though you can. It is used as an intermediary format for other
+  formats, such as the string-based and data-based grammars."
   [tree]
   (cond (map? tree)
         (core/rmap (map-kv identity create-parser tree))
