@@ -48,6 +48,7 @@
     -  [`with-success-name`](#crustimoney2.results/with-success-name) - Set the name of the success value.
 -  [`crustimoney2.string-grammar`](#crustimoney2.string-grammar)  - Create a parser based on a string grammar.
     -  [`create-parser`](#crustimoney2.string-grammar/create-parser) - Create a parser based on a string-based grammar definition.
+    -  [`vector-tree`](#crustimoney2.string-grammar/vector-tree) - Low-level function which translates the string grammar into an intermediary vector-based representation.
 -  [`crustimoney2.vector-grammar`](#crustimoney2.vector-grammar)  - A basic vector-driven parser generator.
     -  [`create-parser`](#crustimoney2.vector-grammar/create-parser) - Create a parser based on a vector-driven combinator tree.
 
@@ -668,7 +669,19 @@ Create a parser based on a string-based grammar definition. If the
     root            <- (:root rules / no-rules) $
 
   To capture nodes in the parse result, you need to use named groups.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L184-L224">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L195-L232">Source</a></sub></p>
+
+## <a name="crustimoney2.string-grammar/vector-tree">`vector-tree`</a><a name="crustimoney2.string-grammar/vector-tree"></a>
+``` clojure
+
+(vector-tree text)
+```
+
+Low-level function which translates the string grammar into an
+  intermediary vector-based representation. See
+  [`crustimoney2.vector-grammar`](#crustimoney2.vector-grammar) for more on this format. This can be
+  useful for debugging.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L184-L193">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.vector-grammar">crustimoney2.vector-grammar</a>

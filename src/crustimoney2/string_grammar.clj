@@ -181,6 +181,17 @@
 
 ;;; Public namespace API
 
+(defn vector-tree
+  "Low-level function which translates the string grammar into an
+  intermediary vector-based representation. See
+  `crustimoney2.vector-grammar` for more on this format. This can be
+  useful for debugging."
+  [text]
+  (let [result (core/parse (:root grammar) text)]
+     (if (list? result)
+       (throw (ex-info "Failed to parse grammar" {:errors (distinct result)}))
+       (vector-tree-for result))))
+
 (defn create-parser
   "Create a parser based on a string-based grammar definition. If the
   definition contains multiple rules, a map of parsers is returned.
@@ -216,12 +227,9 @@
   ([text]
    (create-parser text nil))
   ([text other-parsers]
-   (let [result (core/parse (:root grammar) text)]
-     (if (list? result)
-       (throw (ex-info "Failed to parse grammar" {:errors (distinct result)}))
-       (-> (vector-tree-for result)
-           (cond-> other-parsers (merge other-parsers))
-           (vector-grammar/create-parser))))))
+   (-> (vector-tree text)
+       (cond-> other-parsers (merge other-parsers))
+       (vector-grammar/create-parser))))
 
 ;;; I heard you like string grammars...
 
