@@ -135,10 +135,8 @@
   ([data]
    (create-parser data nil))
   ([data other-parsers]
-   (assert (or (nil? other-parsers) (map? data))
-           "data must be a map when supplying other parsers")
    (-> (vector-tree-for data)
-       (cond-> other-parsers (merge other-parsers))
+       (vector-grammar/merge-other other-parsers)
        (vector-grammar/create-parser))))
 
 ;;; Eat your own dogfood

@@ -23,14 +23,14 @@
 -  [`crustimoney2.data-grammar`](#crustimoney2.data-grammar)  - Create a parser based on a data grammar.
     -  [`create-parser`](#crustimoney2.data-grammar/create-parser) - Create a parser based on a data grammar definition.
     -  [`vector-tree-for`](#crustimoney2.data-grammar/vector-tree-for) - Low-level (multi method) function which translates the data grammar into an intermediary vector-based representation.
--  [`crustimoney2.results`](#crustimoney2.results)  - Result constructors and predicates.
+-  [`crustimoney2.results`](#crustimoney2.results)  - Result constructors, accessors and predicates.
     -  [`->error`](#crustimoney2.results/->error) - Create an error result, given an error key and an index.
     -  [`->push`](#crustimoney2.results/->push) - Create a push value, given a parser function and an index.
     -  [`->success`](#crustimoney2.results/->success) - Create a success result, given a start index (inclusive) and end index (exclusive).
     -  [`error->detail`](#crustimoney2.results/error->detail) - Return the detail object of an error.
     -  [`error->index`](#crustimoney2.results/error->index) - Return the index of an error.
     -  [`error->key`](#crustimoney2.results/error->key) - Return the key of an error.
-    -  [`error->line-column`](#crustimoney2.results/error->line-column) - Add a :line and :culumn key to the error.
+    -  [`errors->line-column`](#crustimoney2.results/errors->line-column) - Adds <code>:line</code> and <code>:column</code> entries to each of the errors, in an efficient way.
     -  [`push->index`](#crustimoney2.results/push->index) - Returns the index of a push value.
     -  [`push->parser`](#crustimoney2.results/push->parser) - Returns the parser of a push value.
     -  [`push->state`](#crustimoney2.results/push->state) - Returns the state of a push value.
@@ -386,7 +386,7 @@ Create a parser based on a data grammar definition. If a map with
      custom-combinator     [:my.app/my-combinator literal]}
 
   To capture nodes in the parse result, you need to use named groups.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L101-L142">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L101-L140">Source</a></sub></p>
 
 ## <a name="crustimoney2.data-grammar/vector-tree-for">`vector-tree-for`</a><a name="crustimoney2.data-grammar/vector-tree-for"></a>
 
@@ -411,7 +411,7 @@ Low-level (multi method) function which translates the data grammar
 # <a name="crustimoney2.results">crustimoney2.results</a>
 
 
-Result constructors and predicates
+Result constructors, accessors and predicates
 
 
 
@@ -425,7 +425,7 @@ Result constructors and predicates
 
 Create an error result, given an error key and an index. An extra
   detail object can be added.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L70-L76">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L74-L80">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/->push">`->push`</a><a name="crustimoney2.results/->push"></a>
 ``` clojure
@@ -436,7 +436,7 @@ Create an error result, given an error key and an index. An extra
 
 Create a push value, given a parser function and an index. Optionally
   a state object can be added.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L105-L111">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L99-L105">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/->success">`->success`</a><a name="crustimoney2.results/->success"></a>
 ``` clojure
@@ -448,7 +448,7 @@ Create a push value, given a parser function and an index. Optionally
 Create a success result, given a start index (inclusive) and end
   index (exclusive). Optionally a collection of success children can
   be given. The name of the success is nil.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L4-L11">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L6-L13">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/error->detail">`error->detail`</a><a name="crustimoney2.results/error->detail"></a>
 ``` clojure
@@ -457,7 +457,7 @@ Create a success result, given a start index (inclusive) and end
 ```
 
 Return the detail object of an error.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L88-L91">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L92-L95">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/error->index">`error->index`</a><a name="crustimoney2.results/error->index"></a>
 ``` clojure
@@ -466,7 +466,7 @@ Return the detail object of an error.
 ```
 
 Return the index of an error
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L83-L86">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L87-L90">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/error->key">`error->key`</a><a name="crustimoney2.results/error->key"></a>
 ``` clojure
@@ -475,16 +475,17 @@ Return the index of an error
 ```
 
 Return the key of an error.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L78-L81">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L82-L85">Source</a></sub></p>
 
-## <a name="crustimoney2.results/error->line-column">`error->line-column`</a><a name="crustimoney2.results/error->line-column"></a>
+## <a name="crustimoney2.results/errors->line-column">`errors->line-column`</a><a name="crustimoney2.results/errors->line-column"></a>
 ``` clojure
 
-(error->line-column error text)
+(errors->line-column errors text)
 ```
 
-Add a :line and :culumn key to the error.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L93-L103">Source</a></sub></p>
+Adds `:line` and `:column` entries to each of the errors, in an
+  efficient way.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L151-L160">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/push->index">`push->index`</a><a name="crustimoney2.results/push->index"></a>
 ``` clojure
@@ -493,7 +494,7 @@ Add a :line and :culumn key to the error.
 ```
 
 Returns the index of a push value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L124-L127">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L118-L121">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/push->parser">`push->parser`</a><a name="crustimoney2.results/push->parser"></a>
 ``` clojure
@@ -502,7 +503,7 @@ Returns the index of a push value.
 ```
 
 Returns the parser of a push value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L119-L122">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L113-L116">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/push->state">`push->state`</a><a name="crustimoney2.results/push->state"></a>
 ``` clojure
@@ -511,7 +512,7 @@ Returns the parser of a push value.
 ```
 
 Returns the state of a push value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L129-L132">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L123-L126">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/push?">`push?`</a><a name="crustimoney2.results/push?"></a>
 ``` clojure
@@ -520,7 +521,7 @@ Returns the state of a push value.
 ```
 
 Returns obj if obj is a push value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L113-L117">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L107-L111">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success->attr">`success->attr`</a><a name="crustimoney2.results/success->attr"></a>
 ``` clojure
@@ -529,7 +530,7 @@ Returns obj if obj is a push value.
 ```
 
 Returns an attribute value of a success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L60-L63">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L62-L65">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success->attrs">`success->attrs`</a><a name="crustimoney2.results/success->attrs"></a>
 ``` clojure
@@ -538,7 +539,7 @@ Returns an attribute value of a success.
 ```
 
 Return the attributes of a success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L55-L58">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L57-L60">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success->children">`success->children`</a><a name="crustimoney2.results/success->children"></a>
 ``` clojure
@@ -547,7 +548,7 @@ Return the attributes of a success.
 ```
 
 Returns the children of a success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L35-L38">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L37-L40">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success->end">`success->end`</a><a name="crustimoney2.results/success->end"></a>
 ``` clojure
@@ -556,7 +557,7 @@ Returns the children of a success.
 ```
 
 Return the end index of a success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L24-L27">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L26-L29">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success->name">`success->name`</a><a name="crustimoney2.results/success->name"></a>
 ``` clojure
@@ -565,7 +566,7 @@ Return the end index of a success.
 ```
 
 Return the name of a success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L45-L48">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L47-L50">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success->start">`success->start`</a><a name="crustimoney2.results/success->start"></a>
 ``` clojure
@@ -574,7 +575,7 @@ Return the name of a success.
 ```
 
 Return the start index of a success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L19-L22">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L21-L24">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success->text">`success->text`</a><a name="crustimoney2.results/success->text"></a>
 ``` clojure
@@ -583,7 +584,7 @@ Return the start index of a success.
 ```
 
 Returns the matched text of a success, given the full text.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L65-L68">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L67-L70">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success?">`success?`</a><a name="crustimoney2.results/success?"></a>
 ``` clojure
@@ -592,7 +593,7 @@ Returns the matched text of a success, given the full text.
 ```
 
 Returns obj if obj is a success value, nil otherwise.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L13-L17">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L15-L19">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/with-success-attrs">`with-success-attrs`</a><a name="crustimoney2.results/with-success-attrs"></a>
 ``` clojure
@@ -601,7 +602,7 @@ Returns obj if obj is a success value, nil otherwise.
 ```
 
 Add extra success attributes to the given success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L50-L53">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L52-L55">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/with-success-children">`with-success-children`</a><a name="crustimoney2.results/with-success-children"></a>
 ``` clojure
@@ -610,7 +611,7 @@ Add extra success attributes to the given success.
 ```
 
 Set the children of a success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L29-L33">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L31-L35">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/with-success-name">`with-success-name`</a><a name="crustimoney2.results/with-success-name"></a>
 ``` clojure
@@ -619,7 +620,7 @@ Set the children of a success.
 ```
 
 Set the name of the success value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L40-L43">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L42-L45">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.string-grammar">crustimoney2.string-grammar</a>
@@ -715,4 +716,4 @@ Create a parser based on a vector-driven combinator tree. For
   This type of parser generator is not intended to be used directly,
   though you can. It is used as an intermediary format for other
   formats, such as the string-based and data-based grammars.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/vector_grammar.clj#L22-L50">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/vector_grammar.clj#L33-L61">Source</a></sub></p>

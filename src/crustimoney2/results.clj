@@ -1,5 +1,7 @@
 (ns crustimoney2.results
-  "Result constructors and predicates")
+  "Result constructors, accessors and predicates")
+
+;;; Success functions
 
 (defn ->success
   "Create a success result, given a start index (inclusive) and end
@@ -67,6 +69,8 @@
   [success text]
   (subs text (success->start success) (success->end success)))
 
+;;; Error functions
+
 (defn ->error
   "Create an error result, given an error key and an index. An extra
   detail object can be added."
@@ -90,17 +94,7 @@
   [error]
   (error :detail))
 
-(defn error->line-column
-  "Add a :line and :culumn key to the error."
-  [error text]
-  (loop [index  (:at error)
-         line   1
-         column nil]
-    (if (< index 1)
-      (assoc error :line line :column (or column (inc (:at error))))
-      (if (= (nth text (dec index)) \newline)
-        (recur (dec index) (inc line) (or column (- (:at error) (dec index))))
-        (recur (dec index) line column)))))
+;;; Push functions
 
 (defn ->push
   "Create a push value, given a parser function and an index. Optionally
@@ -130,3 +124,37 @@
   "Returns the state of a push value."
   [push]
   (push :state))
+
+;;; Line and columns for errors
+
+(defn- line-breaks-at [text]
+  (let [length (count text)]
+    (loop [index   0
+           lengths (transient [])
+           current 0]
+      (if (< index length)
+        (if (= (nth text index) \newline)
+          (recur (inc index) (conj! lengths current) 0)
+          (recur (inc index) lengths (inc current)))
+        (persistent! lengths)))))
+
+(defn- index->line-column [line-breaks index]
+  (loop [at     index
+         line   1
+         breaks line-breaks]
+    (if-let [break (first breaks)]
+      (if (< (- at break) 0)
+        {:line line, :column (inc at)}
+        (recur (- at break) (inc line) (rest breaks)))
+      {:line line, :column (inc at)})))
+
+(defn errors->line-column
+  "Adds `:line` and `:column` entries to each of the errors, in an
+  efficient way."
+  [errors text]
+  (let [line-breaks (line-breaks-at text)]
+    (mapcat (fn [[at errors]]
+              (let [lc (index->line-column line-breaks at)]
+                (map (partial merge lc) errors)))
+            (->> (distinct errors)
+                 (group-by error->index)))))

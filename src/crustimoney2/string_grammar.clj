@@ -188,9 +188,9 @@
   useful for debugging."
   [text]
   (let [result (core/parse (:root grammar) text)]
-     (if (list? result)
-       (throw (ex-info "Failed to parse grammar" {:errors (distinct result)}))
-       (vector-tree-for result))))
+    (if (list? result)
+      (throw (ex-info "Failed to parse grammar" {:errors (r/errors->line-column result text)}))
+      (vector-tree-for result))))
 
 (defn create-parser
   "Create a parser based on a string-based grammar definition. If the
@@ -228,7 +228,7 @@
    (create-parser text nil))
   ([text other-parsers]
    (-> (vector-tree text)
-       (cond-> other-parsers (merge other-parsers))
+       (vector-grammar/merge-other other-parsers)
        (vector-grammar/create-parser))))
 
 ;;; I heard you like string grammars...

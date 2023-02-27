@@ -8,6 +8,17 @@
 (defn- map-kv [kf vf m]
   (reduce-kv (fn [a k v] (assoc a (kf k) (vf v))) {} m))
 
+(defn ^:no-doc merge-other [tree other-parsers]
+  (cond (and (map? tree) (map? other-parsers))
+        (merge tree other-parsers)
+
+        (map? other-parsers)
+        (throw (IllegalArgumentException.
+                "Supplying other parsers needs named rules in input grammar"))
+
+        :otherwise
+        tree))
+
 ;;; Parser creation
 
 (defn- key-to-combinator [key]
