@@ -48,7 +48,7 @@
     -  [`with-success-name`](#crustimoney2.results/with-success-name) - Set the name of the success value.
 -  [`crustimoney2.string-grammar`](#crustimoney2.string-grammar)  - Create a parser based on a string grammar.
     -  [`create-parser`](#crustimoney2.string-grammar/create-parser) - Create a parser based on a string-based grammar definition.
--  [`crustimoney2.vector-grammar`](#crustimoney2.vector-grammar)  - A basic data-driven parser generator.
+-  [`crustimoney2.vector-grammar`](#crustimoney2.vector-grammar)  - A basic vector-driven parser generator.
     -  [`create-parser`](#crustimoney2.vector-grammar/create-parser) - Create a parser based on a vector-driven combinator tree.
 
 -----
@@ -403,7 +403,7 @@ Low-level (multi method) function which translates the data grammar
       [:my-namespace/my-flexible-date-parser date])
 
   To see which data types are already supported, use `(methods
-  conbinator-tree-for)`
+  vector-tree-for)`
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L14-L28">Source</a></sub></p>
 
 -----
@@ -674,7 +674,7 @@ Create a parser based on a string-based grammar definition. If the
 # <a name="crustimoney2.vector-grammar">crustimoney2.vector-grammar</a>
 
 
-A basic data-driven parser generator.
+A basic vector-driven parser generator.
 
 
 
@@ -695,10 +695,11 @@ Create a parser based on a vector-driven combinator tree. For
                        [:literal "baz"]]]}
 
   Each vector is expanded into the combinator invocation, referenced
-  by the keyword. If the keyword does not have a namespace,
-  [`crustimoney2.combinators`](#crustimoney2.combinators) is assumed.
+  by the first keyword. If the keyword does not have a namespace,
+  [`crustimoney2.combinators`](#crustimoney2.combinators) is assumed. Maps are walked as well,
+  wrapped in [`crustimoney2.core/rmap`](#crustimoney2.core/rmap). Other data is left as-is.
 
-  This type of parser generator is not intended to use directly,
-  though you could. It is used as an intermediary format for the
-  string-based and data-based grammars.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/vector_grammar.clj#L22-L49">Source</a></sub></p>
+  This type of parser generator is not intended to be used directly,
+  though you can. It is used as an intermediary format for other
+  formats, such as the string-based and data-based grammars.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/vector_grammar.clj#L22-L50">Source</a></sub></p>
