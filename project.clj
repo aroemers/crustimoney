@@ -1,4 +1,4 @@
-(defproject functionalbytes/crustimoney2 "2.0.0"
+(defproject functionalbytes/crustimoney "2.0.0"
   :description "A Clojure PEG parser"
   :url "https://github.com/aroemers/crustimoney"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"

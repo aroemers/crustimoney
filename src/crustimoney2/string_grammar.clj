@@ -199,29 +199,29 @@
   used by the string grammar. The following definition describes the
   string grammar syntax in itself:
 
-    space           <- [ \t]*
-    whitespace      <- [\\s]*
+      space           <- [ \t]*
+      whitespace      <- [\\s]*
 
-    non-terminal    <- (:non-terminal [a-zA-Z_-]+)
-    literal         <- '''' (:literal ('''''' / [^'])*) ''''
-    character-class <- (:character-class '[' (']]' / [^]]])* ']')
-    end-of-file     <- (:end-of-file '$')
+      non-terminal    <- (:non-terminal [a-zA-Z_-]+)
+      literal         <- '''' (:literal ('''''' / [^'])*) ''''
+      character-class <- (:character-class '[' (']]' / [^]]])* ']')
+      end-of-file     <- (:end-of-file '$')
 
-    group-name      <- ':' (:group-name [a-zA-Z_-]+)
-    group           <- (:group '(' group-name? space choice space ')')
+      group-name      <- ':' (:group-name [a-zA-Z_-]+)
+      group           <- (:group '(' group-name? space choice space ')')
 
-    expr            <- non-terminal / group / literal / character-class / end-of-file
+      expr            <- non-terminal / group / literal / character-class / end-of-file
 
-    quantified      <- (:quantified expr (:operand [?+*])) / expr
-    lookahead       <- (:lookahead (:operand [&!]) quantified) / quantified
+      quantified      <- (:quantified expr (:operand [?+*])) / expr
+      lookahead       <- (:lookahead (:operand [&!]) quantified) / quantified
 
-    chain           <- (:chain lookahead (space lookahead)+) / lookahead
-    choice          <- (:choice chain (space '/' space chain)+) / chain
+      chain           <- (:chain lookahead (space lookahead)+) / lookahead
+      choice          <- (:choice chain (space '/' space chain)+) / chain
 
-    rule            <- (:rule (:rule-name non-terminal) space '<-' space choice)
-    rules           <- (:rules (whitespace rule whitespace)+)
-    no-rules        <- (:no-rules whitespace choice whitespace)
-    root            <- (:root rules / no-rules) $
+      rule            <- (:rule (:rule-name non-terminal) space '<-' space choice)
+      rules           <- (:rules (whitespace rule whitespace)+)
+      no-rules        <- (:no-rules whitespace choice whitespace)
+      root            <- (:root rules / no-rules) $
 
   To capture nodes in the parse result, you need to use named groups."
   ([text]

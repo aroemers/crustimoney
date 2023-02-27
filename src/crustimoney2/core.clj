@@ -1,7 +1,8 @@
 (ns crustimoney2.core
   "The main parsing functions."
   (:refer-clojure :exclude [ref])
-  (:require [crustimoney2.results :as r]))
+  (:require [crustimoney2.caches :as c]
+            [crustimoney2.results :as r]))
 
 ;;; Internals
 
@@ -26,30 +27,30 @@
 
   A success result looks like this:
 
-    [:name {:start 0, :end 3}
-     [:child-1 {:start 0, :end 2, :value \"aa\"}]
-     [:child-2 {:start 2, :end 3}]]
+      [:name {:start 0, :end 3}
+       [:child-1 {:start 0, :end 2, :value \"aa\"}]
+       [:child-2 {:start 2, :end 3}]]
 
   An error result looks like this:
 
-    ({:key :failed-lookahead, :at 0}
-     {:key :expected-literal, :at 0, :detail {:literal \"foo\"}})
+      ({:key :failed-lookahead, :at 0}
+       {:key :expected-literal, :at 0, :detail {:literal \"foo\"}})
 
   The parse function can take an options map, with the following
   options:
 
-  `:index` - the index at which to start parsing in the text, default 0.
+  - `:index`, the index at which to start parsing in the text, default 0.
 
-  `:cache` - the packrat caching function to use, see the caching
-  namespaces, default nil.
+  - `:cache`, the packrat cache to use, see the caches namespace,
+  default nil.
 
-  `:keep-nameless` - set this to true if nameless success nodes should
+  - `:keep-nameless`, set this to true if nameless success nodes should
   be kept in the parse result, for debugging, defaults to false."
   ([parser text]
    (parse parser text nil))
   ([parser text opts]
    (let [start-index  (:index opts 0)
-         cache        (:cache opts (constantly nil))
+         cache        (or (:cache opts) c/noop-cache)
          post-success (if (:keep-nameless opts) identity keep-named-children)]
      ;; Main parsing loop
      (loop [stack  [(r/->push parser start-index)]
@@ -67,13 +68,13 @@
                  (let [push-parser (r/push->parser result)
                        push-index  (r/push->index result)
                        push-state  (r/push->state result)]
-                   (if-let [hit (cache text push-parser push-index)]
+                   (if-let [hit (c/fetch cache text push-parser push-index)]
                      (recur stack hit push-state)
                      (recur (conj stack result) nil nil)))
 
                  (r/success? result)
                  (let [processed (post-success result)]
-                   (cache text parser index processed)
+                   (c/store cache text parser index processed)
                    (recur (pop stack) processed state'))
 
                  (list? result)
@@ -112,7 +113,7 @@
   refer to each other using the `ref` function. In other words, a
   recursive map. For example:
 
-  (rmap {:foo  (literal \"foo\")
-         :root (chain (ref :foo) \"bar\")})"
+      (rmap {:foo  (literal \"foo\")
+             :root (chain (ref :foo) \"bar\")})"
   [grammar]
   `(rmap* (fn [] ~grammar)))

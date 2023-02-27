@@ -34,11 +34,11 @@
   "Create a parser based on a vector-driven combinator tree. For
   example:
 
-    {:foobar [:chain [:ref :foo] [:ref :bar]]
-     :foo    [:literal \"foo\"]
-     :bar    [:with-name :bax
-              [:choice [:literal \"bar\"]
-                       [:literal \"baz\"]]]}
+      {:foobar [:chain [:ref :foo] [:ref :bar]]
+       :foo    [:literal \"foo\"]
+       :bar    [:with-name :bax
+                [:choice [:literal \"bar\"]
+                         [:literal \"baz\"]]]}
 
   Each vector is expanded into the combinator invocation, referenced
   by the first keyword. If the keyword does not have a namespace,

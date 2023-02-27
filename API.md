@@ -1,7 +1,9 @@
 # Table of contents
 -  [`crustimoney2.caches`](#crustimoney2.caches)  - Packrat caches for the core/parse function.
-    -  [`atom-cache`](#crustimoney2.caches/atom-cache) - Create a cache that uses a plain atom for storage, without any eviction (until it is garbage collected that is).
-    -  [`clojure-core-cache`](#crustimoney2.caches/clojure-core-cache) - Create a cache by wrapping a clojure.core.cache cache.
+    -  [`Cache`](#crustimoney2.caches/Cache) - Protocol for packrat cache implementations.
+    -  [`atom-cache`](#crustimoney2.caches/atom-cache) - Create a cache that uses a plain atom for storage, without any eviction (until it is garbage collected).
+    -  [`fetch`](#crustimoney2.caches/fetch) - Try to fetch a cached result, returns nil if it misses the cache.
+    -  [`store`](#crustimoney2.caches/store) - Store a result in the cache.
 -  [`crustimoney2.combinators`](#crustimoney2.combinators)  - Parsers combinator functions.
     -  [`chain`](#crustimoney2.combinators/chain) - Chain multiple consecutive parsers.
     -  [`choice`](#crustimoney2.combinators/choice) - Match the first of the ordered parsers that is successful.
@@ -58,15 +60,19 @@
 
 Packrat caches for the core/parse function.
 
-  Caches are implemented by functions that take three and four
-  arguments. The function is called with three arguments (text,
-  parser, index) to try and fetch a cached result. It returns nil if
-  it misses the cache. The function is called with four
-  arguments (text, parser, index, result) to store a result. It
-  returns the result back.
+  Caches are implemented using the Cache protocol. This way you can
+  implement your own if desired.
 
 
 
+
+## <a name="crustimoney2.caches/Cache">`Cache`</a><a name="crustimoney2.caches/Cache"></a>
+
+
+
+
+Protocol for packrat cache implementations.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L7-L14">Source</a></sub></p>
 
 ## <a name="crustimoney2.caches/atom-cache">`atom-cache`</a><a name="crustimoney2.caches/atom-cache"></a>
 ``` clojure
@@ -75,20 +81,29 @@ Packrat caches for the core/parse function.
 ```
 
 Create a cache that uses a plain atom for storage, without any
-  eviction (until it is garbage collected that is).
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L11-L21">Source</a></sub></p>
+  eviction (until it is garbage collected).
 
-## <a name="crustimoney2.caches/clojure-core-cache">`clojure-core-cache`</a><a name="crustimoney2.caches/clojure-core-cache"></a>
+  This cache is *not* suitable for parsing multiple texts. Create a
+  new cache for each text.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L23-L36">Source</a></sub></p>
+
+## <a name="crustimoney2.caches/fetch">`fetch`</a><a name="crustimoney2.caches/fetch"></a>
 ``` clojure
 
-(clojure-core-cache cache)
+(fetch this text parser index)
 ```
 
-Create a cache by wrapping a clojure.core.cache cache.
+Try to fetch a cached result, returns nil if it misses the cache.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L10-L11">Source</a></sub></p>
 
-  This function resolves the clojure.core.cache library dynamically;
-  you'll need to add the dependency to it yourself.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L23-L37">Source</a></sub></p>
+## <a name="crustimoney2.caches/store">`store`</a><a name="crustimoney2.caches/store"></a>
+``` clojure
+
+(store this text parser index result)
+```
+
+Store a result in the cache.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L13-L14">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.combinators">crustimoney2.combinators</a>
@@ -111,11 +126,11 @@ Parsers combinator functions.
 
   For this reason, a parser function has the following signature:
 
-    (fn
-      ([text index]
-        ...)
-      ([text index result state]
-       ...))
+      (fn
+        ([text index]
+          ...)
+        ([text index result state]
+         ...))
 
   The 2-arity variant is called when the parser was pushed onto the
   stack. It receives the entire text and the index it should begin
@@ -289,26 +304,26 @@ Use the given parser to parse the supplied text string. The result
 
   A success result looks like this:
 
-    [:name {:start 0, :end 3}
-     [:child-1 {:start 0, :end 2, :value "aa"}]
-     [:child-2 {:start 2, :end 3}]]
+      [:name {:start 0, :end 3}
+       [:child-1 {:start 0, :end 2, :value "aa"}]
+       [:child-2 {:start 2, :end 3}]]
 
   An error result looks like this:
 
-    ({:key :failed-lookahead, :at 0}
-     {:key :expected-literal, :at 0, :detail {:literal "foo"}})
+      ({:key :failed-lookahead, :at 0}
+       {:key :expected-literal, :at 0, :detail {:literal "foo"}})
 
   The parse function can take an options map, with the following
   options:
 
-  `:index` - the index at which to start parsing in the text, default 0.
+  - `:index`, the index at which to start parsing in the text, default 0.
 
-  `:cache` - the packrat caching function to use, see the caching
-  namespaces, default nil.
+  - `:cache`, the packrat cache to use, see the caches namespace,
+  default nil.
 
-  `:keep-nameless` - set this to true if nameless success nodes should
+  - `:keep-nameless`, set this to true if nameless success nodes should
   be kept in the parse result, for debugging, defaults to false.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L21-L85">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L22-L86">Source</a></sub></p>
 
 ## <a name="crustimoney2.core/ref">`ref`</a><a name="crustimoney2.core/ref"></a>
 ``` clojure
@@ -319,7 +334,7 @@ Use the given parser to parse the supplied text string. The result
 Creates a parser function that wraps another parser function, which
   is referred to by the given key. Needs to be called within the
   lexical scope of [`rmap`](#crustimoney2.core/rmap).
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L91-L101">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L92-L102">Source</a></sub></p>
 
 ## <a name="crustimoney2.core/rmap">`rmap`</a><a name="crustimoney2.core/rmap"></a>
 ``` clojure
@@ -332,9 +347,9 @@ Takes (something that evaluates to) a map, in which the entries can
   refer to each other using the [`ref`](#crustimoney2.core/ref) function. In other words, a
   recursive map. For example:
 
-  (rmap {:foo  (literal "foo")
-         :root (chain (ref :foo) "bar")})
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L110-L118">Source</a></sub></p>
+      (rmap {:foo  (literal "foo")
+             :root (chain (ref :foo) "bar")})
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L111-L119">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.data-grammar">crustimoney2.data-grammar</a>
@@ -359,31 +374,31 @@ Create a parser based on a data grammar definition. If a map with
   supplied, which can refered to by the data grammar. The following
   example shows what a data grammar looks like:
 
-    {;; terminals
-     literal            "foo"
-     character          \c
-     regex              #"[a-z]"
-     eof                $
+      {;; terminals
+       literal            "foo"
+       character          \c
+       regex              #"[a-z]"
+       eof                $
 
-     ;; refs and grouping
-     reference          literal
-     chain              (literal regex)
-     choices            (literal / regex / "alice" "bob")
-     named-group        (:my-name literal / "the end" $)
+       ;; refs and grouping
+       reference          literal
+       chain              (literal regex)
+       choices            (literal / regex / "alice" "bob")
+       named-group        (:my-name literal / "the end" $)
 
-     ;; quantifiers
-     zero-to-many       (literal *)
-     one-to-many        ("bar"+)
-     zero-to-one        ("foo" "bar"?) ; bar is optional here
+       ;; quantifiers
+       zero-to-many       (literal *)
+       one-to-many        ("bar"+)
+       zero-to-one        ("foo" "bar"?) ; bar is optional here
 
-     ;; lookaheads
-     lookahead          (& regex)
-     negative-lookahead (!"alice")
+       ;; lookaheads
+       lookahead          (& regex)
+       negative-lookahead (!"alice")
 
-     ;; direct combinator calls
-     combinator-call       [:with-value (:bax "bar" / "baz")]
-     combinator-plain-data [:with-error #crust/plain :fail! "foo"]
-     custom-combinator     [:my.app/my-combinator literal]}
+       ;; direct combinator calls
+       combinator-call       [:with-value (:bax "bar" / "baz")]
+       combinator-plain-data [:with-error #crust/plain :fail! "foo"]
+       custom-combinator     [:my.app/my-combinator literal]}
 
   To capture nodes in the parse result, you need to use named groups.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L101-L140">Source</a></sub></p>
@@ -400,8 +415,8 @@ Low-level (multi method) function which translates the data grammar
 
   In the latter case, add your type like so:
 
-    (defmethod vector-tree-for java.util.Date [date]
-      [:my-namespace/my-flexible-date-parser date])
+      (defmethod vector-tree-for java.util.Date [date]
+        [:my-namespace/my-flexible-date-parser date])
 
   To see which data types are already supported, use `(methods
   vector-tree-for)`
@@ -645,29 +660,29 @@ Create a parser based on a string-based grammar definition. If the
   used by the string grammar. The following definition describes the
   string grammar syntax in itself:
 
-    space           <- [ 	]*
-    whitespace      <- [\s]*
+      space           <- [ 	]*
+      whitespace      <- [\s]*
 
-    non-terminal    <- (:non-terminal [a-zA-Z_-]+)
-    literal         <- '''' (:literal ('''''' / [^'])*) ''''
-    character-class <- (:character-class '[' (']]' / [^]]])* ']')
-    end-of-file     <- (:end-of-file '$')
+      non-terminal    <- (:non-terminal [a-zA-Z_-]+)
+      literal         <- '''' (:literal ('''''' / [^'])*) ''''
+      character-class <- (:character-class '[' (']]' / [^]]])* ']')
+      end-of-file     <- (:end-of-file '$')
 
-    group-name      <- ':' (:group-name [a-zA-Z_-]+)
-    group           <- (:group '(' group-name? space choice space ')')
+      group-name      <- ':' (:group-name [a-zA-Z_-]+)
+      group           <- (:group '(' group-name? space choice space ')')
 
-    expr            <- non-terminal / group / literal / character-class / end-of-file
+      expr            <- non-terminal / group / literal / character-class / end-of-file
 
-    quantified      <- (:quantified expr (:operand [?+*])) / expr
-    lookahead       <- (:lookahead (:operand [&!]) quantified) / quantified
+      quantified      <- (:quantified expr (:operand [?+*])) / expr
+      lookahead       <- (:lookahead (:operand [&!]) quantified) / quantified
 
-    chain           <- (:chain lookahead (space lookahead)+) / lookahead
-    choice          <- (:choice chain (space '/' space chain)+) / chain
+      chain           <- (:chain lookahead (space lookahead)+) / lookahead
+      choice          <- (:choice chain (space '/' space chain)+) / chain
 
-    rule            <- (:rule (:rule-name non-terminal) space '<-' space choice)
-    rules           <- (:rules (whitespace rule whitespace)+)
-    no-rules        <- (:no-rules whitespace choice whitespace)
-    root            <- (:root rules / no-rules) $
+      rule            <- (:rule (:rule-name non-terminal) space '<-' space choice)
+      rules           <- (:rules (whitespace rule whitespace)+)
+      no-rules        <- (:no-rules whitespace choice whitespace)
+      root            <- (:root rules / no-rules) $
 
   To capture nodes in the parse result, you need to use named groups.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L195-L232">Source</a></sub></p>
@@ -702,11 +717,11 @@ A basic vector-driven parser generator.
 Create a parser based on a vector-driven combinator tree. For
   example:
 
-    {:foobar [:chain [:ref :foo] [:ref :bar]]
-     :foo    [:literal "foo"]
-     :bar    [:with-name :bax
-              [:choice [:literal "bar"]
-                       [:literal "baz"]]]}
+      {:foobar [:chain [:ref :foo] [:ref :bar]]
+       :foo    [:literal "foo"]
+       :bar    [:with-name :bax
+                [:choice [:literal "bar"]
+                         [:literal "baz"]]]}
 
   Each vector is expanded into the combinator invocation, referenced
   by the first keyword. If the keyword does not have a namespace,

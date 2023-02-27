@@ -19,8 +19,8 @@
 
   In the latter case, add your type like so:
 
-    (defmethod vector-tree-for java.util.Date [date]
-      [:my-namespace/my-flexible-date-parser date])
+      (defmethod vector-tree-for java.util.Date [date]
+        [:my-namespace/my-flexible-date-parser date])
 
   To see which data types are already supported, use `(methods
   vector-tree-for)`"
@@ -105,31 +105,31 @@
   supplied, which can refered to by the data grammar. The following
   example shows what a data grammar looks like:
 
-    {;; terminals
-     literal            \"foo\"
-     character          \\c
-     regex              #\"[a-z]\"
-     eof                $
+      {;; terminals
+       literal            \"foo\"
+       character          \\c
+       regex              #\"[a-z]\"
+       eof                $
 
-     ;; refs and grouping
-     reference          literal
-     chain              (literal regex)
-     choices            (literal / regex / \"alice\" \"bob\")
-     named-group        (:my-name literal / \"the end\" $)
+       ;; refs and grouping
+       reference          literal
+       chain              (literal regex)
+       choices            (literal / regex / \"alice\" \"bob\")
+       named-group        (:my-name literal / \"the end\" $)
 
-     ;; quantifiers
-     zero-to-many       (literal *)
-     one-to-many        (\"bar\"+)
-     zero-to-one        (\"foo\" \"bar\"?) ; bar is optional here
+       ;; quantifiers
+       zero-to-many       (literal *)
+       one-to-many        (\"bar\"+)
+       zero-to-one        (\"foo\" \"bar\"?) ; bar is optional here
 
-     ;; lookaheads
-     lookahead          (& regex)
-     negative-lookahead (!\"alice\")
+       ;; lookaheads
+       lookahead          (& regex)
+       negative-lookahead (!\"alice\")
 
-     ;; direct combinator calls
-     combinator-call       [:with-value (:bax \"bar\" / \"baz\")]
-     combinator-plain-data [:with-error #crust/plain :fail! \"foo\"]
-     custom-combinator     [:my.app/my-combinator literal]}
+       ;; direct combinator calls
+       combinator-call       [:with-value (:bax \"bar\" / \"baz\")]
+       combinator-plain-data [:with-error #crust/plain :fail! \"foo\"]
+       custom-combinator     [:my.app/my-combinator literal]}
 
   To capture nodes in the parse result, you need to use named groups."
   ([data]

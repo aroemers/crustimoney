@@ -16,11 +16,11 @@
 
   For this reason, a parser function has the following signature:
 
-    (fn
-      ([text index]
-        ...)
-      ([text index result state]
-       ...))
+      (fn
+        ([text index]
+          ...)
+        ([text index result state]
+         ...))
 
   The 2-arity variant is called when the parser was pushed onto the
   stack. It receives the entire text and the index it should begin
