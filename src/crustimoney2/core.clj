@@ -41,16 +41,17 @@
 
   - `:index`, the index at which to start parsing in the text, default 0.
 
-  - `:cache`, the packrat cache to use, see the caches namespace,
-  default nil.
+  - `:cache`, the packrat cache to use, see the caches namespace.
+  Default is basic-cache. To disable caching, use nil.
 
-  - `:keep-nameless`, set this to true if nameless success nodes should
-  be kept in the parse result, for debugging, defaults to false."
+  - `:keep-nameless`, set this to true if nameless success nodes
+  should be kept in the parse result. This can be useful for
+  debugging. Defaults to false."
   ([parser text]
    (parse parser text nil))
   ([parser text opts]
    (let [start-index  (:index opts 0)
-         cache        (or (:cache opts) c/noop-cache)
+         cache        (or (:cache opts (c/basic-cache)) c/noop-cache)
          post-success (if (:keep-nameless opts) identity keep-named-children)]
      ;; Main parsing loop
      (loop [stack  [(r/->push parser start-index)]
@@ -68,13 +69,13 @@
                  (let [push-parser (r/push->parser result)
                        push-index  (r/push->index result)
                        push-state  (r/push->state result)]
-                   (if-let [hit (c/fetch cache text push-parser push-index)]
+                   (if-let [hit (c/fetch cache push-parser push-index)]
                      (recur stack hit push-state)
                      (recur (conj stack result) nil nil)))
 
                  (r/success? result)
                  (let [processed (post-success result)]
-                   (c/store cache text parser index processed)
+                   (c/store cache parser index processed)
                    (recur (pop stack) processed state'))
 
                  (list? result)

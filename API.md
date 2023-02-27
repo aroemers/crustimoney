@@ -1,9 +1,10 @@
 # Table of contents
 -  [`crustimoney2.caches`](#crustimoney2.caches)  - Packrat caches for the core/parse function.
     -  [`Cache`](#crustimoney2.caches/Cache) - Protocol for packrat cache implementations.
-    -  [`atom-cache`](#crustimoney2.caches/atom-cache) - Create a cache that uses a plain atom for storage, without any eviction (until it is garbage collected).
+    -  [`basic-cache`](#crustimoney2.caches/basic-cache) - Create a cache that uses a plain map for storage, without any eviction (until it is garbage collected).
     -  [`fetch`](#crustimoney2.caches/fetch) - Try to fetch a cached result, returns nil if it misses the cache.
     -  [`store`](#crustimoney2.caches/store) - Store a result in the cache.
+    -  [`weak-cache`](#crustimoney2.caches/weak-cache) - Create a cache that uses weak references, such that entries are evicted on memory pressure.
 -  [`crustimoney2.combinators`](#crustimoney2.combinators)  - Parsers combinator functions.
     -  [`chain`](#crustimoney2.combinators/chain) - Chain multiple consecutive parsers.
     -  [`choice`](#crustimoney2.combinators/choice) - Match the first of the ordered parsers that is successful.
@@ -60,8 +61,11 @@
 
 Packrat caches for the core/parse function.
 
+  A single cache instance is *not* intended to be used for multiple
+  texts. Create a new cache for each new text.
+
   Caches are implemented using the Cache protocol. This way you can
-  implement your own if desired.
+  implement your own, if desired.
 
 
 
@@ -72,38 +76,45 @@ Packrat caches for the core/parse function.
 
 
 Protocol for packrat cache implementations.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L7-L14">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L10-L17">Source</a></sub></p>
 
-## <a name="crustimoney2.caches/atom-cache">`atom-cache`</a><a name="crustimoney2.caches/atom-cache"></a>
+## <a name="crustimoney2.caches/basic-cache">`basic-cache`</a><a name="crustimoney2.caches/basic-cache"></a>
 ``` clojure
 
-(atom-cache)
+(basic-cache)
 ```
 
-Create a cache that uses a plain atom for storage, without any
+Create a cache that uses a plain map for storage, without any
   eviction (until it is garbage collected).
-
-  This cache is *not* suitable for parsing multiple texts. Create a
-  new cache for each text.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L23-L36">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L26-L36">Source</a></sub></p>
 
 ## <a name="crustimoney2.caches/fetch">`fetch`</a><a name="crustimoney2.caches/fetch"></a>
 ``` clojure
 
-(fetch this text parser index)
+(fetch this parser index)
 ```
 
 Try to fetch a cached result, returns nil if it misses the cache.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L10-L11">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L13-L14">Source</a></sub></p>
 
 ## <a name="crustimoney2.caches/store">`store`</a><a name="crustimoney2.caches/store"></a>
 ``` clojure
 
-(store this text parser index result)
+(store this parser index result)
 ```
 
 Store a result in the cache.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L13-L14">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L16-L17">Source</a></sub></p>
+
+## <a name="crustimoney2.caches/weak-cache">`weak-cache`</a><a name="crustimoney2.caches/weak-cache"></a>
+``` clojure
+
+(weak-cache)
+```
+
+Create a cache that uses weak references, such that entries are
+  evicted on memory pressure.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L38-L48">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.combinators">crustimoney2.combinators</a>
@@ -318,12 +329,13 @@ Use the given parser to parse the supplied text string. The result
 
   - `:index`, the index at which to start parsing in the text, default 0.
 
-  - `:cache`, the packrat cache to use, see the caches namespace,
-  default nil.
+  - `:cache`, the packrat cache to use, see the caches namespace.
+  Default is basic-cache. To disable caching, use nil.
 
-  - `:keep-nameless`, set this to true if nameless success nodes should
-  be kept in the parse result, for debugging, defaults to false.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L22-L86">Source</a></sub></p>
+  - `:keep-nameless`, set this to true if nameless success nodes
+  should be kept in the parse result. This can be useful for
+  debugging. Defaults to false.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L22-L87">Source</a></sub></p>
 
 ## <a name="crustimoney2.core/ref">`ref`</a><a name="crustimoney2.core/ref"></a>
 ``` clojure
@@ -334,7 +346,7 @@ Use the given parser to parse the supplied text string. The result
 Creates a parser function that wraps another parser function, which
   is referred to by the given key. Needs to be called within the
   lexical scope of [`rmap`](#crustimoney2.core/rmap).
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L92-L102">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L93-L103">Source</a></sub></p>
 
 ## <a name="crustimoney2.core/rmap">`rmap`</a><a name="crustimoney2.core/rmap"></a>
 ``` clojure
@@ -349,7 +361,7 @@ Takes (something that evaluates to) a map, in which the entries can
 
       (rmap {:foo  (literal "foo")
              :root (chain (ref :foo) "bar")})
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L111-L119">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L112-L120">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.data-grammar">crustimoney2.data-grammar</a>
