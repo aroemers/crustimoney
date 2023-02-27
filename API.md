@@ -30,7 +30,7 @@
     -  [`error->detail`](#crustimoney2.results/error->detail) - Return the detail object of an error.
     -  [`error->index`](#crustimoney2.results/error->index) - Return the index of an error.
     -  [`error->key`](#crustimoney2.results/error->key) - Return the key of an error.
-    -  [`errors->line-column`](#crustimoney2.results/errors->line-column) - Adds <code>:line</code> and <code>:column</code> entries to each of the errors, in an efficient way.
+    -  [`errors->line-column`](#crustimoney2.results/errors->line-column) - Returns the errors with <code>:line</code> and <code>:column</code> entries added, in an efficient way.
     -  [`push->index`](#crustimoney2.results/push->index) - Returns the index of a push value.
     -  [`push->parser`](#crustimoney2.results/push->parser) - Returns the parser of a push value.
     -  [`push->state`](#crustimoney2.results/push->state) - Returns the state of a push value.
@@ -483,7 +483,7 @@ Return the key of an error.
 (errors->line-column errors text)
 ```
 
-Adds `:line` and `:column` entries to each of the errors, in an
+Returns the errors with `:line` and `:column` entries added, in an
   efficient way.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L151-L160">Source</a></sub></p>
 

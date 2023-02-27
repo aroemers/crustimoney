@@ -149,7 +149,7 @@
       {:line line, :column (inc at)})))
 
 (defn errors->line-column
-  "Adds `:line` and `:column` entries to each of the errors, in an
+  "Returns the errors with `:line` and `:column` entries added, in an
   efficient way."
   [errors text]
   (let [line-breaks (line-breaks-at text)]
