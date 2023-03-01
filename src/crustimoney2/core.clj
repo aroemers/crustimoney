@@ -17,11 +17,20 @@
                          (r/success->children success))]
     (r/with-success-children success children)))
 
+(defn- infinite-loop? [stack index parser]
+  (loop [i (dec (count stack))]
+    (when (<= 0 i)
+      (let [stack-item (nth stack i)]
+        (when (= (r/push->index stack-item) index)
+          (if (= (r/push->parser stack-item) parser)
+            true
+            (recur (dec i))))))))
+
 ;;; Parsing virtual machine
 
 (defn parse
   "Use the given parser to parse the supplied text string. The result
-  will either be a success (a hiccup-style vector) or a list of
+  will either be a success (a hiccup-style vector) or a set of
   errors. By default only named nodes are kept in a success
   result (the root node is allowed to be nameless).
 
@@ -44,15 +53,22 @@
   - `:cache`, the packrat cache to use, see the caches namespace.
   Default is basic-cache. To disable caching, use nil.
 
-  - `:keep-nameless`, set this to true if nameless success nodes
+  - `:infinite-check?`, check for infinite loops during parsing.
+  Default is true. Setting it to false yields a small performance
+  boost.
+
+  - `:keep-nameless?`, set this to true if nameless success nodes
   should be kept in the parse result. This can be useful for
   debugging. Defaults to false."
   ([parser text]
    (parse parser text nil))
   ([parser text opts]
-   (let [start-index  (:index opts 0)
-         cache        (or (:cache opts (c/basic-cache)) c/noop-cache)
-         post-success (if (:keep-nameless opts) identity keep-named-children)]
+   ;; Options parsing
+   (let [start-index     (:index opts 0)
+         cache           (or (:cache opts (c/basic-cache)) c/noop-cache)
+         post-success    (if (:keep-nameless? opts) identity keep-named-children)
+         infinite-check? (:infinite-check? opts true)]
+
      ;; Main parsing loop
      (loop [stack  [(r/->push parser start-index)]
             result nil
@@ -69,6 +85,8 @@
                  (let [push-parser (r/push->parser result)
                        push-index  (r/push->index result)
                        push-state  (r/push->state result)]
+                   (when (and infinite-check? (infinite-loop? stack push-index push-parser))
+                     (throw (ex-info "Infinite parsing loop detected" {:index push-index})))
                    (if-let [hit (c/fetch cache push-parser push-index)]
                      (recur stack hit push-state)
                      (recur (conj stack result) nil nil)))
@@ -78,7 +96,7 @@
                    (c/store cache parser index processed)
                    (recur (pop stack) processed state'))
 
-                 (list? result)
+                 (set? result)
                  (recur (pop stack) result state')
 
                  :else
@@ -99,8 +117,11 @@
     "Cannot use ref function outside rmap macro")
   (swap! *parsers* assoc key nil)
   (let [parsers *parsers*]
-    (fn [& args]
-      (apply (get @parsers key) args))))
+    (fn
+      ([_ index]
+       (r/->push (get @parsers key) index))
+      ([_ _ result _]
+       result))))
 
 (defn ^:no-doc rmap* [f]
   (binding [*parsers* (atom nil)]

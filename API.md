@@ -33,7 +33,8 @@
     -  [`error->detail`](#crustimoney2.results/error->detail) - Return the detail object of an error.
     -  [`error->index`](#crustimoney2.results/error->index) - Return the index of an error.
     -  [`error->key`](#crustimoney2.results/error->key) - Return the key of an error.
-    -  [`errors->line-column`](#crustimoney2.results/errors->line-column) - Returns the errors with <code>:line</code> and <code>:column</code> entries added, in an efficient way.
+    -  [`errors->furthest`](#crustimoney2.results/errors->furthest) - Returns only the errors that have the highest index.
+    -  [`errors->line-column`](#crustimoney2.results/errors->line-column) - Returns the errors with <code>:line</code> and <code>:column</code> entries added.
     -  [`push->index`](#crustimoney2.results/push->index) - Returns the index of a push value.
     -  [`push->parser`](#crustimoney2.results/push->parser) - Returns the parser of a push value.
     -  [`push->state`](#crustimoney2.results/push->state) - Returns the state of a push value.
@@ -150,7 +151,7 @@ Parsers combinator functions.
   original index, but also the result of the pushed parser and any
   state that was pushed with it.
 
-  Both arities can return a success, a list of errors, or a push. The
+  Both arities can return a success, a set of errors, or a push. The
   [`crustimoney2.results`](#crustimoney2.results) namespace should be used for creating and
   reading these results.
 
@@ -309,7 +310,7 @@ The main parsing functions.
 ```
 
 Use the given parser to parse the supplied text string. The result
-  will either be a success (a hiccup-style vector) or a list of
+  will either be a success (a hiccup-style vector) or a set of
   errors. By default only named nodes are kept in a success
   result (the root node is allowed to be nameless).
 
@@ -332,10 +333,14 @@ Use the given parser to parse the supplied text string. The result
   - `:cache`, the packrat cache to use, see the caches namespace.
   Default is basic-cache. To disable caching, use nil.
 
-  - `:keep-nameless`, set this to true if nameless success nodes
+  - `:infinite-check?`, check for infinite loops during parsing.
+  Default is true. Setting it to false yields a small performance
+  boost.
+
+  - `:keep-nameless?`, set this to true if nameless success nodes
   should be kept in the parse result. This can be useful for
   debugging. Defaults to false.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L22-L87">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L31-L105">Source</a></sub></p>
 
 ## <a name="crustimoney2.core/ref">`ref`</a><a name="crustimoney2.core/ref"></a>
 ``` clojure
@@ -346,7 +351,7 @@ Use the given parser to parse the supplied text string. The result
 Creates a parser function that wraps another parser function, which
   is referred to by the given key. Needs to be called within the
   lexical scope of [`rmap`](#crustimoney2.core/rmap).
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L93-L103">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L111-L124">Source</a></sub></p>
 
 ## <a name="crustimoney2.core/rmap">`rmap`</a><a name="crustimoney2.core/rmap"></a>
 ``` clojure
@@ -361,7 +366,7 @@ Takes (something that evaluates to) a map, in which the entries can
 
       (rmap {:foo  (literal "foo")
              :root (chain (ref :foo) "bar")})
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L112-L120">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L133-L141">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.data-grammar">crustimoney2.data-grammar</a>
@@ -413,7 +418,7 @@ Create a parser based on a data grammar definition. If a map with
        custom-combinator     [:my.app/my-combinator literal]}
 
   To capture nodes in the parse result, you need to use named groups.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L101-L140">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L100-L139">Source</a></sub></p>
 
 ## <a name="crustimoney2.data-grammar/vector-tree-for">`vector-tree-for`</a><a name="crustimoney2.data-grammar/vector-tree-for"></a>
 
@@ -432,7 +437,7 @@ Low-level (multi method) function which translates the data grammar
 
   To see which data types are already supported, use `(methods
   vector-tree-for)`
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L14-L28">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L13-L27">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.results">crustimoney2.results</a>
@@ -504,15 +509,23 @@ Return the index of an error
 Return the key of an error.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L82-L85">Source</a></sub></p>
 
+## <a name="crustimoney2.results/errors->furthest">`errors->furthest`</a><a name="crustimoney2.results/errors->furthest"></a>
+``` clojure
+
+(errors->furthest errors)
+```
+
+Returns only the errors that have the highest index.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L163-L167">Source</a></sub></p>
+
 ## <a name="crustimoney2.results/errors->line-column">`errors->line-column`</a><a name="crustimoney2.results/errors->line-column"></a>
 ``` clojure
 
 (errors->line-column errors text)
 ```
 
-Returns the errors with `:line` and `:column` entries added, in an
-  efficient way.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L151-L160">Source</a></sub></p>
+Returns the errors with `:line` and `:column` entries added.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L151-L159">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/push->index">`push->index`</a><a name="crustimoney2.results/push->index"></a>
 ``` clojure

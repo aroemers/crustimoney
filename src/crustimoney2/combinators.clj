@@ -29,7 +29,7 @@
   original index, but also the result of the pushed parser and any
   state that was pushed with it.
 
-  Both arities can return a success, a list of errors, or a push. The
+  Both arities can return a success, a set of errors, or a push. The
   `crustimoney2.results` namespace should be used for creating and
   reading these results.
 
@@ -46,7 +46,7 @@
     (let [end (+ index (count s))]
       (if (and (<= end (count text)) (= (subs text index end) s))
         (r/->success index end)
-        (list (r/->error :expected-literal index {:literal s}))))))
+        #{(r/->error :expected-literal index {:literal s})}))))
 
 (defn chain
   "Chain multiple consecutive parsers."
@@ -73,7 +73,7 @@
   (fn
     ([_text index]
      (if-let [parser (first parsers)]
-       (r/->push parser index {:pindex 0 :children [] :errors ()})
+       (r/->push parser index {:pindex 0 :children [] :errors #{}})
        (r/->success index index)))
 
     ([_text index result state]
@@ -108,7 +108,7 @@
 
     ([text index result _state]
      (if (r/success? result)
-       (list (r/->error :unexpected-match index {:text (r/success->text result text)}))
+       #{(r/->error :unexpected-match index {:text (r/success->text result text)})}
        (r/->success index index)))))
 
 ;;; Extra combinators
@@ -120,7 +120,7 @@
     (fn [text index]
       (if-let [[match] (re-find pattern (subs text index))]
         (r/->success index (+ index (count match)))
-        (list (r/->error :expected-match index {:regex re}))))))
+        #{(r/->error :expected-match index {:regex re})}))))
 
 (defn repeat+
   "Eagerly try to match the parser as many times as possible, expecting
@@ -148,7 +148,7 @@
     ([_text index result _state]
      (if (r/success? result)
        (r/->success index index)
-       (list (r/->error :failed-lookahead index))))))
+       #{(r/->error :failed-lookahead index)}))))
 
 (defn maybe
   "Try to parse the given parser, but succeed anyway."
@@ -171,7 +171,7 @@
   ([text index]
    (if (= (count text) index)
      (r/->success index index)
-     (list (r/->error :eof-not-reached index))))
+     #{(r/->error :eof-not-reached index)}))
 
   ([parser]
    (fn
@@ -182,7 +182,7 @@
       (if (r/success? result)
         (if (= (r/success->end result) (count text))
           result
-          (list (r/->error :eof-not-reached (r/success->end result))))
+          #{(r/->error :eof-not-reached (r/success->end result))})
         result)))))
 
 ;;; Result wrappers
@@ -202,8 +202,8 @@
   [key parser]
   (fn [text index & args]
     (let [result (apply parser text index args)]
-      (if (list? result)
-        (list (r/->error key index))
+      (if (set? result)
+        #{(r/->error key index)}
         result))))
 
 (defn with-value

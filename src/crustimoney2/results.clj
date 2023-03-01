@@ -127,7 +127,7 @@
 
 ;;; Line and columns for errors
 
-(defn- line-breaks-at [text]
+(defn- line-breaks-in [text]
   (let [length (count text)]
     (loop [index   0
            lengths (transient [])
@@ -149,12 +149,18 @@
       {:line line, :column (inc at)})))
 
 (defn errors->line-column
-  "Returns the errors with `:line` and `:column` entries added, in an
-  efficient way."
+  "Returns the errors with `:line` and `:column` entries added."
   [errors text]
-  (let [line-breaks (line-breaks-at text)]
+  (let [line-breaks (line-breaks-in text)]
     (mapcat (fn [[at errors]]
               (let [lc (index->line-column line-breaks at)]
                 (map (partial merge lc) errors)))
-            (->> (distinct errors)
-                 (group-by error->index)))))
+            (group-by error->index errors))))
+
+;;; Keep furthers errors
+
+(defn errors->furthest
+  "Returns only the errors that have the highest index."
+  [errors]
+  (let [grouped (group-by error->index errors)]
+    (get grouped (apply max (keys grouped)))))

@@ -16,7 +16,7 @@
         (throw (IllegalArgumentException.
                 "Supplying other parsers needs named rules in input grammar"))
 
-        :otherwise
+        :else
         tree))
 
 ;;; Parser creation
@@ -57,5 +57,5 @@
           (apply combinator (map create-parser (rest tree)))
           (throw (ex-info "combinator-key does not resolve" {:key (first tree)})))
 
-        :otherwise
+        :else
         tree))

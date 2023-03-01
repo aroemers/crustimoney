@@ -4,7 +4,7 @@
   (:refer-clojure :exclude [ref])
   (:require [clojure.string :as str]
             [crustimoney2.core :as core :refer [ref]]
-            [crustimoney2.combinators :refer :all]
+            [crustimoney2.combinators :refer [chain choice eof literal maybe regex repeat+ with-name with-value]]
             [crustimoney2.results :as r]
             [crustimoney2.vector-grammar :as vector-grammar]))
 
@@ -188,7 +188,7 @@
   useful for debugging."
   [text]
   (let [result (core/parse (:root grammar) text)]
-    (if (list? result)
+    (if (set? result)
       (throw (ex-info "Failed to parse grammar" {:errors (r/errors->line-column result text)}))
       (vector-tree-for result))))
 
@@ -231,27 +231,29 @@
        (vector-grammar/merge-other other-parsers)
        (vector-grammar/create-parser))))
 
-;;; I heard you like string grammars...
+(comment
 
-(def ^:private superdogfood "
-  space           <- [ \t]*
-  whitespace      <- [\\s]*
+  ;;; I heard you like string grammars...
 
-  non-terminal    <- (:non-terminal [a-zA-Z_-]+)
-  literal         <- '''' (:literal ('''''' / [^'])*) ''''
-  character-class <- (:character-class '[' (']]' / [^]]])* ']')
-  end-of-file     <- (:end-of-file '$')
+  (def superdogfood "
+    space           <- [ \t]*
+    whitespace      <- [\\s]*
 
-  group-name      <- ':' (:group-name [a-zA-Z_-]+)
-  group           <- (:group '(' group-name? space choice space ')')
+    non-terminal    <- (:non-terminal [a-zA-Z_-]+)
+    literal         <- '''' (:literal ('''''' / [^'])*) ''''
+    character-class <- (:character-class '[' (']]' / [^]]])* ']')
+    end-of-file     <- (:end-of-file '$')
 
-  expr            <- non-terminal / group / literal / character-class / end-of-file
+    group-name      <- ':' (:group-name [a-zA-Z_-]+)
+    group           <- (:group '(' group-name? space choice space ')')
 
-  quantified      <- (:quantified expr (:operand [?+*])) / expr
-  lookahead       <- (:lookahead (:operand [&!]) quantified) / quantified
+    expr            <- non-terminal / group / literal / character-class / end-of-file
 
-  chain           <- (:chain lookahead (space lookahead)+) / lookahead
-  choice          <- (:choice chain (space '/' space chain)+) / chain
+    quantified      <- (:quantified expr (:operand [?+*])) / expr
+    lookahead       <- (:lookahead (:operand [&!]) quantified) / quantified
 
-  rule            <- (:rule (:rule-name non-terminal) space '<-' space choice)
-  root            <- (:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $")
+    chain           <- (:chain lookahead (space lookahead)+) / lookahead
+    choice          <- (:choice chain (space '/' space chain)+) / chain
+
+    rule            <- (:rule (:rule-name non-terminal) space '<-' space choice)
+    root            <- (:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $"))

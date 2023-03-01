@@ -1,8 +1,7 @@
 (ns crustimoney2.data-grammar
   "Create a parser based on a data grammar. The data is translated into
   combinators."
-  (:require [crustimoney2.core :as core]
-            [crustimoney2.vector-grammar :as vector-grammar]))
+  (:require [crustimoney2.vector-grammar :as vector-grammar]))
 
 ;;; Utility functions
 
@@ -139,27 +138,29 @@
        (vector-grammar/merge-other other-parsers)
        (vector-grammar/create-parser))))
 
-;;; Eat your own dogfood
+(comment
 
-(def ^:private superdogfood
-  '{space      #"[ \t]*"
-    whitespace #"\s*"
+  ;;; Eat your own dogfood, the string-grammar described in a data-grammar.
 
-    non-terminal    (:non-terminal #"[a-zA-Z_-]+")
-    literal         ("'" (:literal ("''" / #"[^']")*) "'")
-    character-class (:character-class "[" ("]]" / #"[^]]")* "]")
-    end-of-file     (:end-of-file "$")
+  (def superdogfood
+    '{space      #"[ \t]*"
+      whitespace #"\s*"
 
-    group-name (":" (:group-name #"[a-zA-Z_-]+"))
-    group      (:group "(" group-name ? space choice space ")")
+      non-terminal    (:non-terminal #"[a-zA-Z_-]+")
+      literal         ("'" (:literal ("''" / #"[^']")*) "'")
+      character-class (:character-class "[" ("]]" / #"[^]]")* "]")
+      end-of-file     (:end-of-file "$")
 
-    expr (non-terminal / group / literal / character-class / end-of-file)
+      group-name (":" (:group-name #"[a-zA-Z_-]+"))
+      group      (:group "(" group-name ? space choice space ")")
 
-    quantified ((:quantified expr (:operand #"[?+*]")) / expr)
-    lookahead  ((:lookahead (:operand #"[&!]") quantified) / quantified)
+      expr (non-terminal / group / literal / character-class / end-of-file)
 
-    chain  ((:chain lookahead (space lookahead)+) / lookahead)
-    choice ((:choice chain (space "/" space chain)+) / chain)
+      quantified ((:quantified expr (:operand #"[?+*]")) / expr)
+      lookahead  ((:lookahead (:operand #"[&!]") quantified) / quantified)
 
-    rule (:rule (:rule-name non-terminal) space "<-" space choice)
-    root ((:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $)})
+      chain  ((:chain lookahead (space lookahead)+) / lookahead)
+      choice ((:choice chain (space "/" space chain)+) / chain)
+
+      rule (:rule (:rule-name non-terminal) space "<-" space choice)
+      root ((:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $)}))
