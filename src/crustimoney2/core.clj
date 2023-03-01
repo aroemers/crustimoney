@@ -1,7 +1,8 @@
 (ns crustimoney2.core
   "The main parsing functions."
   (:refer-clojure :exclude [ref])
-  (:require [crustimoney2.caches :as c]
+  (:require [crustimoney2.caches :as caches]
+            [crustimoney2.combinators :as c]
             [crustimoney2.results :as r]))
 
 ;;; Internals
@@ -65,7 +66,7 @@
   ([parser text opts]
    ;; Options parsing
    (let [start-index     (:index opts 0)
-         cache           (or (:cache opts (c/basic-cache)) c/noop-cache)
+         cache           (or (:cache opts (caches/basic-cache)) caches/noop-cache)
          post-success    (if (:keep-nameless? opts) identity keep-named-children)
          infinite-check? (:infinite-check? opts true)]
 
@@ -87,13 +88,13 @@
                        push-state  (r/push->state result)]
                    (when (and infinite-check? (infinite-loop? stack push-index push-parser))
                      (throw (ex-info "Infinite parsing loop detected" {:index push-index})))
-                   (if-let [hit (c/fetch cache push-parser push-index)]
+                   (if-let [hit (caches/fetch cache push-parser push-index)]
                      (recur stack hit push-state)
                      (recur (conj stack result) nil nil)))
 
                  (r/success? result)
                  (let [processed (post-success result)]
-                   (c/store cache parser index processed)
+                   (caches/store cache parser index processed)
                    (recur (pop stack) processed state'))
 
                  (set? result)
@@ -139,3 +140,39 @@
              :root (chain (ref :foo) \"bar\")})"
   [grammar]
   `(rmap* (fn [] ~grammar)))
+
+
+(comment
+
+  (def grammar
+    (rmap
+     {:sum (c/choice (c/with-name :sum
+                       (c/chain (ref :product)
+                                (ref :sum-op)
+                                (ref :sum)))
+                     (ref :product))
+
+      :product (c/choice (c/with-name :product
+                           (c/chain (ref :value)
+                                    (ref :product-op)
+                                    (ref :product)))
+                         (ref :value))
+
+      :value (c/choice (ref :number)
+                       (c/chain (c/literal "(")
+                                (ref :sum)
+                                (c/literal ")")))
+
+      :sum-op (c/with-name :operation
+                (c/with-value
+                  (c/regex #"(\+|-)")))
+
+      :product-op (c/with-name :operation
+                    (c/with-value
+                      (c/regex #"(\*|/)")))
+
+      :number (c/with-name :number
+                (c/with-value parse-long
+                  (c/regex #"[0-9]+")))}))
+
+  )
