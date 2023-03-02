@@ -256,4 +256,31 @@
     choice          <- (:choice chain (space '/' space chain)+) / chain
 
     rule            <- (:rule (:rule-name non-terminal) space '<-' space choice)
-    root            <- (:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $"))
+    root            <- (:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $")
+
+  (require '[instaparse.core :as insta])
+
+  (def instafood "
+    space           = #'[ \t]*'
+    whitespace      = #'[\\s]*'
+
+    non-terminal    = #'[a-zA-Z_-]+'
+    literal         = \"'\" (\"''\" / #\"[^']\")* \"'\"
+    character-class = '[' (']]' / #'[^]]')* ']'
+    end-of-file     = '$'
+
+    group-name      = ':' #'[a-zA-Z_-]+'
+    group           = '(' group-name? space choice space ')'
+
+    expr            = non-terminal / group / literal / character-class / end-of-file
+
+    quantified      = expr #'[?+*]' / expr
+    lookahead       = #'[&!]' quantified / quantified
+
+    chain           = lookahead (space lookahead)+ / lookahead
+    choice          = chain (space '/' space chain)+ / chain
+
+    rule            = non-terminal space '<-' space choice
+    root            = (whitespace rule whitespace)+ / whitespace choice whitespace")
+
+  )

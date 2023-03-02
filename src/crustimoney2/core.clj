@@ -2,7 +2,7 @@
   "The main parsing functions."
   (:refer-clojure :exclude [ref])
   (:require [crustimoney2.caches :as caches]
-            [crustimoney2.combinators :as c]
+            [crustimoney2.combinators :refer [literal regex chain choice with-name with-value]]
             [crustimoney2.results :as r]))
 
 ;;; Internals
@@ -144,35 +144,58 @@
 
 (comment
 
-  (def grammar
+  (def combinator-grammar
     (rmap
-     {:sum (c/choice (c/with-name :sum
-                       (c/chain (ref :product)
-                                (ref :sum-op)
-                                (ref :sum)))
-                     (ref :product))
+     {:sum (choice (with-name :sum
+                     (chain (ref :product)
+                            (ref :sum-op)
+                            (ref :sum)))
+                   (ref :product))
 
-      :product (c/choice (c/with-name :product
-                           (c/chain (ref :value)
-                                    (ref :product-op)
-                                    (ref :product)))
-                         (ref :value))
+      :product (choice (with-name :product
+                         (chain (ref :value)
+                                (ref :product-op)
+                                (ref :product)))
+                       (ref :value))
 
-      :value (c/choice (ref :number)
-                       (c/chain (c/literal "(")
-                                (ref :sum)
-                                (c/literal ")")))
+      :value (choice (ref :number)
+                     (chain (literal "(")
+                            (ref :sum)
+                            (literal ")")))
 
-      :sum-op (c/with-name :operation
-                (c/with-value
-                  (c/regex #"(\+|-)")))
+      :sum-op (with-name :operation
+                (regex #"(\+|-)"))
 
-      :product-op (c/with-name :operation
-                    (c/with-value
-                      (c/regex #"(\*|/)")))
+      :product-op (with-name :operation
+                    (regex #"(\*|/)"))
 
-      :number (c/with-name :number
-                (c/with-value parse-long
-                  (c/regex #"[0-9]+")))}))
+      :number (with-name :number
+                (regex #"[0-9]+"))}))
+
+  (def string-grammar "
+    sum        <- (:sum product sum-op sum) / product
+
+    product    <- (:product value product-op product) / value
+
+    value      <- number / '(' sum ')'
+
+    sum-op     <- (:operation [+-])
+
+    product-op <- (:operation [*/])
+
+    number     <- (:number [0-9]+)")
+
+  (def data-grammar
+    '{sum ((:sum product sum-op sum) / product)
+
+      product ((:product value product-op product) / value)
+
+      value (number / "(" sum ")")
+
+      sum-op (:operation #"[+-]")
+
+      product-op (:operation #"[*/]")
+
+      number (:number #"[0-9]+")})
 
   )
