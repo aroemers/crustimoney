@@ -164,13 +164,13 @@
                             (literal ")")))
 
       :sum-op (with-name :operation
-                (regex #"(\+|-)"))
+                (with-value (regex #"(\+|-)")))
 
       :product-op (with-name :operation
-                    (regex #"(\*|/)"))
+                    (with-value (regex #"(\*|/)")))
 
       :number (with-name :number
-                (regex #"[0-9]+"))}))
+                (with-value (regex #"[0-9]+")))}))
 
   (def string-grammar "
     sum        <- (:sum product sum-op sum) / product
