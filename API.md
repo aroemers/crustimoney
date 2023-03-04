@@ -11,7 +11,7 @@
 -  [`crustimoney2.combinators`](#crustimoney2.combinators)  - Parsers combinator functions.
     -  [`chain`](#crustimoney2.combinators/chain) - Chain multiple consecutive parsers.
     -  [`choice`](#crustimoney2.combinators/choice) - Match the first of the ordered parsers that is successful.
-    -  [`cut`](#crustimoney2.combinators/cut) - Wrap the given parser with a cut.
+    -  [`cut`](#crustimoney2.combinators/cut) - Like chain, but wraps the given parsers with a cut.
     -  [`eof`](#crustimoney2.combinators/eof) - Succeed only if the entire text has been parsed.
     -  [`literal`](#crustimoney2.combinators/literal) - A parser that matches an exact literal string.
     -  [`lookahead`](#crustimoney2.combinators/lookahead) - Lookahead for the given parser, i.e.
@@ -219,11 +219,11 @@ Match the first of the ordered parsers that is successful.
 ## <a name="crustimoney2.combinators/cut">`cut`</a><a name="crustimoney2.combinators/cut"></a>
 ``` clojure
 
-(cut parser)
+(cut & parsers)
 ```
 
-Wrap the given parser with a cut. Backtracking will not occur past
-  this point.
+Like chain, but wraps the given parsers with a cut. Errors do not
+  escape this cut for backtracking.
 
   Well placed cuts have two major benefits:
 
@@ -232,7 +232,7 @@ Wrap the given parser with a cut. Backtracking will not occur past
 
   - Better error messages, since cuts prevent backtracking to the
   beginning of the text.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L190-L207">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L190-L208">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/eof">`eof`</a><a name="crustimoney2.combinators/eof"></a>
 ``` clojure
@@ -323,7 +323,7 @@ Eagerly try to match the parser as many times as possible, expecting
 
 Wrap the parser, replacing any errors with a single error with the
   supplied error key.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L220-L228">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L221-L229">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/with-name">`with-name`</a><a name="crustimoney2.combinators/with-name"></a>
 ``` clojure
@@ -334,7 +334,7 @@ Wrap the parser, replacing any errors with a single error with the
 Wrap the parser, assigning a name to the (success) result of the
   parser. Nameless parsers are filtered out by default during
   parsing.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L211-L218">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L212-L219">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/with-value">`with-value`</a><a name="crustimoney2.combinators/with-value"></a>
 ``` clojure
@@ -346,7 +346,7 @@ Wrap the parser, assigning a name to the (success) result of the
 Wrap the parser, adding a `:value` attribute to its success,
   containing the matched text. Optionally takes a function f, applied
   to the text value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L230-L241">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L231-L242">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.core">crustimoney2.core</a>

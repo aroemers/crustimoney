@@ -73,8 +73,7 @@
      ;; Main parsing loop
      (loop [stack  [(r/->push parser start-index)]
             result nil
-            state  nil
-            cut-at 0]
+            state  nil]
        (if-let [stack-item (peek stack)]
          (let [parser (r/push->parser stack-item)
                index  (r/push->index stack-item)
@@ -90,21 +89,23 @@
                    (when (and infinite-check? (infinite-loop? stack push-index push-parser))
                      (throw (ex-info "Infinite parsing loop detected" {:index push-index})))
                    (if-let [hit (caches/fetch cache push-parser push-index)]
-                     (recur stack hit push-state cut-at)
-                     (recur (conj stack result) nil nil cut-at)))
+                     (recur stack hit push-state)
+                     (recur (conj stack result) nil nil)))
 
                  (r/success? result)
                  (let [processed (post-success result)]
                    (caches/store cache parser index processed)
-                   (if (r/success->attr result :cut)
-                     (do (prn :cut index)
-                       (recur (pop stack) processed state' index))
-                     (recur (pop stack) processed state' cut-at)))
+                   (recur (pop stack) processed state'))
+
+                 (r/cut? result)
+                 (let [cut-result (r/cut->result result)]
+                   (caches/cut cache index)
+                   (if (r/success? cut-result)
+                     (recur (pop stack) cut-result state')
+                     cut-result))
 
                  (set? result)
-                 (if (< index cut-at)
-                   result
-                   (recur (pop stack) result state' cut-at))
+                 (recur (pop stack) result state')
 
                  :else
                  (let [info {:parser parser, :type (type result)}]

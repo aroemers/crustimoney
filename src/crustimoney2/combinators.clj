@@ -188,8 +188,8 @@
 ;;; Cut support
 
 (defn cut
-  "A cut combinator. This always succeeds, and ensures the parser that
-  backtracking will not occur past this point.
+  "Like chain, but wraps the given parsers with a cut. Errors do not
+  escape this cut for backtracking.
 
   Well placed cuts have two major benefits:
 
@@ -198,9 +198,14 @@
 
   - Better error messages, since cuts prevent backtracking to the
   beginning of the text."
-  [_text index]
-  (-> (r/->success index index)
-      (r/with-success-attrs {:cut true})))
+  [& parsers]
+  (let [chained (apply chain parsers)]
+    (fn
+      ([_text index]
+       (r/->push chained index))
+
+      ([_text _index result _state]
+       (r/->cut result)))))
 
 ;;; Result wrappers
 

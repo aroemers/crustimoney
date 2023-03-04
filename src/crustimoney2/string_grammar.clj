@@ -29,10 +29,10 @@
                       (regex "[a-zA-Z_-]+")))
 
     :literal (chain (literal "'")
-                    (with-name :literal
-                      (with-value unescape-quotes
-                        (regex "(''|[^'])*")))
-                    (literal "'"))
+                    (cut (with-name :literal
+                           (with-value unescape-quotes
+                             (regex "(''|[^'])*")))
+                         (literal "'")))
 
     :character-class (with-name :character-class
                        (with-value unescape-brackets
@@ -42,17 +42,17 @@
                    (literal "$"))
 
     :group-name (chain (literal ":")
-                       (with-name :group-name
-                         (with-value
-                           (regex "[a-zA-Z_-]+"))))
+                       (cut (with-name :group-name
+                              (with-value
+                                (regex "[a-zA-Z_-]+")))))
 
     :group (with-name :group
              (chain (literal "(")
-                    (maybe (ref :group-name))
-                    (ref :space)
-                    (ref :choice)
-                    (ref :space)
-                    (literal ")")))
+                    (cut (maybe (ref :group-name))
+                         (ref :space)
+                         (maybe (ref :choice))
+                         (ref :space)
+                         (literal ")"))))
 
     :expr (choice (ref :non-terminal)
                   (ref :group)
@@ -71,8 +71,7 @@
                          (chain (with-name :operand
                                   (with-value
                                     (regex "[&!]")))
-                                cut
-                                (ref :quantified)))
+                                (cut (ref :quantified))))
                        (ref :quantified))
 
     :chain (choice (with-name :chain
@@ -94,9 +93,8 @@
                      (ref :non-terminal))
                    (ref :space)
                    (literal "<-")
-                   (ref :space)
-                   cut
-                   (ref :choice)))
+                   (cut (ref :space)
+                        (ref :choice))))
 
     :root (with-name :root
             (eof (choice (with-name :rules
