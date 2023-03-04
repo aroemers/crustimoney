@@ -102,46 +102,46 @@
   ([parser index]
    (->push parser index nil))
   ([parser index state]
-   {:push {:parser parser :index index :state state}}))
+   {:op :push :parser parser :index index :state state}))
 
 (defn push?
   "Returns obj if obj is a push value."
   [obj]
-  (when (and (map? obj) (:push obj))
+  (when (and (map? obj) (= (:op obj) :push))
     obj))
 
 (defn push->parser
   "Returns the parser of a push value."
   [push]
-  (get-in push [:push :parser]))
+  (push :parser))
 
 (defn push->index
   "Returns the index of a push value."
   [push]
-  (get-in push [:push :index]))
+  (push :index))
 
 (defn push->state
   "Returns the state of a push value."
   [push]
-  (get-in push [:push :state]))
+  (push :state))
 
 ;;; Cut functions
 
 (defn ->cut
   "Wrap the given result with a cut."
   [result]
-  {:cut {:result result}})
+  {:op :cut :result result})
 
 (defn cut?
   "Returns obj if obj is a cut value."
   [obj]
-  (when (and (map? obj) (:cut obj))
+  (when (and (map? obj) (= (:op obj) :cut))
     obj))
 
 (defn cut->result
   "Returns the wrapped result of a cut."
   [cut]
-  (get-in cut [:cut :result]))
+  (cut :result))
 
 ;;; Line and columns for errors
 
