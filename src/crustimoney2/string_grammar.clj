@@ -4,7 +4,7 @@
   (:refer-clojure :exclude [ref])
   (:require [clojure.string :as str]
             [crustimoney2.core :as core :refer [ref]]
-            [crustimoney2.combinators :refer [chain choice eof literal maybe regex repeat+ with-name with-value]]
+            [crustimoney2.combinators :refer [chain choice cut eof literal maybe regex repeat+ with-name with-value]]
             [crustimoney2.results :as r]
             [crustimoney2.vector-grammar :as vector-grammar]))
 
@@ -94,7 +94,7 @@
                    (ref :space)
                    (literal "<-")
                    (ref :space)
-                   (ref :choice)))
+                   (cut (ref :choice))))
 
     :root (with-name :root
             (eof (choice (with-name :rules

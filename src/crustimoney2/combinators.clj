@@ -185,6 +185,27 @@
           #{(r/->error :eof-not-reached (r/success->end result))})
         result)))))
 
+;;; Cut support
+
+(defn cut
+  "Wrap the given parser with a cut. Backtracking will not occur past
+  this point.
+
+  Well placed cuts have two major benefits:
+
+  - Substantial memory optimization, since the packrat caches can
+  evict everything before the cut
+
+  - Better error messages, since cuts prevent backtracking to the
+  beginning of the text."
+  [parser]
+  (fn
+    ([_text index]
+     (r/->push parser index))
+
+    ([_text _index result _state]
+     (r/->cut result))))
+
 ;;; Result wrappers
 
 (defn with-name

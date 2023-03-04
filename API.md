@@ -2,12 +2,16 @@
 -  [`crustimoney2.caches`](#crustimoney2.caches)  - Packrat caches for the core/parse function.
     -  [`Cache`](#crustimoney2.caches/Cache) - Protocol for packrat cache implementations.
     -  [`basic-cache`](#crustimoney2.caches/basic-cache) - Create a cache that uses a plain map for storage, without any eviction (until it is garbage collected).
+    -  [`cut`](#crustimoney2.caches/cut) - Clear all cached results before given index.
     -  [`fetch`](#crustimoney2.caches/fetch) - Try to fetch a cached result, returns nil if it misses the cache.
     -  [`store`](#crustimoney2.caches/store) - Store a result in the cache.
+    -  [`treemap-cache`](#crustimoney2.caches/treemap-cache) - Create a cache that supports clearing below a certain index, such that entries are evicted on cuts.
     -  [`weak-cache`](#crustimoney2.caches/weak-cache) - Create a cache that uses weak references, such that entries are evicted on memory pressure.
+    -  [`weak-treemap-cache`](#crustimoney2.caches/weak-treemap-cache) - Create a cache that supports clearing below a certain index and has weak references, such that entries are evicted on cuts or on memory pressure.
 -  [`crustimoney2.combinators`](#crustimoney2.combinators)  - Parsers combinator functions.
     -  [`chain`](#crustimoney2.combinators/chain) - Chain multiple consecutive parsers.
     -  [`choice`](#crustimoney2.combinators/choice) - Match the first of the ordered parsers that is successful.
+    -  [`cut`](#crustimoney2.combinators/cut) - Wrap the given parser with a cut.
     -  [`eof`](#crustimoney2.combinators/eof) - Succeed only if the entire text has been parsed.
     -  [`literal`](#crustimoney2.combinators/literal) - A parser that matches an exact literal string.
     -  [`lookahead`](#crustimoney2.combinators/lookahead) - Lookahead for the given parser, i.e.
@@ -27,9 +31,12 @@
     -  [`create-parser`](#crustimoney2.data-grammar/create-parser) - Create a parser based on a data grammar definition.
     -  [`vector-tree-for`](#crustimoney2.data-grammar/vector-tree-for) - Low-level (multi method) function which translates the data grammar into an intermediary vector-based representation.
 -  [`crustimoney2.results`](#crustimoney2.results)  - Result constructors, accessors and predicates.
+    -  [`->cut`](#crustimoney2.results/->cut) - Wrap the given result with a cut.
     -  [`->error`](#crustimoney2.results/->error) - Create an error result, given an error key and an index.
     -  [`->push`](#crustimoney2.results/->push) - Create a push value, given a parser function and an index.
     -  [`->success`](#crustimoney2.results/->success) - Create a success result, given a start index (inclusive) and end index (exclusive).
+    -  [`cut->result`](#crustimoney2.results/cut->result) - Returns the wrapped result of a cut.
+    -  [`cut?`](#crustimoney2.results/cut?) - Returns obj if obj is a cut value.
     -  [`error->detail`](#crustimoney2.results/error->detail) - Return the detail object of an error.
     -  [`error->index`](#crustimoney2.results/error->index) - Return the index of an error.
     -  [`error->key`](#crustimoney2.results/error->key) - Return the key of an error.
@@ -77,7 +84,7 @@ Packrat caches for the core/parse function.
 
 
 Protocol for packrat cache implementations.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L10-L17">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L10-L20">Source</a></sub></p>
 
 ## <a name="crustimoney2.caches/basic-cache">`basic-cache`</a><a name="crustimoney2.caches/basic-cache"></a>
 ``` clojure
@@ -86,8 +93,17 @@ Protocol for packrat cache implementations.
 ```
 
 Create a cache that uses a plain map for storage, without any
-  eviction (until it is garbage collected).
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L26-L36">Source</a></sub></p>
+  eviction (until it is garbage collected). Does not support cuts.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L29-L41">Source</a></sub></p>
+
+## <a name="crustimoney2.caches/cut">`cut`</a><a name="crustimoney2.caches/cut"></a>
+``` clojure
+
+(cut this index)
+```
+
+Clear all cached results before given index.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L19-L20">Source</a></sub></p>
 
 ## <a name="crustimoney2.caches/fetch">`fetch`</a><a name="crustimoney2.caches/fetch"></a>
 ``` clojure
@@ -107,6 +123,16 @@ Try to fetch a cached result, returns nil if it misses the cache.
 Store a result in the cache.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L16-L17">Source</a></sub></p>
 
+## <a name="crustimoney2.caches/treemap-cache">`treemap-cache`</a><a name="crustimoney2.caches/treemap-cache"></a>
+``` clojure
+
+(treemap-cache)
+```
+
+Create a cache that supports clearing below a certain index, such
+  that entries are evicted on cuts.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L57-L74">Source</a></sub></p>
+
 ## <a name="crustimoney2.caches/weak-cache">`weak-cache`</a><a name="crustimoney2.caches/weak-cache"></a>
 ``` clojure
 
@@ -114,8 +140,19 @@ Store a result in the cache.
 ```
 
 Create a cache that uses weak references, such that entries are
-  evicted on memory pressure.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L38-L48">Source</a></sub></p>
+  evicted on memory pressure. Does not support cuts.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L43-L55">Source</a></sub></p>
+
+## <a name="crustimoney2.caches/weak-treemap-cache">`weak-treemap-cache`</a><a name="crustimoney2.caches/weak-treemap-cache"></a>
+``` clojure
+
+(weak-treemap-cache)
+```
+
+Create a cache that supports clearing below a certain index and has
+  weak references, such that entries are evicted on cuts or on memory
+  pressure.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L76-L94">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.combinators">crustimoney2.combinators</a>
@@ -178,6 +215,24 @@ Chain multiple consecutive parsers.
 
 Match the first of the ordered parsers that is successful.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L70-L85">Source</a></sub></p>
+
+## <a name="crustimoney2.combinators/cut">`cut`</a><a name="crustimoney2.combinators/cut"></a>
+``` clojure
+
+(cut parser)
+```
+
+Wrap the given parser with a cut. Backtracking will not occur past
+  this point.
+
+  Well placed cuts have two major benefits:
+
+  - Substantial memory optimization, since the packrat caches can
+  evict everything before the cut
+
+  - Better error messages, since cuts prevent backtracking to the
+  beginning of the text.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L190-L207">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/eof">`eof`</a><a name="crustimoney2.combinators/eof"></a>
 ``` clojure
@@ -268,7 +323,7 @@ Eagerly try to match the parser as many times as possible, expecting
 
 Wrap the parser, replacing any errors with a single error with the
   supplied error key.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L199-L207">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L220-L228">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/with-name">`with-name`</a><a name="crustimoney2.combinators/with-name"></a>
 ``` clojure
@@ -279,7 +334,7 @@ Wrap the parser, replacing any errors with a single error with the
 Wrap the parser, assigning a name to the (success) result of the
   parser. Nameless parsers are filtered out by default during
   parsing.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L190-L197">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L211-L218">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/with-value">`with-value`</a><a name="crustimoney2.combinators/with-value"></a>
 ``` clojure
@@ -291,7 +346,7 @@ Wrap the parser, assigning a name to the (success) result of the
 Wrap the parser, adding a `:value` attribute to its success,
   containing the matched text. Optionally takes a function f, applied
   to the text value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L209-L220">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L230-L241">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.core">crustimoney2.core</a>
@@ -340,7 +395,7 @@ Use the given parser to parse the supplied text string. The result
   - `:keep-nameless?`, set this to true if nameless success nodes
   should be kept in the parse result. This can be useful for
   debugging. Defaults to false.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L31-L105">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L32-L113">Source</a></sub></p>
 
 ## <a name="crustimoney2.core/ref">`ref`</a><a name="crustimoney2.core/ref"></a>
 ``` clojure
@@ -351,7 +406,7 @@ Use the given parser to parse the supplied text string. The result
 Creates a parser function that wraps another parser function, which
   is referred to by the given key. Needs to be called within the
   lexical scope of [`rmap`](#crustimoney2.core/rmap).
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L111-L124">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L119-L132">Source</a></sub></p>
 
 ## <a name="crustimoney2.core/rmap">`rmap`</a><a name="crustimoney2.core/rmap"></a>
 ``` clojure
@@ -366,7 +421,7 @@ Takes (something that evaluates to) a map, in which the entries can
 
       (rmap {:foo  (literal "foo")
              :root (chain (ref :foo) "bar")})
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L133-L141">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L141-L149">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.data-grammar">crustimoney2.data-grammar</a>
@@ -448,6 +503,15 @@ Result constructors, accessors and predicates
 
 
 
+## <a name="crustimoney2.results/->cut">`->cut`</a><a name="crustimoney2.results/->cut"></a>
+``` clojure
+
+(->cut result)
+```
+
+Wrap the given result with a cut.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L130-L133">Source</a></sub></p>
+
 ## <a name="crustimoney2.results/->error">`->error`</a><a name="crustimoney2.results/->error"></a>
 ``` clojure
 
@@ -481,6 +545,24 @@ Create a success result, given a start index (inclusive) and end
   index (exclusive). Optionally a collection of success children can
   be given. The name of the success is nil.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L6-L13">Source</a></sub></p>
+
+## <a name="crustimoney2.results/cut->result">`cut->result`</a><a name="crustimoney2.results/cut->result"></a>
+``` clojure
+
+(cut->result cut)
+```
+
+Returns the wrapped result of a cut.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L141-L144">Source</a></sub></p>
+
+## <a name="crustimoney2.results/cut?">`cut?`</a><a name="crustimoney2.results/cut?"></a>
+``` clojure
+
+(cut? obj)
+```
+
+Returns obj if obj is a cut value.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L135-L139">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/error->detail">`error->detail`</a><a name="crustimoney2.results/error->detail"></a>
 ``` clojure
@@ -516,7 +598,7 @@ Return the key of an error.
 ```
 
 Returns only the errors that have the highest index.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L163-L167">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L180-L184">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/errors->line-column">`errors->line-column`</a><a name="crustimoney2.results/errors->line-column"></a>
 ``` clojure
@@ -525,7 +607,7 @@ Returns only the errors that have the highest index.
 ```
 
 Returns the errors with `:line` and `:column` entries added.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L151-L159">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L169-L176">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/push->index">`push->index`</a><a name="crustimoney2.results/push->index"></a>
 ``` clojure

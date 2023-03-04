@@ -2,7 +2,7 @@
   "The main parsing functions."
   (:refer-clojure :exclude [ref])
   (:require [crustimoney2.caches :as caches]
-            [crustimoney2.combinators :refer [literal regex chain choice with-name with-value]]
+            [crustimoney2.combinators :refer [cut eof literal regex chain choice with-error with-name with-value]]
             [crustimoney2.results :as r]))
 
 ;;; Internals
@@ -97,6 +97,13 @@
                    (caches/store cache parser index processed)
                    (recur (pop stack) processed state'))
 
+                 (r/cut? result)
+                 (let [cut-result (r/cut->result result)]
+                   (caches/cut cache index)
+                   (if (r/success? cut-result)
+                     (recur (pop stack) cut-result state')
+                     cut-result))
+
                  (set? result)
                  (recur (pop stack) result state')
 
@@ -149,19 +156,20 @@
      {:sum (choice (with-name :sum
                      (chain (ref :product)
                             (ref :sum-op)
-                            (ref :sum)))
+                            (cut (ref :sum))))
                    (ref :product))
 
       :product (choice (with-name :product
                          (chain (ref :value)
                                 (ref :product-op)
-                                (ref :product)))
+                                (cut (ref :product))))
                        (ref :value))
 
       :value (choice (ref :number)
-                     (chain (literal "(")
-                            (ref :sum)
-                            (literal ")")))
+                     (with-error :expected-group
+                       (chain (literal "(")
+                              (ref :sum)
+                              (literal ")"))))
 
       :sum-op (with-name :operation
                 (with-value (regex #"(\+|-)")))
@@ -170,7 +178,8 @@
                     (with-value (regex #"(\*|/)")))
 
       :number (with-name :number
-                (with-value (regex #"[0-9]+")))}))
+                (with-error :expected-number
+                  (with-value (regex #"[0-9]+"))))}))
 
   (def string-grammar "
     sum        <- (:sum product sum-op sum) / product
