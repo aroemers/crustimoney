@@ -71,6 +71,7 @@
                          (chain (with-name :operand
                                   (with-value
                                     (regex "[&!]")))
+                                cut
                                 (ref :quantified)))
                        (ref :quantified))
 
@@ -94,7 +95,8 @@
                    (ref :space)
                    (literal "<-")
                    (ref :space)
-                   (cut (ref :choice))))
+                   cut
+                   (ref :choice)))
 
     :root (with-name :root
             (eof (choice (with-name :rules

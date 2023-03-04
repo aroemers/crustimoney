@@ -188,8 +188,8 @@
 ;;; Cut support
 
 (defn cut
-  "Wrap the given parser with a cut. Backtracking will not occur past
-  this point.
+  "A cut combinator. This always succeeds, and ensures the parser that
+  backtracking will not occur past this point.
 
   Well placed cuts have two major benefits:
 
@@ -198,13 +198,9 @@
 
   - Better error messages, since cuts prevent backtracking to the
   beginning of the text."
-  [parser]
-  (fn
-    ([_text index]
-     (r/->push parser index))
-
-    ([_text _index result _state]
-     (r/->cut result))))
+  [_text index]
+  (-> (r/->success index index)
+      (r/with-success-attrs {:cut true})))
 
 ;;; Result wrappers
 
