@@ -187,9 +187,10 @@
 
 ;;; Cut support
 
-(defn cut
-  "Like chain, but wraps the given parsers with a cut. Errors do not
-  escape this cut for backtracking.
+(defn soft-cut
+  "Like chain, but wraps the given parsers with a soft cut. Errors do not
+  escape this cut for backtracking. It is a \"soft\" cut, as backtracking
+  can still happen outside this cut.
 
   Well placed cuts have two major benefits:
 
