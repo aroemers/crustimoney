@@ -189,16 +189,41 @@
 
 (defn soft-cut
   "Like chain, but wraps the given parsers with a soft cut. Errors do not
-  escape this cut for backtracking. It is a \"soft\" cut, as backtracking
-  can still happen outside this cut.
+  escape this cut, i.e backtracking would stop here.
 
-  Well placed cuts have two major benefits:
+  A cut should be placed within a chain, behind at least one parser
+  that has consumed some of the input, which no other parser (via a
+  choice) up in the combinator tree could also consume at that point.
 
-  - Substantial memory optimization, since the packrat caches can
-  evict everything before the cut
+  It is a called \"soft\" cut, as backtracking can still happen
+  outside this cut. The advantage of a soft cut over a `hard-cut`, is
+  that they can be used at more places without breaking the grammar.
+  As cuts help with better error messages, this can be beneficial.
 
-  - Better error messages, since cuts prevent backtracking to the
-  beginning of the text."
+  For example, the following grammar benefits from a soft-cut:
+
+      {:prefix (chain (literal \"<\")
+                      (soft-cut
+                       (maybe (ref :expr))
+                       (literal \">\")))
+
+       :expr   (choice (with-name :foo
+                         (chain (maybe (ref :prefix))
+                                (literal \"foo\")))
+                       (with-name :bar
+                         (chain (maybe (ref :prefix))
+                                (literal \"bar\"))))}
+
+  When parsing \"<foo\", it will nicely report that a \">\" is
+  missing. Without the soft-cut, it would report that \"foo\" or
+  \"bar\" are expected, ignoring that clearly a prefix was started.
+
+  When parsing \"<foo>bar\", this succeeds nicely. Placing a hard cut
+  at the location of the soft-cut would fail to parse this, as it
+  would never backtrack to try the prefix with \"bar\" after it.
+
+  Soft cuts do not influence the packrat caches - as opposed to hard
+  cuts - so they do not help performance wise."
   [& parsers]
   (let [chained (apply chain parsers)]
     (fn
@@ -206,7 +231,33 @@
        (r/->push chained index))
 
       ([_text _index result _state]
-       (r/->cut result)))))
+       (if (set? result)
+         (with-meta result {:soft-cut true})
+         result)))))
+
+(defn hard-cut
+  "A parser that always succeeds, and instructs the parser to not
+  backtrack before the current point in the text.
+
+  A cut should be placed within a chain, behind at least one parser
+  that has consumed some of the input, which no other parser (via a
+  choice) up in the combinator tree could also consume at that point.
+
+  Well placed hard cuts have two major benefits:
+
+  - Substantial memory optimization, since the packrat caches can
+  evict everything before the cut. It can turn memory requirements
+  from O(n) to O(1). Since PEG parsers are memory hungry, this can be
+  a big deal.
+
+  - Better error messages, since cuts prevent backtracking to the
+  beginning of the text.
+
+  Also read about `soft-cut`, as hard cuts can only be used in places
+  where you are sure no backtracking is required."
+  [_text index]
+  (-> (r/->success index index)
+      (r/with-success-attrs {:hard-cut true})))
 
 ;;; Result wrappers
 
@@ -241,3 +292,20 @@
        (cond-> result
          (r/success? result)
          (r/with-success-attrs {:value (f (r/success->text result text))}))))))
+
+(comment
+
+  (require '[crustimoney2.core :as core])
+
+  (def soft-cut-grammar
+    (core/rmap
+     {:prefix (chain (literal "<")
+                     (soft-cut
+                      (maybe (core/ref :expr))
+                      (literal ">")))
+      :expr (choice (chain (maybe (core/ref :prefix))
+                           (literal "foo"))
+                    (chain (maybe (core/ref :prefix))
+                           (literal "bar")))}))
+
+  )

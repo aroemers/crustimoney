@@ -125,24 +125,6 @@
   [push]
   (push :state))
 
-;;; Cut functions
-
-(defn ->cut
-  "Wrap the given result with a cut."
-  [result]
-  {:op :cut :result result})
-
-(defn cut?
-  "Returns obj if obj is a cut value."
-  [obj]
-  (when (and (map? obj) (= (:op obj) :cut))
-    obj))
-
-(defn cut->result
-  "Returns the wrapped result of a cut."
-  [cut]
-  (cut :result))
-
 ;;; Line and columns for errors
 
 (defn- line-breaks-in [text]
@@ -168,6 +150,7 @@
 
 (defn errors->line-column
   "Returns the errors with `:line` and `:column` entries added."
+  ;TODO FIX THIS
   [errors text]
   (let [line-breaks (line-breaks-in text)]
     (mapcat (fn [[at errors]]

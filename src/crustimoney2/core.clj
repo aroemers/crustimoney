@@ -2,7 +2,7 @@
   "The main parsing functions."
   (:refer-clojure :exclude [ref])
   (:require [crustimoney2.caches :as caches]
-            [crustimoney2.combinators :refer [cut eof literal regex chain choice with-error with-name with-value]]
+            [crustimoney2.combinators :as c]
             [crustimoney2.results :as r]))
 
 ;;; Internals
@@ -73,43 +73,52 @@
      ;; Main parsing loop
      (loop [stack  [(r/->push parser start-index)]
             result nil
-            state  nil]
+            state  nil
+            cut-at 0]
+       ;; See if there is something on the stack
        (if-let [stack-item (peek stack)]
          (let [parser (r/push->parser stack-item)
                index  (r/push->index stack-item)
                state' (r/push->state stack-item)
-               result (or (if result
-                            (parser text index result state)
-                            (parser text index))
-                          ())]
-           (cond (r/push? result)
-                 (let [push-parser (r/push->parser result)
-                       push-index  (r/push->index result)
-                       push-state  (r/push->state result)]
-                   (when (and infinite-check? (infinite-loop? stack push-index push-parser))
-                     (throw (ex-info "Infinite parsing loop detected" {:index push-index})))
-                   (if-let [hit (caches/fetch cache push-parser push-index)]
-                     (recur stack hit push-state)
-                     (recur (conj stack result) nil nil)))
+               ;; If there was previously a result, we are backtracking. Otherwise, there was a push.
+               result (if result
+                        (parser text index result state)
+                        (parser text index))]
+           ;; Handle the parse result
+           (cond
+             ;; Handle a push
+             (r/push? result)
+             (let [push-parser (r/push->parser result)
+                   push-index  (r/push->index result)
+                   push-state  (r/push->state result)]
+               ;; Check for infinite loops
+               (when (and infinite-check? (infinite-loop? stack push-index push-parser))
+                 (throw (ex-info "Infinite parsing loop detected" {:index push-index})))
+               ;; Check if this parser on this index is already in the cache
+               (if-let [hit (caches/fetch cache push-parser push-index)]
+                 (recur stack hit push-state cut-at)
+                 (recur (conj stack result) nil nil cut-at)))
 
-                 (r/success? result)
-                 (let [processed (post-success result)]
-                   (caches/store cache parser index processed)
-                   (recur (pop stack) processed state'))
+             ;; Handle a success
+             (r/success? result)
+             (let [processed (post-success result)]
+               ;; Check if it was a hard-cut (success) result
+               (if (r/success->attr result :hard-cut)
+                 (do (caches/cut cache index)
+                     (recur (pop stack) processed state' index))
+                 (do (caches/store cache parser index processed)
+                     (recur (pop stack) processed state' cut-at))))
 
-                 (r/cut? result)
-                 (let [cut-result (r/cut->result result)]
-                   (caches/cut cache index)
-                   (if (r/success? cut-result)
-                     (recur (pop stack) cut-result state')
-                     cut-result))
+             ;; Handle a set of errors
+             (set? result)
+             (if-not (or (-> result meta :soft-cut) (< index cut-at))
+               (recur (pop stack) result state' cut-at)
+               result)
 
-                 (set? result)
-                 (recur (pop stack) result state')
-
-                 :else
-                 (let [info {:parser parser, :type (type result)}]
-                   (throw (ex-info "Unexpected result from parser" info)))))
+             ;; Something weird was returned from the parser
+             :else
+             (let [info {:parser parser, :type (type result)}]
+               (throw (ex-info "Unexpected result from parser" info)))))
          result)))))
 
 ;;; Recursive grammar definition
@@ -153,40 +162,41 @@
 
   (def combinator-grammar
     (rmap
-     {:sum (choice (with-name :sum
-                     (chain (ref :product)
-                            (ref :sum-op)
-                            (cut (ref :sum))))
-                   (ref :product))
+     {:sum (c/choice (c/with-name :sum
+                       (c/chain (ref :product)
+                                (ref :sum-op)
+                                c/hard-cut
+                                (ref :sum)))
+                     (ref :product))
 
-      :product (choice (with-name :product
-                         (chain (ref :value)
-                                (ref :product-op)
-                                (cut (ref :product))))
-                       (ref :value))
+      :product (c/choice (c/with-name :product
+                           (c/chain (ref :value)
+                                    (ref :product-op)
+                                    c/hard-cut
+                                    (ref :product)))
+                         (ref :value))
 
-      :value (choice (ref :number)
-                     (with-error :expected-group
-                       (chain (literal "(")
-                              (ref :sum)
-                              (literal ")"))))
+      :value (c/choice (ref :number)
+                       (c/chain (c/literal "(")
+                                (c/soft-cut (c/maybe (ref :sum))
+                                            (c/literal ")"))))
 
-      :sum-op (with-name :operation
-                (with-value (regex #"(\+|-)")))
+      :sum-op (c/with-name :operation
+                (c/with-value (c/regex #"(\+|-)")))
 
-      :product-op (with-name :operation
-                    (with-value (regex #"(\*|/)")))
+      :product-op (c/with-name :operation
+                    (c/with-value (c/regex #"(\*|/)")))
 
-      :number (with-name :number
-                (with-error :expected-number
-                  (with-value (regex #"[0-9]+"))))}))
+      :number (c/with-name :number
+                (c/with-error :expected-number
+                  (c/with-value (c/regex #"[0-9]+"))))}))
 
   (def string-grammar "
-    sum        <- (:sum product sum-op sum) / product
+    sum        <- (:sum product sum-op | sum) / product
 
-    product    <- (:product value product-op product) / value
+    product    <- (:product value product-op | product) / value
 
-    value      <- number / '(' sum ')'
+    value      <- number / '(' |(sum ')')
 
     sum-op     <- (:operation [+-])
 
