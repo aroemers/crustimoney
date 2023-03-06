@@ -65,8 +65,7 @@
                   (ref :group)
                   (ref :literal)
                   (ref :character-class)
-                  (ref :end-of-file)
-                  (ref :cut))
+                  (ref :end-of-file))
 
     :quantified (choice (with-name :quantified
                           (chain (ref :expr)
@@ -86,7 +85,8 @@
     :chain (choice (with-name :chain
                      (chain (ref :lookahead)
                             (repeat+ (chain (ref :space)
-                                            (ref :lookahead)))))
+                                            (choice (ref :cut)
+                                                    (ref :lookahead))))))
                    (ref :lookahead))
 
     :choice (choice (with-name :choice
@@ -221,17 +221,18 @@
       literal         <- '''' > (:literal ('''''' / [^'])*) ''''
       character-class <- (:character-class '[' (']]' / [^]]])* ']')
       end-of-file     <- (:end-of-file '$')
-      cut             <- (:hard-cut '>>') / (:soft-cut '>')
 
       group-name      <- ':' > (:group-name [a-zA-Z_-]+)
       group           <- (:group '(' > group-name? space choice space ')')
 
-      expr            <- non-terminal / group / literal / character-class / end-of-file / cut
+      expr            <- non-terminal / group / literal / character-class / end-of-file
 
       quantified      <- (:quantified expr (:operand [?+*])) / expr
       lookahead       <- (:lookahead (:operand [&!]) > quantified) / quantified
 
-      chain           <- (:chain lookahead (space lookahead)+) / lookahead
+      cut             <- (:hard-cut '>>') / (:soft-cut '>')
+
+      chain           <- (:chain lookahead (space (cut / lookahead))+) / lookahead
       choice          <- (:choice chain (space '/' space chain)+) / chain
 
       rule            <- (:rule (:rule-name non-terminal) space '<-' >> space choice)
@@ -259,17 +260,18 @@
     literal         <- '''' > (:literal ('''''' / [^'])*) ''''
     character-class <- (:character-class '[' (']]' / [^]]])* ']')
     end-of-file     <- (:end-of-file '$')
-    cut             <- (:hard-cut '>>') / (:soft-cut '>')
 
     group-name      <- ':' > (:group-name [a-zA-Z_-]+)
     group           <- (:group '(' > group-name? space choice space ')')
 
-    expr            <- non-terminal / group / literal / character-class / end-of-file / cut
+    expr            <- non-terminal / group / literal / character-class / end-of-file
 
     quantified      <- (:quantified expr (:operand [?+*])) / expr
     lookahead       <- (:lookahead (:operand [&!]) > quantified) / quantified
 
-    chain           <- (:chain lookahead (space lookahead)+) / lookahead
+    cut             <- (:hard-cut '>>') / (:soft-cut '>')
+
+    chain           <- (:chain lookahead (space (cut / lookahead))+) / lookahead
     choice          <- (:choice chain (space '/' space chain)+) / chain
 
     rule            <- (:rule (:rule-name non-terminal) space '<-' >> space choice)

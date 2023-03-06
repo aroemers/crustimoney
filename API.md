@@ -417,7 +417,7 @@ Takes (something that evaluates to) a map, in which the entries can
 
       (rmap {:foo  (literal "foo")
              :root (chain (ref :foo) "bar")})
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L150-L158">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/core.clj#L151-L159">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.data-grammar">crustimoney2.data-grammar</a>
@@ -738,17 +738,18 @@ Create a parser based on a string-based grammar definition. If the
       literal         <- '''' > (:literal ('''''' / [^'])*) ''''
       character-class <- (:character-class '[' (']]' / [^]]])* ']')
       end-of-file     <- (:end-of-file '$')
-      cut             <- (:hard-cut '>>') / (:soft-cut '>')
 
       group-name      <- ':' > (:group-name [a-zA-Z_-]+)
       group           <- (:group '(' > group-name? space choice space ')')
 
-      expr            <- non-terminal / group / literal / character-class / end-of-file / cut
+      expr            <- non-terminal / group / literal / character-class / end-of-file
 
       quantified      <- (:quantified expr (:operand [?+*])) / expr
       lookahead       <- (:lookahead (:operand [&!]) > quantified) / quantified
 
-      chain           <- (:chain lookahead (space lookahead)+) / lookahead
+      cut             <- (:hard-cut '>>') / (:soft-cut '>')
+
+      chain           <- (:chain lookahead (space (cut / lookahead))+) / lookahead
       choice          <- (:choice chain (space '/' space chain)+) / chain
 
       rule            <- (:rule (:rule-name non-terminal) space '<-' >> space choice)
@@ -757,7 +758,7 @@ Create a parser based on a string-based grammar definition. If the
       root            <- (:root rules / no-rules) $
 
   To capture nodes in the parse result, you need to use named groups.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L210-L248">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L210-L249">Source</a></sub></p>
 
 ## <a name="crustimoney2.string-grammar/vector-tree">`vector-tree`</a><a name="crustimoney2.string-grammar/vector-tree"></a>
 ``` clojure
