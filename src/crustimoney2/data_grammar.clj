@@ -118,10 +118,6 @@
        choices            (literal / regex / \"alice\" \"bob\")
        named-group        (:my-name literal / \"the end\" $)
 
-       ;; cuts
-       soft-cut           ('[' > expr? ']')
-       hard-cut           ((class-open class class-close >>)*
-
        ;; quantifiers
        zero-to-many       (literal *)
        one-to-many        (\"bar\"+)
@@ -130,6 +126,10 @@
        ;; lookaheads
        lookahead          (& regex)
        negative-lookahead (!\"alice\")
+
+       ;; cuts
+       soft-cut           ('[' > expr? ']')
+       hard-cut           ((class-open class class-close >>)*
 
        ;; direct combinator calls
        combinator-call       [:with-value (:bax \"bar\" / \"baz\")]

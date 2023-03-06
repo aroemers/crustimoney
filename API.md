@@ -34,7 +34,6 @@
     -  [`error->detail`](#crustimoney2.results/error->detail) - Return the detail object of an error.
     -  [`error->index`](#crustimoney2.results/error->index) - Return the index of an error.
     -  [`error->key`](#crustimoney2.results/error->key) - Return the key of an error.
-    -  [`errors->furthest`](#crustimoney2.results/errors->furthest) - Returns only the errors that have the highest index.
     -  [`errors->line-column`](#crustimoney2.results/errors->line-column) - Returns the errors with <code>:line</code> and <code>:column</code> entries added.
     -  [`push->index`](#crustimoney2.results/push->index) - Returns the index of a push value.
     -  [`push->parser`](#crustimoney2.results/push->parser) - Returns the parser of a push value.
@@ -455,10 +454,6 @@ Create a parser based on a data grammar definition. If a map with
        choices            (literal / regex / "alice" "bob")
        named-group        (:my-name literal / "the end" $)
 
-       ;; cuts
-       soft-cut           ('[' > expr? ']')
-       hard-cut           ((class-open class class-close >>)*
-
        ;; quantifiers
        zero-to-many       (literal *)
        one-to-many        ("bar"+)
@@ -467,6 +462,10 @@ Create a parser based on a data grammar definition. If a map with
        ;; lookaheads
        lookahead          (& regex)
        negative-lookahead (!"alice")
+
+       ;; cuts
+       soft-cut           ('[' > expr? ']')
+       hard-cut           ((class-open class class-close >>)*
 
        ;; direct combinator calls
        combinator-call       [:with-value (:bax "bar" / "baz")]
@@ -565,15 +564,6 @@ Return the index of an error
 Return the key of an error.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L82-L85">Source</a></sub></p>
 
-## <a name="crustimoney2.results/errors->furthest">`errors->furthest`</a><a name="crustimoney2.results/errors->furthest"></a>
-``` clojure
-
-(errors->furthest errors)
-```
-
-Returns only the errors that have the highest index.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L163-L167">Source</a></sub></p>
-
 ## <a name="crustimoney2.results/errors->line-column">`errors->line-column`</a><a name="crustimoney2.results/errors->line-column"></a>
 ``` clojure
 
@@ -581,7 +571,7 @@ Returns only the errors that have the highest index.
 ```
 
 Returns the errors with `:line` and `:column` entries added.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L151-L159">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L151-L158">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/push->index">`push->index`</a><a name="crustimoney2.results/push->index"></a>
 ``` clojure

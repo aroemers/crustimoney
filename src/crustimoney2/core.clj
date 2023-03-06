@@ -165,21 +165,22 @@
      {:sum (c/choice (c/with-name :sum
                        (c/chain (ref :product)
                                 (ref :sum-op)
-                                c/hard-cut
+                                :hard-cut
                                 (ref :sum)))
                      (ref :product))
 
       :product (c/choice (c/with-name :product
                            (c/chain (ref :value)
                                     (ref :product-op)
-                                    c/hard-cut
+                                    :hard-cut
                                     (ref :product)))
                          (ref :value))
 
       :value (c/choice (ref :number)
                        (c/chain (c/literal "(")
-                                (c/soft-cut (c/maybe (ref :sum))
-                                            (c/literal ")"))))
+                                :soft-cut
+                                (c/maybe (ref :sum))
+                                (c/literal ")")))
 
       :sum-op (c/with-name :operation
                 (c/with-value (c/regex #"(\+|-)")))
@@ -188,15 +189,14 @@
                     (c/with-value (c/regex #"(\*|/)")))
 
       :number (c/with-name :number
-                (c/with-error :expected-number
-                  (c/with-value (c/regex #"[0-9]+"))))}))
+                (c/with-value (c/regex #"[0-9]+")))}))
 
   (def string-grammar "
-    sum        <- (:sum product sum-op | sum) / product
+    sum        <- (:sum product sum-op >> sum) / product
 
-    product    <- (:product value product-op | product) / value
+    product    <- (:product value product-op >> product) / value
 
-    value      <- number / '(' |(sum ')')
+    value      <- number / '(' > sum? ')'
 
     sum-op     <- (:operation [+-])
 
@@ -205,11 +205,11 @@
     number     <- (:number [0-9]+)")
 
   (def data-grammar
-    '{sum ((:sum product sum-op sum) / product)
+    '{sum ((:sum product sum-op >> sum) / product)
 
-      product ((:product value product-op product) / value)
+      product ((:product value product-op >> product) / value)
 
-      value (number / "(" sum ")")
+      value (number / "(" > sum ? ")")
 
       sum-op (:operation #"[+-]")
 
