@@ -150,18 +150,9 @@
 
 (defn errors->line-column
   "Returns the errors with `:line` and `:column` entries added."
-  ;TODO FIX THIS
   [errors text]
   (let [line-breaks (line-breaks-in text)]
     (mapcat (fn [[at errors]]
               (let [lc (index->line-column line-breaks at)]
                 (map (partial merge lc) errors)))
             (group-by error->index errors))))
-
-;;; Keep furthers errors
-
-(defn errors->furthest
-  "Returns only the errors that have the highest index."
-  [errors]
-  (let [grouped (group-by error->index errors)]
-    (get grouped (apply max (keys grouped)))))
