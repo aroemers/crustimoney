@@ -4,7 +4,7 @@
   (:refer-clojure :exclude [ref])
   (:require [clojure.string :as str]
             [crustimoney2.core :as core :refer [ref]]
-            [crustimoney2.combinators :refer [chain choice eof hard-cut literal maybe regex repeat+ soft-cut with-name with-value]]
+            [crustimoney2.combinators :refer [chain choice eof literal maybe regex repeat+ with-name with-value]]
             [crustimoney2.results :as r]
             [crustimoney2.vector-grammar :as vector-grammar]))
 
@@ -29,11 +29,11 @@
                       (regex "[a-zA-Z_-]+")))
 
     :literal (chain (literal "'")
-                    (soft-cut
-                     (with-name :literal
-                       (with-value unescape-quotes
-                         (regex "(''|[^'])*")))
-                         (literal "'")))
+                    :soft-cut
+                    (with-name :literal
+                      (with-value unescape-quotes
+                        (regex "(''|[^'])*")))
+                    (literal "'"))
 
     :character-class (with-name :character-class
                        (with-value unescape-brackets
@@ -43,19 +43,19 @@
                    (literal "$"))
 
     :group-name (chain (literal ":")
-                       ;soft-cut
+                       :soft-cut
                        (with-name :group-name
                          (with-value
                            (regex "[a-zA-Z_-]+"))))
 
     :group (with-name :group
              (chain (literal "(")
-                    (soft-cut
-                     (maybe (ref :group-name))
-                     (ref :space)
-                     (maybe (ref :choice))
-                     (ref :space)
-                     (literal ")"))))
+                    :soft-cut
+                    (maybe (ref :group-name))
+                    (ref :space)
+                    (maybe (ref :choice))
+                    (ref :space)
+                    (literal ")")))
 
     :expr (choice (ref :non-terminal)
                   (ref :group)
@@ -74,8 +74,8 @@
                          (chain (with-name :operand
                                   (with-value
                                     (regex "[&!]")))
-                                (soft-cut
-                                 (ref :quantified))))
+                                :soft-cut
+                                (ref :quantified)))
                        (ref :quantified))
 
     :chain (choice (with-name :chain
@@ -97,7 +97,7 @@
                      (ref :non-terminal))
                    (ref :space)
                    (literal "<-")
-                   hard-cut
+                   :hard-cut
                    (ref :space)
                    (ref :choice)))
 
