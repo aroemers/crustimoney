@@ -1,12 +1,10 @@
 # Table of contents
 -  [`crustimoney2.caches`](#crustimoney2.caches)  - Packrat caches for the core/parse function.
     -  [`Cache`](#crustimoney2.caches/Cache) - Protocol for packrat cache implementations.
-    -  [`basic-cache`](#crustimoney2.caches/basic-cache) - Create a cache that uses a plain map for storage, without any eviction (until it is garbage collected).
     -  [`cut`](#crustimoney2.caches/cut) - Clear all cached results before given index.
     -  [`fetch`](#crustimoney2.caches/fetch) - Try to fetch a cached result, returns nil if it misses the cache.
     -  [`store`](#crustimoney2.caches/store) - Store a result in the cache.
     -  [`treemap-cache`](#crustimoney2.caches/treemap-cache) - Create a cache that supports clearing below a certain index, such that entries are evicted on cuts.
-    -  [`weak-cache`](#crustimoney2.caches/weak-cache) - Create a cache that uses weak references, such that entries are evicted on memory pressure.
     -  [`weak-treemap-cache`](#crustimoney2.caches/weak-treemap-cache) - Create a cache that supports clearing below a certain index and has weak references, such that entries are evicted on cuts or on memory pressure.
 -  [`crustimoney2.combinators`](#crustimoney2.combinators)  - Parsers combinator functions.
     -  [`chain`](#crustimoney2.combinators/chain) - Chain multiple consecutive parsers.
@@ -82,16 +80,6 @@ Packrat caches for the core/parse function.
 Protocol for packrat cache implementations.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L10-L20">Source</a></sub></p>
 
-## <a name="crustimoney2.caches/basic-cache">`basic-cache`</a><a name="crustimoney2.caches/basic-cache"></a>
-``` clojure
-
-(basic-cache)
-```
-
-Create a cache that uses a plain map for storage, without any
-  eviction (until it is garbage collected). Does not support cuts.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L29-L41">Source</a></sub></p>
-
 ## <a name="crustimoney2.caches/cut">`cut`</a><a name="crustimoney2.caches/cut"></a>
 ``` clojure
 
@@ -127,17 +115,7 @@ Store a result in the cache.
 
 Create a cache that supports clearing below a certain index, such
   that entries are evicted on cuts.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L57-L74">Source</a></sub></p>
-
-## <a name="crustimoney2.caches/weak-cache">`weak-cache`</a><a name="crustimoney2.caches/weak-cache"></a>
-``` clojure
-
-(weak-cache)
-```
-
-Create a cache that uses weak references, such that entries are
-  evicted on memory pressure. Does not support cuts.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L43-L55">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L30-L47">Source</a></sub></p>
 
 ## <a name="crustimoney2.caches/weak-treemap-cache">`weak-treemap-cache`</a><a name="crustimoney2.caches/weak-treemap-cache"></a>
 ``` clojure
@@ -148,7 +126,7 @@ Create a cache that uses weak references, such that entries are
 Create a cache that supports clearing below a certain index and has
   weak references, such that entries are evicted on cuts or on memory
   pressure.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L76-L94">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/caches.clj#L49-L67">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.combinators">crustimoney2.combinators</a>
@@ -411,7 +389,7 @@ Use the given parser to parse the supplied text string. The result
   - `:index`, the index at which to start parsing in the text, default 0.
 
   - `:cache`, the packrat cache to use, see the caches namespace.
-  Default is basic-cache. To disable caching, use nil.
+  Default is treemap-cache. To disable caching, use nil.
 
   - `:infinite-check?`, check for infinite loops during parsing.
   Default is true. Setting it to false yields a small performance

@@ -111,7 +111,7 @@
   (fn chain*
     ([_text index]
      (if-let [parser (first parsers)]
-       (r/->push parser index {:pindex 0 :children [] :soft-cut false})
+       (r/->push parser index {:pindex 0 :children []})
        (r/->success index index)))
 
     ([text index result state]

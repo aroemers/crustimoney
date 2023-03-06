@@ -24,35 +24,8 @@
 (def ^:no-doc noop-cache
   (reify Cache
     (fetch [_ _ _])
-    (store [_ _ _ _])))
-
-(defn basic-cache
-  "Create a cache that uses a plain map for storage, without any
-  eviction (until it is garbage collected). Does not support cuts."
-  []
-  (let [cache (volatile! nil)]
-    (reify Cache
-      (fetch [_ parser index]
-        (get-in @cache [parser index]))
-
-      (store [_ parser index result]
-        (vswap! cache assoc-in [parser index] result))
-
-      (cut [_ _]))))
-
-(defn weak-cache
-  "Create a cache that uses weak references, such that entries are
-  evicted on memory pressure. Does not support cuts."
-  []
-  (let [cache (java.util.WeakHashMap.)]
-    (reify Cache
-      (fetch [_ parser index]
-        (get cache [parser index]))
-
-      (store [_ parser index result]
-        (.put cache [parser index] result))
-
-      (cut [_ _]))))
+    (store [_ _ _ _])
+    (cut   [_ _])))
 
 (defn treemap-cache
   "Create a cache that supports clearing below a certain index, such

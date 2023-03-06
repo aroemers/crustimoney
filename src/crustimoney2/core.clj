@@ -52,7 +52,7 @@
   - `:index`, the index at which to start parsing in the text, default 0.
 
   - `:cache`, the packrat cache to use, see the caches namespace.
-  Default is basic-cache. To disable caching, use nil.
+  Default is treemap-cache. To disable caching, use nil.
 
   - `:infinite-check?`, check for infinite loops during parsing.
   Default is true. Setting it to false yields a small performance
@@ -66,7 +66,7 @@
   ([parser text opts]
    ;; Options parsing
    (let [start-index     (:index opts 0)
-         cache           (or (:cache opts (caches/basic-cache)) caches/noop-cache)
+         cache           (or (:cache opts (caches/treemap-cache)) caches/noop-cache)
          post-success    (if (:keep-nameless? opts) identity keep-named-children)
          infinite-check? (:infinite-check? opts true)]
 
@@ -102,7 +102,7 @@
              ;; Handle a success
              (r/success? result)
              (let [processed (post-success result)]
-               ;; Check if it was a hard-cut (success) result
+               ;; Check if it was a hard-cut success
                (if (r/success->attr result :hard-cut)
                  (do (caches/cut cache (r/success->end result))
                      (recur (pop stack) processed state' (r/success->end result)))
