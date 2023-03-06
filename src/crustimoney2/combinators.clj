@@ -39,18 +39,8 @@
 
 ;;; Cut support
 
-(def beta-warning
+(def ^:private beta-warning
   (delay (binding [*out* *err*] (println "WARN: crustimoney's cut functionality is still in beta"))))
-
-(defn- hard-cut
-  [_text index]
-  (-> (r/->success index index)
-      (r/with-success-attrs {:hard-cut true})))
-
-(defn- soft-cut
-  [_text index]
-  (-> (r/->success index index)
-      (r/with-success-attrs {:soft-cut true})))
 
 ;;; Primitives
 
@@ -77,15 +67,16 @@
   backtracking.
 
   With a hard cut, the parser is instructed to never backtrack before
-  the current point in the text. A well placed hard cut has a major
-  benefit, next to better error messages. It allows for substantial
-  memory optimization, since the packrat caches can evict everything
-  before the cut. This can turn memory requirements from O(n) to O(1).
-  Since PEG parsers are memory hungry, this can be a big deal.
+  the end of this chain. A well placed hard cut has a major benefit,
+  next to better error messages. It allows for substantial memory
+  optimization, since the packrat caches can evict everything before
+  the cut. This can turn memory requirements from O(n) to O(1). Since
+  PEG parsers are memory hungry, this can be a big deal.
 
-  With a soft cut, backtracking can still happen outside the chain.
-  The advantage of a soft cut over a hard cut, is that they can be
-  used at more places without breaking the grammar.
+  With a soft cut, backtracking can still happen outside the chain,
+  but errors will not escape inside the chain after a soft cut. The
+  advantage of a soft cut over a hard cut, is that they can be used at
+  more places without breaking the grammar.
 
   For example, the following grammar benefits from a soft-cut:
 
@@ -110,7 +101,7 @@
   would never backtrack to try the prefix with \"bar\" after it.
 
   Soft cuts do not influence the packrat caches, so they do not help
-  performance wise."
+  performance wise. A hard cut is implicitly also a soft cut."
   [& parsers]
   (when (#{:soft-cut :hard-cut} (first parsers))
     (throw (ex-info "Cannot place a cut in first posision of a chain" {:parsers parsers})))
@@ -123,17 +114,18 @@
        (r/->push parser index {:pindex 0 :children [] :soft-cut false})
        (r/->success index index)))
 
-    ([_text _index result state]
+    ([text index result state]
      (if (r/success? result)
        (let [state (-> state (update :pindex inc) (update :children conj result))]
          (if-let [parser (nth parsers (:pindex state) nil)]
            (condp = parser
-             :soft-cut (chain* _text _index result (assoc state :soft-cut true))
-             :hard-cut (r/->push hard-cut (r/success->end result) state)
+             :soft-cut (chain* text index result (assoc state :soft-cut true))
+             :hard-cut (chain* text index result (assoc state :soft-cut true, :hard-cut true))
              (r/->push parser (r/success->end result) state))
-           (r/->success (-> state :children first r/success->start)
-                        (-> state :children last r/success->end)
-                        (:children state))))
+           (cond-> (r/->success (-> state :children first r/success->start)
+                                (-> state :children last r/success->end)
+                                (:children state))
+             (:hard-cut state) (r/with-success-attrs {:hard-cut true}))))
 
        (if (:soft-cut state)
          (with-meta result {:soft-cut true})
@@ -298,9 +290,9 @@
   (def soft-cut-grammar
     (core/rmap
      {:prefix (chain (literal "<")
-                     (soft-cut
-                      (maybe (core/ref :expr))
-                      (literal ">")))
+                     :hard-cut
+                     (maybe (core/ref :expr))
+                     (literal ">"))
       :expr (choice (chain (maybe (core/ref :prefix))
                            (literal "foo"))
                     (chain (maybe (core/ref :prefix))

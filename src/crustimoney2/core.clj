@@ -104,8 +104,8 @@
              (let [processed (post-success result)]
                ;; Check if it was a hard-cut (success) result
                (if (r/success->attr result :hard-cut)
-                 (do (caches/cut cache index)
-                     (recur (pop stack) processed state' index))
+                 (do (caches/cut cache (r/success->end result))
+                     (recur (pop stack) processed state' (r/success->end result)))
                  (do (caches/store cache parser index processed)
                      (recur (pop stack) processed state' cut-at))))
 

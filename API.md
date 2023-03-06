@@ -12,7 +12,6 @@
     -  [`chain`](#crustimoney2.combinators/chain) - Chain multiple consecutive parsers.
     -  [`choice`](#crustimoney2.combinators/choice) - Match the first of the ordered parsers that is successful.
     -  [`eof`](#crustimoney2.combinators/eof) - Succeed only if the entire text has been parsed.
-    -  [`hard-cut`](#crustimoney2.combinators/hard-cut) - A parser that always succeeds, and instructs the parser to not backtrack before the current point in the text.
     -  [`literal`](#crustimoney2.combinators/literal) - A parser that matches an exact literal string.
     -  [`lookahead`](#crustimoney2.combinators/lookahead) - Lookahead for the given parser, i.e.
     -  [`maybe`](#crustimoney2.combinators/maybe) - Try to parse the given parser, but succeed anyway.
@@ -20,7 +19,6 @@
     -  [`regex`](#crustimoney2.combinators/regex) - A parser that matches the given regular expression.
     -  [`repeat*`](#crustimoney2.combinators/repeat*) - Eagerly try to match the given parser as many times as possible.
     -  [`repeat+`](#crustimoney2.combinators/repeat+) - Eagerly try to match the parser as many times as possible, expecting at least one match.
-    -  [`soft-cut`](#crustimoney2.combinators/soft-cut) - Like chain, but wraps the given parsers with a soft cut.
     -  [`with-error`](#crustimoney2.combinators/with-error) - Wrap the parser, replacing any errors with a single error with the supplied error key.
     -  [`with-name`](#crustimoney2.combinators/with-name) - Wrap the parser, assigning a name to the (success) result of the parser.
     -  [`with-value`](#crustimoney2.combinators/with-value) - Wrap the parser, adding a <code>:value</code> attribute to its success, containing the matched text.
@@ -203,7 +201,54 @@ Parsers combinator functions.
 ```
 
 Chain multiple consecutive parsers.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L51-L68">Source</a></sub></p>
+
+  The chain combinator supports cuts. At least one normal parser needs
+  to precede a cut. That parser must consume input, which no other
+  parser (via a choice) up in the combinator tree could also consume
+  at that point.
+
+  Two kinds of cuts are supported. A "hard" cut and a "soft" cut,
+  which can be inserted in the chain using `:hard-cut` or `:soft-cut`.
+  Both types of cuts improve error messages, as they limit
+  backtracking.
+
+  With a hard cut, the parser is instructed to never backtrack before
+  the end of this chain. A well placed hard cut has a major benefit,
+  next to better error messages. It allows for substantial memory
+  optimization, since the packrat caches can evict everything before
+  the cut. This can turn memory requirements from O(n) to O(1). Since
+  PEG parsers are memory hungry, this can be a big deal.
+
+  With a soft cut, backtracking can still happen outside the chain,
+  but errors will not escape inside the chain after a soft cut. The
+  advantage of a soft cut over a hard cut, is that they can be used at
+  more places without breaking the grammar.
+
+  For example, the following grammar benefits from a soft-cut:
+
+      {:prefix (chain (literal "[")
+                      :soft-cut
+                      (maybe (ref :expr))
+                      (literal "]"))
+
+       :expr   (choice (with-name :foo
+                         (chain (maybe (ref :prefix))
+                                (literal "foo")))
+                       (with-name :bar
+                         (chain (maybe (ref :prefix))
+                                (literal "bar"))))}
+
+  When parsing "[foo", it will nicely report that a "]" is
+  missing. Without the soft-cut, it would report that "foo" or
+  "bar" are expected, ignoring that clearly a prefix was started.
+
+  When parsing "[foo]bar", this succeeds nicely. Placing a hard cut
+  at the location of the soft-cut would fail to parse this, as it
+  would never backtrack to try the prefix with "bar" after it.
+
+  Soft cuts do not influence the packrat caches, so they do not help
+  performance wise. A hard cut is implicitly also a soft cut.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L56-L132">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/choice">`choice`</a><a name="crustimoney2.combinators/choice"></a>
 ``` clojure
@@ -212,7 +257,7 @@ Chain multiple consecutive parsers.
 ```
 
 Match the first of the ordered parsers that is successful.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L70-L85">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L134-L149">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/eof">`eof`</a><a name="crustimoney2.combinators/eof"></a>
 ``` clojure
@@ -227,34 +272,7 @@ Succeed only if the entire text has been parsed. Optionally another
   the same as `(eof a-parser)`, though the latter form evaluates to the
   result of the wrapped parser, whereas the former eof creates its own
   (empty) success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L164-L186">Source</a></sub></p>
-
-## <a name="crustimoney2.combinators/hard-cut">`hard-cut`</a><a name="crustimoney2.combinators/hard-cut"></a>
-``` clojure
-
-(hard-cut _text index)
-```
-
-A parser that always succeeds, and instructs the parser to not
-  backtrack before the current point in the text.
-
-  A cut should be placed within a chain, behind at least one parser
-  that has consumed some of the input, which no other parser (via a
-  choice) up in the combinator tree could also consume at that point.
-
-  Well placed hard cuts have two major benefits:
-
-  - Substantial memory optimization, since the packrat caches can
-  evict everything before the cut. It can turn memory requirements
-  from O(n) to O(1). Since PEG parsers are memory hungry, this can be
-  a big deal.
-
-  - Better error messages, since cuts prevent backtracking to the
-  beginning of the text.
-
-  Also read about [`soft-cut`](#crustimoney2.combinators/soft-cut), as hard cuts can only be used in places
-  where you are sure no backtracking is required.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L238-L260">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L228-L250">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/literal">`literal`</a><a name="crustimoney2.combinators/literal"></a>
 ``` clojure
@@ -263,7 +281,7 @@ A parser that always succeeds, and instructs the parser to not
 ```
 
 A parser that matches an exact literal string.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L42-L49">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L47-L54">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/lookahead">`lookahead`</a><a name="crustimoney2.combinators/lookahead"></a>
 ``` clojure
@@ -273,7 +291,7 @@ A parser that matches an exact literal string.
 
 Lookahead for the given parser, i.e. succeed if the parser does,
   without advancing the parsing position.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L140-L151">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L204-L215">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/maybe">`maybe`</a><a name="crustimoney2.combinators/maybe"></a>
 ``` clojure
@@ -282,7 +300,7 @@ Lookahead for the given parser, i.e. succeed if the parser does,
 ```
 
 Try to parse the given parser, but succeed anyway.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L153-L162">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L217-L226">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/negate">`negate`</a><a name="crustimoney2.combinators/negate"></a>
 ``` clojure
@@ -292,7 +310,7 @@ Try to parse the given parser, but succeed anyway.
 
 Negative lookahead for the given parser, i.e. this succeeds if the
   parser does not.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L101-L112">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L165-L176">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/regex">`regex`</a><a name="crustimoney2.combinators/regex"></a>
 ``` clojure
@@ -301,7 +319,7 @@ Negative lookahead for the given parser, i.e. this succeeds if the
 ```
 
 A parser that matches the given regular expression.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L116-L123">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L180-L187">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/repeat*">`repeat*`</a><a name="crustimoney2.combinators/repeat*"></a>
 ``` clojure
@@ -310,7 +328,7 @@ A parser that matches the given regular expression.
 ```
 
 Eagerly try to match the given parser as many times as possible.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L87-L99">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L151-L163">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/repeat+">`repeat+`</a><a name="crustimoney2.combinators/repeat+"></a>
 ``` clojure
@@ -320,51 +338,7 @@ Eagerly try to match the given parser as many times as possible.
 
 Eagerly try to match the parser as many times as possible, expecting
   at least one match.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L125-L138">Source</a></sub></p>
-
-## <a name="crustimoney2.combinators/soft-cut">`soft-cut`</a><a name="crustimoney2.combinators/soft-cut"></a>
-``` clojure
-
-(soft-cut & parsers)
-```
-
-Like chain, but wraps the given parsers with a soft cut. Errors do not
-  escape this cut, i.e backtracking would stop here.
-
-  A cut should be placed within a chain, behind at least one parser
-  that has consumed some of the input, which no other parser (via a
-  choice) up in the combinator tree could also consume at that point.
-
-  It is a called "soft" cut, as backtracking can still happen
-  outside this cut. The advantage of a soft cut over a [`hard-cut`](#crustimoney2.combinators/hard-cut), is
-  that they can be used at more places without breaking the grammar.
-  As cuts help with better error messages, this can be beneficial.
-
-  For example, the following grammar benefits from a soft-cut:
-
-      {:prefix (chain (literal "<")
-                      (soft-cut
-                       (maybe (ref :expr))
-                       (literal ">")))
-
-       :expr   (choice (with-name :foo
-                         (chain (maybe (ref :prefix))
-                                (literal "foo")))
-                       (with-name :bar
-                         (chain (maybe (ref :prefix))
-                                (literal "bar"))))}
-
-  When parsing "<foo", it will nicely report that a ">" is
-  missing. Without the soft-cut, it would report that "foo" or
-  "bar" are expected, ignoring that clearly a prefix was started.
-
-  When parsing "<foo>bar", this succeeds nicely. Placing a hard cut
-  at the location of the soft-cut would fail to parse this, as it
-  would never backtrack to try the prefix with "bar" after it.
-
-  Soft cuts do not influence the packrat caches - as opposed to hard
-  cuts - so they do not help performance wise.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L190-L236">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L189-L202">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/with-error">`with-error`</a><a name="crustimoney2.combinators/with-error"></a>
 ``` clojure
@@ -374,7 +348,7 @@ Like chain, but wraps the given parsers with a soft cut. Errors do not
 
 Wrap the parser, replacing any errors with a single error with the
   supplied error key.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L273-L281">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L263-L271">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/with-name">`with-name`</a><a name="crustimoney2.combinators/with-name"></a>
 ``` clojure
@@ -385,7 +359,7 @@ Wrap the parser, replacing any errors with a single error with the
 Wrap the parser, assigning a name to the (success) result of the
   parser. Nameless parsers are filtered out by default during
   parsing.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L264-L271">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L254-L261">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/with-value">`with-value`</a><a name="crustimoney2.combinators/with-value"></a>
 ``` clojure
@@ -397,7 +371,7 @@ Wrap the parser, assigning a name to the (success) result of the
 Wrap the parser, adding a `:value` attribute to its success,
   containing the matched text. Optionally takes a function f, applied
   to the text value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L283-L294">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L273-L284">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.core">crustimoney2.core</a>
