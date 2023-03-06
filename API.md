@@ -241,16 +241,10 @@ Match the first of the ordered parsers that is successful.
 ``` clojure
 
 (eof text index)
-(eof parser)
 ```
 
-Succeed only if the entire text has been parsed. Optionally another
-  parser can be wrapped, after which the check is done when that parser
-  is done (successfully). This means that `(chain a-parser eof)` behaves
-  the same as `(eof a-parser)`, though the latter form evaluates to the
-  result of the wrapped parser, whereas the former eof creates its own
-  (empty) success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L228-L250">Source</a></sub></p>
+Succeed only if the entire text has been parsed.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L228-L233">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/literal">`literal`</a><a name="crustimoney2.combinators/literal"></a>
 ``` clojure
@@ -326,7 +320,7 @@ Eagerly try to match the parser as many times as possible, expecting
 
 Wrap the parser, replacing any errors with a single error with the
   supplied error key.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L263-L271">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L246-L254">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/with-name">`with-name`</a><a name="crustimoney2.combinators/with-name"></a>
 ``` clojure
@@ -337,7 +331,7 @@ Wrap the parser, replacing any errors with a single error with the
 Wrap the parser, assigning a name to the (success) result of the
   parser. Nameless parsers are filtered out by default during
   parsing.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L254-L261">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L237-L244">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/with-value">`with-value`</a><a name="crustimoney2.combinators/with-value"></a>
 ``` clojure
@@ -349,7 +343,7 @@ Wrap the parser, assigning a name to the (success) result of the
 Wrap the parser, adding a `:value` attribute to its success,
   containing the matched text. Optionally takes a function f, applied
   to the text value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L273-L284">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L256-L267">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.core">crustimoney2.core</a>
@@ -461,6 +455,10 @@ Create a parser based on a data grammar definition. If a map with
        choices            (literal / regex / "alice" "bob")
        named-group        (:my-name literal / "the end" $)
 
+       ;; cuts
+       soft-cut           ('[' > expr? ']')
+       hard-cut           ((class-open class class-close >>)*
+
        ;; quantifiers
        zero-to-many       (literal *)
        one-to-many        ("bar"+)
@@ -476,7 +474,7 @@ Create a parser based on a data grammar definition. If a map with
        custom-combinator     [:my.app/my-combinator literal]}
 
   To capture nodes in the parse result, you need to use named groups.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L100-L139">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L102-L145">Source</a></sub></p>
 
 ## <a name="crustimoney2.data-grammar/vector-tree-for">`vector-tree-for`</a><a name="crustimoney2.data-grammar/vector-tree-for"></a>
 
@@ -747,28 +745,29 @@ Create a parser based on a string-based grammar definition. If the
       whitespace      <- [\s]*
 
       non-terminal    <- (:non-terminal [a-zA-Z_-]+)
-      literal         <- '''' (:literal ('''''' / [^'])*) ''''
+      literal         <- '''' > (:literal ('''''' / [^'])*) ''''
       character-class <- (:character-class '[' (']]' / [^]]])* ']')
       end-of-file     <- (:end-of-file '$')
+      cut             <- (:hard-cut '>>') / (:soft-cut '>')
 
-      group-name      <- ':' (:group-name [a-zA-Z_-]+)
-      group           <- (:group '(' group-name? space choice space ')')
+      group-name      <- ':' > (:group-name [a-zA-Z_-]+)
+      group           <- (:group '(' > group-name? space choice space ')')
 
-      expr            <- non-terminal / group / literal / character-class / end-of-file
+      expr            <- non-terminal / group / literal / character-class / end-of-file / cut
 
       quantified      <- (:quantified expr (:operand [?+*])) / expr
-      lookahead       <- (:lookahead (:operand [&!]) quantified) / quantified
+      lookahead       <- (:lookahead (:operand [&!]) > quantified) / quantified
 
       chain           <- (:chain lookahead (space lookahead)+) / lookahead
       choice          <- (:choice chain (space '/' space chain)+) / chain
 
-      rule            <- (:rule (:rule-name non-terminal) space '<-' space choice)
+      rule            <- (:rule (:rule-name non-terminal) space '<-' >> space choice)
       rules           <- (:rules (whitespace rule whitespace)+)
       no-rules        <- (:no-rules whitespace choice whitespace)
       root            <- (:root rules / no-rules) $
 
   To capture nodes in the parse result, you need to use named groups.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L200-L237">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L210-L248">Source</a></sub></p>
 
 ## <a name="crustimoney2.string-grammar/vector-tree">`vector-tree`</a><a name="crustimoney2.string-grammar/vector-tree"></a>
 ``` clojure
@@ -780,7 +779,7 @@ Low-level function which translates the string grammar into an
   intermediary vector-based representation. See
   [`crustimoney2.vector-grammar`](#crustimoney2.vector-grammar) for more on this format. This can be
   useful for debugging.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L189-L198">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L199-L208">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.vector-grammar">crustimoney2.vector-grammar</a>

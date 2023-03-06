@@ -42,6 +42,10 @@
     :end-of-file (with-name :end-of-file
                    (literal "$"))
 
+    :cut         (with-name :cut
+                   (with-value {">>" :hard-cut, ">" :soft-cut}
+                     (choice (literal ">>") (literal ">"))))
+
     :group-name (chain (literal ":")
                        :soft-cut
                        (with-name :group-name
@@ -53,7 +57,7 @@
                     :soft-cut
                     (maybe (ref :group-name))
                     (ref :space)
-                    (maybe (ref :choice))
+                    (ref :choice)
                     (ref :space)
                     (literal ")")))
 
@@ -61,7 +65,8 @@
                   (ref :group)
                   (ref :literal)
                   (ref :character-class)
-                  (ref :end-of-file))
+                  (ref :end-of-file)
+                  (ref :cut))
 
     :quantified (choice (with-name :quantified
                           (chain (ref :expr)
@@ -102,14 +107,15 @@
                    (ref :choice)))
 
     :root (with-name :root
-            (eof (choice (with-name :rules
-                           (repeat+ (chain (ref :whitespace)
-                                           (ref :rule)
-                                           (ref :whitespace))))
-                         (with-name :no-rules
-                           (chain (ref :whitespace)
-                                  (ref :choice)
-                                  (ref :whitespace))))))}))
+            (chain (choice (with-name :rules
+                             (repeat+ (chain (ref :whitespace)
+                                             (ref :rule)
+                                             (ref :whitespace))))
+                           (with-name :no-rules
+                             (chain (ref :whitespace)
+                                    (ref :choice)
+                                    (ref :whitespace))))
+                   eof))}))
 
 ;;; Parse result processing
 
@@ -184,6 +190,10 @@
   [_node]
   [:eof])
 
+(defmethod vector-tree-for :cut
+  [node]
+  (r/success->attr node :value))
+
 ;;; Public namespace API
 
 (defn vector-tree
@@ -208,22 +218,23 @@
       whitespace      <- [\\s]*
 
       non-terminal    <- (:non-terminal [a-zA-Z_-]+)
-      literal         <- '''' (:literal ('''''' / [^'])*) ''''
+      literal         <- '''' > (:literal ('''''' / [^'])*) ''''
       character-class <- (:character-class '[' (']]' / [^]]])* ']')
       end-of-file     <- (:end-of-file '$')
+      cut             <- (:hard-cut '>>') / (:soft-cut '>')
 
-      group-name      <- ':' (:group-name [a-zA-Z_-]+)
-      group           <- (:group '(' group-name? space choice space ')')
+      group-name      <- ':' > (:group-name [a-zA-Z_-]+)
+      group           <- (:group '(' > group-name? space choice space ')')
 
-      expr            <- non-terminal / group / literal / character-class / end-of-file
+      expr            <- non-terminal / group / literal / character-class / end-of-file / cut
 
       quantified      <- (:quantified expr (:operand [?+*])) / expr
-      lookahead       <- (:lookahead (:operand [&!]) quantified) / quantified
+      lookahead       <- (:lookahead (:operand [&!]) > quantified) / quantified
 
       chain           <- (:chain lookahead (space lookahead)+) / lookahead
       choice          <- (:choice chain (space '/' space chain)+) / chain
 
-      rule            <- (:rule (:rule-name non-terminal) space '<-' space choice)
+      rule            <- (:rule (:rule-name non-terminal) space '<-' >> space choice)
       rules           <- (:rules (whitespace rule whitespace)+)
       no-rules        <- (:no-rules whitespace choice whitespace)
       root            <- (:root rules / no-rules) $
@@ -245,22 +256,23 @@
     whitespace      <- [\\s]*
 
     non-terminal    <- (:non-terminal [a-zA-Z_-]+)
-    literal         <- '''' (:literal ('''''' / [^'])*) ''''
+    literal         <- '''' > (:literal ('''''' / [^'])*) ''''
     character-class <- (:character-class '[' (']]' / [^]]])* ']')
     end-of-file     <- (:end-of-file '$')
+    cut             <- (:hard-cut '>>') / (:soft-cut '>')
 
-    group-name      <- ':' (:group-name [a-zA-Z_-]+)
-    group           <- (:group '(' group-name? space choice space ')')
+    group-name      <- ':' > (:group-name [a-zA-Z_-]+)
+    group           <- (:group '(' > group-name? space choice space ')')
 
-    expr            <- non-terminal / group / literal / character-class / end-of-file
+    expr            <- non-terminal / group / literal / character-class / end-of-file / cut
 
     quantified      <- (:quantified expr (:operand [?+*])) / expr
-    lookahead       <- (:lookahead (:operand [&!]) quantified) / quantified
+    lookahead       <- (:lookahead (:operand [&!]) > quantified) / quantified
 
     chain           <- (:chain lookahead (space lookahead)+) / lookahead
     choice          <- (:choice chain (space '/' space chain)+) / chain
 
-    rule            <- (:rule (:rule-name non-terminal) space '<-' space choice)
+    rule            <- (:rule (:rule-name non-terminal) space '<-' >> space choice)
     root            <- (:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $")
 
   (require '[instaparse.core :as insta])
@@ -273,11 +285,12 @@
     literal         = \"'\" (\"''\" / #\"[^']\")* \"'\"
     character-class = '[' (']]' / #'[^]]')* ']'
     end-of-file     = '$'
+    cut             = '>>' / '>'
 
     group-name      = ':' #'[a-zA-Z_-]+'
     group           = '(' group-name? space choice space ')'
 
-    expr            = non-terminal / group / literal / character-class / end-of-file
+    expr            = non-terminal / group / literal / character-class / end-of-file / cut
 
     quantified      = expr #'[?+*]' / expr
     lookahead       = #'[&!]' quantified / quantified

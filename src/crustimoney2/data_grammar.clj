@@ -74,7 +74,9 @@
   [data]
   (let [ref-name (str data)]
     (case ref-name
-      "$" [:eof]
+      "$"  [:eof]
+      ">>" :hard-cut
+      ">"  :soft-cut
       [:ref (keyword ref-name)])))
 
 (defmethod vector-tree-for java.lang.String
@@ -116,6 +118,10 @@
        choices            (literal / regex / \"alice\" \"bob\")
        named-group        (:my-name literal / \"the end\" $)
 
+       ;; cuts
+       soft-cut           ('[' > expr? ']')
+       hard-cut           ((class-open class class-close >>)*
+
        ;; quantifiers
        zero-to-many       (literal *)
        one-to-many        (\"bar\"+)
@@ -147,20 +153,23 @@
       whitespace #"\s*"
 
       non-terminal    (:non-terminal #"[a-zA-Z_-]+")
-      literal         ("'" (:literal ("''" / #"[^']")*) "'")
+      literal         ("'" > (:literal ("''" / #"[^']")*) "'")
       character-class (:character-class "[" ("]]" / #"[^]]")* "]")
       end-of-file     (:end-of-file "$")
+      cut             ((:hard-cut ">>") / (:soft-cut ">"))
 
-      group-name (":" (:group-name #"[a-zA-Z_-]+"))
-      group      (:group "(" group-name ? space choice space ")")
+      group-name (":" > (:group-name #"[a-zA-Z_-]+"))
+      group      (:group "(" > group-name ? space choice space ")")
 
-      expr (non-terminal / group / literal / character-class / end-of-file)
+      expr (non-terminal / group / literal / character-class / end-of-file / cut)
 
       quantified ((:quantified expr (:operand #"[?+*]")) / expr)
-      lookahead  ((:lookahead (:operand #"[&!]") quantified) / quantified)
+      lookahead  ((:lookahead (:operand #"[&!]") > quantified) / quantified)
 
       chain  ((:chain lookahead (space lookahead)+) / lookahead)
       choice ((:choice chain (space "/" space chain)+) / chain)
 
-      rule (:rule (:rule-name non-terminal) space "<-" space choice)
-      root ((:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $)}))
+      rule (:rule (:rule-name non-terminal) space "<-" >> space choice)
+      root ((:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $)})
+
+  )
