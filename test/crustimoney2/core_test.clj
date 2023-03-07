@@ -23,19 +23,17 @@
              (core/parse p "foobar" {:keep-nameless? true})))))
 
   (testing "resiliency against infinite loops"
-    (let [grammar (core/rmap {:a (core/ref :b)
-                              :b (core/ref :c)
-                              :c (core/ref :a)})]
+    (let [grammar (c/grammar {:a (c/ref :b), :b (c/ref :c), :c (c/ref :a)})]
       (is (thrown-with-msg? Exception #"Infinite parsing loop detected"
                             (core/parse (:a grammar) "anything"))))
 
-    (let [grammar (core/rmap {:a (c/chain (c/choice (c/maybe (c/repeat* (core/ref :b)))))
-                              :b (core/ref :a)})]
+    (let [grammar (c/grammar {:a (c/chain (c/choice (c/maybe (c/repeat* (c/ref :b)))))
+                              :b (c/ref :a)})]
       (is (thrown-with-msg? Exception #"Infinite parsing loop detected"
                             (core/parse (:a grammar) "anything")))))
 
   (testing "resiliency against stack overflow"
-    (let [grammar   (core/rmap {:a (c/choice (c/chain (c/literal "a") (core/ref :a))
+    (let [grammar   (c/grammar {:a (c/choice (c/chain (c/literal "a") (c/ref :a))
                                              (c/literal "a"))})
           long-text (apply str (repeat 10000 "a"))]
       (is (r/success? (core/parse (:a grammar) long-text))))))

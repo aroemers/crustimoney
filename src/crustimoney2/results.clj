@@ -127,32 +127,27 @@
 
 ;;; Line and columns for errors
 
-(defn- line-breaks-in [text]
-  (let [length (count text)]
-    (loop [index   0
-           lengths (transient [])
-           current 0]
-      (if (< index length)
-        (if (= (nth text index) \newline)
-          (recur (inc index) (conj! lengths current) 0)
-          (recur (inc index) lengths (inc current)))
-        (persistent! lengths)))))
-
-(defn- index->line-column [line-breaks index]
-  (loop [at     index
-         line   1
-         breaks line-breaks]
-    (if-let [break (first breaks)]
-      (if (< (- at break) 0)
-        {:line line, :column (inc at)}
-        (recur (- at break) (inc line) (rest breaks)))
-      {:line line, :column (inc at)})))
+(defn- indices->line-columns [text indices]
+  (loop [indices   (sort (distinct indices))
+         line-cols {}
+         cursor    0
+         line      1
+         col       1]
+    (if-let [index (first indices)]
+      (let [hit?     (= cursor index)
+            newline? (= (nth text cursor :eof) \newline)]
+        (recur (cond-> indices hit? rest)
+               (cond-> line-cols hit? (assoc index {:line line :column col}))
+               (inc cursor)
+               (cond-> line newline? inc)
+               (if newline? 1 (inc col))))
+      line-cols)))
 
 (defn errors->line-column
   "Returns the errors with `:line` and `:column` entries added."
   [errors text]
-  (let [line-breaks (line-breaks-in text)]
-    (mapcat (fn [[at errors]]
-              (let [lc (index->line-column line-breaks at)]
-                (map (partial merge lc) errors)))
-            (group-by error->index errors))))
+  (let [grouped   (group-by error->index errors)
+        line-cols (indices->line-columns text (keys grouped))]
+    (->> errors
+         (map #(merge %1 (line-cols (error->index %1))))
+         (set))))

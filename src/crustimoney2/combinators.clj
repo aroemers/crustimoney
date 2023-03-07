@@ -35,12 +35,8 @@
 
   Before you write your own combinator, do realise that the provided
   combinators are complete in the sense that they can parse any text."
+  (:refer-clojure :exclude [ref])
   (:require [crustimoney2.results :as r]))
-
-;;; Cut support
-
-(def ^:private beta-warning
-  (delay (binding [*out* *err*] (println "WARN: crustimoney's cut functionality is still in beta"))))
 
 ;;; Primitives
 
@@ -103,10 +99,10 @@
   Soft cuts do not influence the packrat caches, so they do not help
   performance wise. A hard cut is implicitly also a soft cut."
   [& parsers]
-  (when (#{:soft-cut :hard-cut} (first parsers))
-    (throw (ex-info "Cannot place a cut in first posision of a chain" {:parsers parsers})))
-  (when (some #{:soft-cut :hard-cut} parsers)
-    @beta-warning)
+  (assert (not (#{:soft-cut :hard-cut} (first parsers)))
+    "Cannot place a cut in first posision of a chain")
+  (assert (seq (filter #{:soft-cut :hard-cut} parsers))
+    "Only :soft-cut and :hard-cut keywords are supported")
 
   (fn chain*
     ([_text index]
@@ -232,6 +228,44 @@
       (r/->success index index)
       #{(r/->error :eof-not-reached index)})))
 
+;;; Recursive grammar definition
+
+(def ^:dynamic ^:no-doc *parsers*)
+
+(defn ref
+  "Wrap another parser function, which is referred to by the given key.
+  Needs to be called within the lexical scope of `grammar`."
+  [key]
+  (assert (bound? #'*parsers*)
+    "Cannot use ref function outside grammar macro")
+
+  (swap! *parsers* assoc key nil)
+  (let [parsers *parsers*]
+    (fn
+      ([_ index]
+       (r/->push (get @parsers key) index))
+      ([_ _ result _]
+       result))))
+
+(defn ^:no-doc grammar* [f]
+  (assert (not (bound? #'*parsers*)) "Cannot nest grammar macro")
+
+  (binding [*parsers* (atom nil)]
+    (let [result (swap! *parsers* merge (f))]
+      (if-let [unknown-refs (seq (remove result (keys result)))]
+        (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unknown-refs}))
+        result))))
+
+(defmacro grammar
+  "Takes (something that evaluates to) a map, in which the entries can
+  refer to each other using the `ref` function. In other words, a
+  recursive map. For example:
+
+      (grammar {:foo  (literal \"foo\")
+                :root (chain (ref :foo) \"bar\")})"
+  [m]
+  `(grammar* (fn [] ~m)))
+
 ;;; Result wrappers
 
 (defn with-name
@@ -268,17 +302,15 @@
 
 (comment
 
-  (require '[crustimoney2.core :as core])
-
   (def soft-cut-grammar
-    (core/rmap
+    (grammar
      {:prefix (chain (literal "<")
                      :hard-cut
-                     (maybe (core/ref :expr))
+                     (maybe (ref :expr))
                      (literal ">"))
-      :expr (choice (chain (maybe (core/ref :prefix))
+      :expr (choice (chain (maybe (ref :prefix))
                            (literal "foo"))
-                    (chain (maybe (core/ref :prefix))
+                    (chain (maybe (ref :prefix))
                            (literal "bar")))}))
 
   (def hard-cut-grammar

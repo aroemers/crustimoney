@@ -1,10 +1,8 @@
 (ns crustimoney2.string-grammar
   "Create a parser based on a string grammar. The grammar is translated
   into combinators."
-  (:refer-clojure :exclude [ref])
   (:require [clojure.string :as str]
-            [crustimoney2.core :as core :refer [ref]]
-            [crustimoney2.combinators :refer [chain choice eof literal maybe regex repeat+ with-name with-value]]
+            [crustimoney2.combinators :as c]
             [crustimoney2.results :as r]
             [crustimoney2.vector-grammar :as vector-grammar]))
 
@@ -19,103 +17,103 @@
 ;;; Grammar definition
 
 (def ^:private grammar
-  (core/rmap
-   {:space (regex "[ \t]*")
+  (c/grammar
+   {:space (c/regex "[ \t]*")
 
-    :whitespace (regex #"\s*")
+    :whitespace (c/regex #"\s*")
 
-    :non-terminal (with-name :non-terminal
-                    (with-value
-                      (regex "[a-zA-Z_-]+")))
+    :non-terminal (c/with-name :non-terminal
+                    (c/with-value
+                      (c/regex "[a-zA-Z_-]+")))
 
-    :literal (chain (literal "'")
-                    :soft-cut
-                    (with-name :literal
-                      (with-value unescape-quotes
-                        (regex "(''|[^'])*")))
-                    (literal "'"))
+    :literal (c/chain (c/literal "'")
+                      :soft-cut
+                      (c/with-name :literal
+                        (c/with-value unescape-quotes
+                          (c/regex "(''|[^'])*")))
+                      (c/literal "'"))
 
-    :character-class (with-name :character-class
-                       (with-value unescape-brackets
-                         (regex #"\[(]]|[^]])*]")))
+    :character-class (c/with-name :character-class
+                       (c/with-value unescape-brackets
+                         (c/regex #"\[(]]|[^]])*]")))
 
-    :end-of-file (with-name :end-of-file
-                   (literal "$"))
+    :end-of-file (c/with-name :end-of-file
+                   (c/literal "$"))
 
-    :cut         (with-name :cut
-                   (with-value {">>" :hard-cut, ">" :soft-cut}
-                     (choice (literal ">>") (literal ">"))))
+    :cut (c/with-name :cut
+           (c/with-value {">>" :hard-cut, ">" :soft-cut}
+             (c/choice (c/literal ">>") (c/literal ">"))))
 
-    :group-name (chain (literal ":")
-                       :soft-cut
-                       (with-name :group-name
-                         (with-value
-                           (regex "[a-zA-Z_-]+"))))
+    :group-name (c/chain (c/literal ":")
+                         :soft-cut
+                         (c/with-name :group-name
+                           (c/with-value
+                             (c/regex "[a-zA-Z_-]+"))))
 
-    :group (with-name :group
-             (chain (literal "(")
-                    :soft-cut
-                    (maybe (ref :group-name))
-                    (ref :space)
-                    (ref :choice)
-                    (ref :space)
-                    (literal ")")))
+    :group (c/with-name :group
+             (c/chain (c/literal "(")
+                      :soft-cut
+                      (c/maybe (c/ref :group-name))
+                      (c/ref :space)
+                      (c/ref :choice)
+                      (c/ref :space)
+                      (c/literal ")")))
 
-    :expr (choice (ref :non-terminal)
-                  (ref :group)
-                  (ref :literal)
-                  (ref :character-class)
-                  (ref :end-of-file))
+    :expr (c/choice (c/ref :non-terminal)
+                    (c/ref :group)
+                    (c/ref :literal)
+                    (c/ref :character-class)
+                    (c/ref :end-of-file))
 
-    :quantified (choice (with-name :quantified
-                          (chain (ref :expr)
-                                 (with-name :operand
-                                   (with-value
-                                     (regex "[?+*]")))))
-                        (ref :expr))
+    :quantified (c/choice (c/with-name :quantified
+                            (c/chain (c/ref :expr)
+                                     (c/with-name :operand
+                                       (c/with-value
+                                         (c/regex "[?+*]")))))
+                          (c/ref :expr))
 
-    :lookahead (choice (with-name :lookahead
-                         (chain (with-name :operand
-                                  (with-value
-                                    (regex "[&!]")))
-                                :soft-cut
-                                (ref :quantified)))
-                       (ref :quantified))
+    :lookahead (c/choice (c/with-name :lookahead
+                           (c/chain (c/with-name :operand
+                                      (c/with-value
+                                        (c/regex "[&!]")))
+                                    :soft-cut
+                                    (c/ref :quantified)))
+                         (c/ref :quantified))
 
-    :chain (choice (with-name :chain
-                     (chain (ref :lookahead)
-                            (repeat+ (chain (ref :space)
-                                            (choice (ref :cut)
-                                                    (ref :lookahead))))))
-                   (ref :lookahead))
+    :chain (c/choice (c/with-name :chain
+                       (c/chain (c/ref :lookahead)
+                                (c/repeat+ (c/chain (c/ref :space)
+                                                    (c/choice (c/ref :cut)
+                                                              (c/ref :lookahead))))))
+                     (c/ref :lookahead))
 
-    :choice (choice (with-name :choice
-                      (chain (ref :chain)
-                             (repeat+ (chain (ref :space)
-                                             (literal "/")
-                                             (ref :space)
-                                             (ref :chain)))))
-                    (ref :chain))
+    :choice (c/choice (c/with-name :choice
+                        (c/chain (c/ref :chain)
+                                 (c/repeat+ (c/chain (c/ref :space)
+                                                     (c/literal "/")
+                                                     (c/ref :space)
+                                                     (c/ref :chain)))))
+                      (c/ref :chain))
 
-    :rule (with-name :rule
-            (chain (with-name :rule-name
-                     (ref :non-terminal))
-                   (ref :space)
-                   (literal "<-")
-                   :hard-cut
-                   (ref :space)
-                   (ref :choice)))
+    :rule (c/with-name :rule
+            (c/chain (c/with-name :rule-name
+                       (c/ref :non-terminal))
+                     (c/ref :space)
+                     (c/literal "<-")
+                     :hard-cut
+                     (c/ref :space)
+                     (c/ref :choice)))
 
-    :root (with-name :root
-            (chain (choice (with-name :rules
-                             (repeat+ (chain (ref :whitespace)
-                                             (ref :rule)
-                                             (ref :whitespace))))
-                           (with-name :no-rules
-                             (chain (ref :whitespace)
-                                    (ref :choice)
-                                    (ref :whitespace))))
-                   eof))}))
+    :root (c/with-name :root
+            (c/chain (c/choice (c/with-name :rules
+                                 (c/repeat+ (c/chain (c/ref :whitespace)
+                                                     (c/ref :rule)
+                                                     (c/ref :whitespace))))
+                               (c/with-name :no-rules
+                                 (c/chain (c/ref :whitespace)
+                                          (c/ref :choice)
+                                          (c/ref :whitespace))))
+                     c/eof))}))
 
 ;;; Parse result processing
 
@@ -251,6 +249,8 @@
 (comment
 
   ;;; I heard you like string grammars...
+
+  ;;TODO: Other syntax for regexes? So not character class, but real regex? Or both?
 
   (def superdogfood "
     space           <- [ \t]*

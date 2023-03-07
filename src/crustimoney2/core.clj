@@ -1,6 +1,5 @@
 (ns crustimoney2.core
   "The main parsing functions."
-  (:refer-clojure :exclude [ref])
   (:require [crustimoney2.caches :as caches]
             [crustimoney2.combinators :as c]
             [crustimoney2.results :as r]))
@@ -80,7 +79,8 @@
          (let [parser (r/push->parser stack-item)
                index  (r/push->index stack-item)
                state' (r/push->state stack-item)
-               ;; If there was previously a result, we are backtracking. Otherwise, there was a push.
+               ;; If there was previously a result, we are
+               ;; backtracking. Otherwise, there was a push.
                result (if result
                         (parser text index result state)
                         (parser text index))]
@@ -121,65 +121,28 @@
                (throw (ex-info "Unexpected result from parser" info)))))
          result)))))
 
-;;; Recursive grammar definition
-
-(def ^:dynamic ^:no-doc *parsers*)
-
-(defn ref
-  "Creates a parser function that wraps another parser function, which
-  is referred to by the given key. Needs to be called within the
-  lexical scope of `rmap`."
-  [key]
-  (assert (bound? #'*parsers*)
-    "Cannot use ref function outside rmap macro")
-  (swap! *parsers* assoc key nil)
-  (let [parsers *parsers*]
-    (fn
-      ([_ index]
-       (r/->push (get @parsers key) index))
-      ([_ _ result _]
-       result))))
-
-(defn ^:no-doc rmap* [f]
-  (binding [*parsers* (atom nil)]
-    (let [result (swap! *parsers* merge (f))]
-      (if-let [unknown-refs (seq (remove result (keys result)))]
-        (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unknown-refs}))
-        result))))
-
-(defmacro rmap
-  "Takes (something that evaluates to) a map, in which the entries can
-  refer to each other using the `ref` function. In other words, a
-  recursive map. For example:
-
-      (rmap {:foo  (literal \"foo\")
-             :root (chain (ref :foo) \"bar\")})"
-  [grammar]
-  `(rmap* (fn [] ~grammar)))
-
-
 (comment
 
   (def combinator-grammar
-    (rmap
+    (c/grammar
      {:sum (c/choice (c/with-name :sum
-                       (c/chain (ref :product)
-                                (ref :sum-op)
+                       (c/chain (c/ref :product)
+                                (c/ref :sum-op)
                                 :hard-cut
-                                (ref :sum)))
-                     (ref :product))
+                                (c/ref :sum)))
+                     (c/ref :product))
 
       :product (c/choice (c/with-name :product
-                           (c/chain (ref :value)
-                                    (ref :product-op)
+                           (c/chain (c/ref :value)
+                                    (c/ref :product-op)
                                     :hard-cut
-                                    (ref :product)))
-                         (ref :value))
+                                    (c/ref :product)))
+                         (c/ref :value))
 
-      :value (c/choice (ref :number)
+      :value (c/choice (c/ref :number)
                        (c/chain (c/literal "(")
                                 :soft-cut
-                                (c/maybe (ref :sum))
+                                (c/maybe (c/ref :sum))
                                 (c/literal ")")))
 
       :sum-op (c/with-name :operation
