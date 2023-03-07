@@ -32,7 +32,40 @@
 
   (testing "chain with no parsers"
     (let [p (c/chain)]
-      (is (= (r/->success 0 0) (parse p "anything"))))))
+      (is (= (r/->success 0 0) (parse p "anything")))))
+
+  (testing "chain with soft-cut"
+    (is (thrown? AssertionError (c/chain :soft-cut)))
+
+    (let [p (c/grammar {:prefix (c/chain (c/literal "<")
+                                         :soft-cut
+                                         (c/literal ">"))
+                        :root   (c/chain (c/choice (c/chain (c/maybe (c/ref :prefix))
+                                                            (c/literal "foo"))
+                                                   (c/chain (c/maybe (c/ref :prefix))
+                                                            (c/literal "bar"))))})]
+      (is (= #{(r/->error :expected-literal 1 {:literal ">"})}
+             (core/parse (:root p) "<")))
+      (is (= (r/->success 0 5)
+             (core/parse (:root p) "<>bar")))))
+
+  (testing "chain with hard-cut"
+    (is (thrown? AssertionError (c/chain :hard-cut)))
+
+    (let [p (c/grammar {:prefix (c/chain (c/literal "<")
+                                         :hard-cut
+                                         (c/literal ">"))
+                        :root   (c/chain (c/choice (c/chain (c/maybe (c/ref :prefix))
+                                                            (c/literal "foo"))
+                                                   (c/chain (c/maybe (c/ref :prefix))
+                                                            (c/literal "bar"))))})]
+      (is (= #{(r/->error :expected-literal 1 {:literal ">"})}
+             (core/parse (:root p) "<")))
+      (is (= #{(r/->error :expected-literal 2 {:literal "foo"})}
+             (core/parse (:root p) "<>bar")))))
+
+  (testing "chain with unknown keyword"
+    (is (thrown? AssertionError (c/chain (c/literal "foo") :unknown)))))
 
 (deftest choice-test
   (testing "choice with two parsers"
@@ -106,10 +139,10 @@
            (parse c/eof "more"))))
 
   (testing "wrapping other parser"
-    (let [p (c/eof (c/literal "foo"))]
-      (is (= (r/->success 0 3) (parse p "foo")))
+    (let [p (c/chain (c/literal "foo") c/eof)]
+      (is (= (r/->success 0 3) (core/parse p "foo")))
       (is (= #{(r/->error :eof-not-reached 3)}
-             (parse p "foo-and-more"))))))
+             (core/parse p "foo-and-more"))))))
 
 ;;; Result wrappers
 

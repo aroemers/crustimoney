@@ -101,7 +101,7 @@
   [& parsers]
   (assert (not (#{:soft-cut :hard-cut} (first parsers)))
     "Cannot place a cut in first posision of a chain")
-  (assert (seq (filter #{:soft-cut :hard-cut} parsers))
+  (assert (empty? (remove #{:soft-cut :hard-cut} (filter keyword? parsers)))
     "Only :soft-cut and :hard-cut keywords are supported")
 
   (fn chain*

@@ -26,6 +26,7 @@
              (core/parse (:root p) "foobaz")))))
 
   (testing "custom combinator"
+    #_{:clj-kondo/ignore [:inline-def]}
     (def my-combinator c/literal)
 
     (let [p (create-parser [::my-combinator "foo"])]
