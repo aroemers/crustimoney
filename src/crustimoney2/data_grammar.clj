@@ -75,6 +75,7 @@
   (let [ref-name (str data)]
     (case ref-name
       "$"  [:eof]
+      "ε"  [:epsilon]
       ">>" :hard-cut
       ">"  :soft-cut
       [:ref (keyword ref-name)])))
@@ -102,15 +103,15 @@
 (defn create-parser
   "Create a parser based on a data grammar definition. If a map with
   rules is supplied, a map of parsers is returned. Otherwise a single
-  parser is returned. Optionally an existing map of parsers can be
-  supplied, which can refered to by the data grammar. The following
-  example shows what a data grammar looks like:
+  parser is returned. The following example shows what a data grammar
+  looks like:
 
       {;; terminals
        literal            \"foo\"
        character          \\c
        regex              #\"[a-z]\"
        eof                $
+       epsilon            ε
 
        ;; refs and grouping
        reference          literal
@@ -136,6 +137,9 @@
        combinator-plain-data [:with-error #crust/plain :fail! \"foo\"]
        custom-combinator     [:my.app/my-combinator literal]}
 
+  Optionally an existing map of parsers can be supplied, which can
+  refered to by the data grammar.
+
   To capture nodes in the parse result, you need to use named groups."
   ([data]
    (create-parser data nil))
@@ -149,27 +153,28 @@
   ;;; Eat your own dogfood, the string-grammar described in a data-grammar.
 
   (def superdogfood
-    '{space      #"[ \t]*"
-      whitespace #"\s*"
+    '{space #"\s*"
 
       non-terminal    (:non-terminal #"[a-zA-Z_-]+")
-      literal         ("'" > (:literal ("''" / #"[^']")*) "'")
-      character-class (:character-class "[" ("]]" / #"[^]]")* "]")
-      end-of-file     (:end-of-file "$")
-      cut             ((:hard-cut ">>") / (:soft-cut ">"))
+      literal         ("'" > (:literal ("\\'" / #"[^']")*) "'")
+      character-class (:character-class "[" ("\\]" / #"[^]]")* "]")
+      special-char    ((:end-of-file "$") / (:epsilon "ε"))
 
       group-name (":" > (:group-name #"[a-zA-Z_-]+"))
       group      (:group "(" > group-name ? space choice space ")")
 
-      expr (non-terminal / group / literal / character-class / end-of-file / cut)
+      expr ((non-terminal space !"<-") /
+            group / literal / character-class / special-char)
 
       quantified ((:quantified expr (:operand #"[?+*]")) / expr)
       lookahead  ((:lookahead (:operand #"[&!]") > quantified) / quantified)
 
-      chain  ((:chain lookahead (space lookahead)+) / lookahead)
+      cut ((:hard-cut ">>") / (:soft-cut ">"))
+
+      chain  ((:chain lookahead (space (cut / lookahead))+) / lookahead)
       choice ((:choice chain (space "/" space chain)+) / chain)
 
       rule (:rule (:rule-name non-terminal) space "<-" >> space choice)
-      root ((:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $)})
+      root ((:root (:rules (space rule space)+) / (:no-rules space choice space)) $)})
 
   )

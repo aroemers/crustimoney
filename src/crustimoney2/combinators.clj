@@ -104,19 +104,19 @@
   (assert (empty? (remove #{:soft-cut :hard-cut} (filter keyword? parsers)))
     "Only :soft-cut and :hard-cut keywords are supported")
 
-  (fn chain*
+  (fn
     ([_text index]
      (if-let [parser (first parsers)]
        (r/->push parser index {:pindex 0 :children []})
        (r/->success index index)))
 
-    ([text index result state]
+    ([_text _index result state]
      (if (r/success? result)
-       (let [state (-> state (update :pindex inc) (update :children conj result))]
+       (loop [state (-> state (update :pindex inc) (update :children conj result))]
          (if-let [parser (nth parsers (:pindex state) nil)]
            (condp = parser
-             :soft-cut (chain* text index result (assoc state :soft-cut true))
-             :hard-cut (chain* text index result (assoc state :soft-cut true, :hard-cut true))
+             :soft-cut (recur (-> state (update :pindex inc) (assoc :soft-cut true)))
+             :hard-cut (recur (-> state (update :pindex inc) (assoc :soft-cut true, :hard-cut true)))
              (r/->push parser (r/success->end result) state))
            (cond-> (r/->success (-> state :children first r/success->start)
                                 (-> state :children last r/success->end)
@@ -221,12 +221,15 @@
      (or (r/success? result)
          (r/->success index index)))))
 
-(def ^{:doc "Succeed only if the entire text has been parsed."}
-  eof
-  (fn [text index]
-    (if (= (count text) index)
-      (r/->success index index)
-      #{(r/->error :eof-not-reached index)})))
+(defn eof
+  "Succeed only if the entire text has been parsed."
+  []
+  (negate (regex ".")))
+
+(defn epsilon
+  "Matches the empty string."
+  []
+  (literal ""))
 
 ;;; Recursive grammar definition
 

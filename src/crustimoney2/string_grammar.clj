@@ -3,24 +3,23 @@
   into combinators."
   (:require [clojure.string :as str]
             [crustimoney2.combinators :as c]
+            [crustimoney2.core :as core]
             [crustimoney2.results :as r]
             [crustimoney2.vector-grammar :as vector-grammar]))
 
 ;;; Value transformers
 
 (defn- unescape-quotes [s]
-  (str/replace s "''" "'"))
+  (str/replace s "\\'" "'"))
 
 (defn- unescape-brackets [s]
-  (str/replace s "]]" "]"))
+  (str/replace s "\\]" "]"))
 
 ;;; Grammar definition
 
 (def ^:private grammar
   (c/grammar
-   {:space (c/regex "[ \t]*")
-
-    :whitespace (c/regex #"\s*")
+   {:space (c/regex #"\s*")
 
     :non-terminal (c/with-name :non-terminal
                     (c/with-value
@@ -30,15 +29,17 @@
                       :soft-cut
                       (c/with-name :literal
                         (c/with-value unescape-quotes
-                          (c/regex "(''|[^'])*")))
+                          (c/regex #"(\\'|[^'])*")))
                       (c/literal "'"))
 
     :character-class (c/with-name :character-class
                        (c/with-value unescape-brackets
-                         (c/regex #"\[(]]|[^]])*]")))
+                         (c/regex #"\[(\\]|[^]])*][?*+]?")))
 
-    :end-of-file (c/with-name :end-of-file
-                   (c/literal "$"))
+    :special-char (c/choice (c/with-name :end-of-file
+                              (c/literal "$"))
+                            (c/with-name :epsilon
+                              (c/literal "ε")))
 
     :cut (c/with-name :cut
            (c/with-value {">>" :hard-cut, ">" :soft-cut}
@@ -59,11 +60,13 @@
                       (c/ref :space)
                       (c/literal ")")))
 
-    :expr (c/choice (c/ref :non-terminal)
+    :expr (c/choice (c/chain (c/ref :non-terminal)
+                             (c/ref :space)
+                             (c/negate (c/literal "<-")))
                     (c/ref :group)
                     (c/ref :literal)
                     (c/ref :character-class)
-                    (c/ref :end-of-file))
+                    (c/ref :special-char))
 
     :quantified (c/choice (c/with-name :quantified
                             (c/chain (c/ref :expr)
@@ -106,14 +109,14 @@
 
     :root (c/with-name :root
             (c/chain (c/choice (c/with-name :rules
-                                 (c/repeat+ (c/chain (c/ref :whitespace)
+                                 (c/repeat+ (c/chain (c/ref :space)
                                                      (c/ref :rule)
-                                                     (c/ref :whitespace))))
+                                                     (c/ref :space))))
                                (c/with-name :no-rules
-                                 (c/chain (c/ref :whitespace)
+                                 (c/chain (c/ref :space)
                                           (c/ref :choice)
-                                          (c/ref :whitespace))))
-                     c/eof))}))
+                                          (c/ref :space))))
+                     (c/eof)))}))
 
 ;;; Parse result processing
 
@@ -188,6 +191,10 @@
   [_node]
   [:eof])
 
+(defmethod vector-tree-for :epsilon
+  [_node]
+  [:epsilon])
+
 (defmethod vector-tree-for :cut
   [node]
   (r/success->attr node :value))
@@ -208,22 +215,21 @@
 (defn create-parser
   "Create a parser based on a string-based grammar definition. If the
   definition contains multiple rules, a map of parsers is returned.
-  Optionally an existing map of parsers can be supplied, which can be
-  used by the string grammar. The following definition describes the
-  string grammar syntax in itself:
+  The following definition describes the string grammar syntax in
+  itself:
 
-      space           <- [ \t]*
-      whitespace      <- [\\s]*
+      space           <- [\\s]*
 
       non-terminal    <- (:non-terminal [a-zA-Z_-]+)
-      literal         <- '''' > (:literal ('''''' / [^'])*) ''''
-      character-class <- (:character-class '[' (']]' / [^]]])* ']')
-      end-of-file     <- (:end-of-file '$')
+      literal         <- '\\'' > (:literal ('\\\\'' / [^'])*) '\\''
+      character-class <- (:character-class '[' ('\\]' / [^\\]])* ']' [?*+]?)
+      special-char    <- (:end-of-file '$') / (:epsilon 'ε')
 
       group-name      <- ':' > (:group-name [a-zA-Z_-]+)
       group           <- (:group '(' > group-name? space choice space ')')
 
-      expr            <- non-terminal / group / literal / character-class / end-of-file
+      expr            <- (non-terminal space !'<-') /
+                         group / literal / character-class / special-char
 
       quantified      <- (:quantified expr (:operand [?+*])) / expr
       lookahead       <- (:lookahead (:operand [&!]) > quantified) / quantified
@@ -234,9 +240,14 @@
       choice          <- (:choice chain (space '/' space chain)+) / chain
 
       rule            <- (:rule (:rule-name non-terminal) space '<-' >> space choice)
-      rules           <- (:rules (whitespace rule whitespace)+)
-      no-rules        <- (:no-rules whitespace choice whitespace)
+      rules           <- (:rules (space rule space)+)
+      no-rules        <- (:no-rules space choice space)
       root            <- (:root rules / no-rules) $
+
+  Optionally an existing map of parsers can be supplied, which can be
+  used by the string grammar. For example:
+
+      (create-parser \"root <- 'Hello ' email\" {:email (regex \"...\")})
 
   To capture nodes in the parse result, you need to use named groups."
   ([text]
@@ -250,21 +261,21 @@
 
   ;;; I heard you like string grammars...
 
-  ;;TODO: Other syntax for regexes? So not character class, but real regex? Or both?
+  ;; TODO: Add comments, using #
 
   (def superdogfood "
-    space           <- [ \t]*
-    whitespace      <- [\\s]*
+    space           <- [\\s]*
 
     non-terminal    <- (:non-terminal [a-zA-Z_-]+)
-    literal         <- '''' > (:literal ('''''' / [^'])*) ''''
-    character-class <- (:character-class '[' (']]' / [^]]])* ']')
-    end-of-file     <- (:end-of-file '$')
+    literal         <- '\\'' > (:literal ('\\\\'' / [^'])*) '\\''
+    character-class <- (:character-class '[' ('\\]' / [^\\]])* ']' [?*+]?)
+    special-char    <- (:end-of-file '$') / (:epsilon 'ε')
 
     group-name      <- ':' > (:group-name [a-zA-Z_-]+)
     group           <- (:group '(' > group-name? space choice space ')')
 
-    expr            <- non-terminal / group / literal / character-class / end-of-file
+    expr            <- (non-terminal space !'<-') /
+                       group / literal / character-class / special-char
 
     quantified      <- (:quantified expr (:operand [?+*])) / expr
     lookahead       <- (:lookahead (:operand [&!]) > quantified) / quantified
@@ -275,32 +286,6 @@
     choice          <- (:choice chain (space '/' space chain)+) / chain
 
     rule            <- (:rule (:rule-name non-terminal) space '<-' >> space choice)
-    root            <- (:root (:rules (whitespace rule whitespace)+) / (:no-rules whitespace choice whitespace)) $")
+    root            <- (:root (:rules (space rule space)+) / (:no-rules space choice space)) $")
 
-  (require '[instaparse.core :as insta])
-
-  (def instafood "
-    space           = #'[ \t]*'
-    whitespace      = #'[\\s]*'
-
-    non-terminal    = #'[a-zA-Z_-]+'
-    literal         = \"'\" (\"''\" / #\"[^']\")* \"'\"
-    character-class = '[' (']]' / #'[^]]')* ']'
-    end-of-file     = '$'
-    cut             = '>>' / '>'
-
-    group-name      = ':' #'[a-zA-Z_-]+'
-    group           = '(' group-name? space choice space ')'
-
-    expr            = non-terminal / group / literal / character-class / end-of-file / cut
-
-    quantified      = expr #'[?+*]' / expr
-    lookahead       = #'[&!]' quantified / quantified
-
-    chain           = lookahead (space lookahead)+ / lookahead
-    choice          = chain (space '/' space chain)+ / chain
-
-    rule            = non-terminal space '<-' space choice
-    root            = (whitespace rule whitespace)+ / whitespace choice whitespace")
-
-  )
+)

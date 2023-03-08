@@ -148,6 +148,5 @@
   [errors text]
   (let [grouped   (group-by error->index errors)
         line-cols (indices->line-columns text (keys grouped))]
-    (->> errors
-         (map #(merge %1 (line-cols (error->index %1))))
+    (->> (map #(merge %1 (line-cols (error->index %1))) errors)
          (set))))
