@@ -64,6 +64,11 @@
       (is (= #{(r/->error :expected-literal 2 {:literal "foo"})}
              (core/parse (:root p) "<>bar")))))
 
+  (testing "chain with cuts results in correct children"
+    (let [p (c/chain (c/literal "foo") :soft-cut (c/literal "bar"))]
+      (is (= (r/->success 0 6 [(r/->success 0 3) (r/->success 3 6)])
+             (parse p "foobar")))))
+
   (testing "chain with unknown keyword"
     (is (thrown? AssertionError (c/chain (c/literal "foo") :unknown)))))
 
@@ -133,16 +138,14 @@
     (is (= (r/->success 0 3) (parse p "foobar")))))
 
 (deftest eof-test
-  (testing "standalone eof"
-    (is (= (r/->success 0 0) (parse c/eof "")))
-    (is (= #{(r/->error :eof-not-reached 0)}
-           (parse c/eof "more"))))
+  (let [p (c/eof)]
+    (is (= (r/->success 0 0) (parse p "")))
+    (is (= #{(r/->error :unexpected-match 0 {:text "m"})}
+           (parse p "more")))))
 
-  (testing "wrapping other parser"
-    (let [p (c/chain (c/literal "foo") c/eof)]
-      (is (= (r/->success 0 3) (core/parse p "foo")))
-      (is (= #{(r/->error :eof-not-reached 3)}
-             (core/parse p "foo-and-more"))))))
+(deftest epsilon-test
+  (let [p (c/epsilon)]
+    (is (= (r/->success 0 0) (parse p "anything")))))
 
 ;;; Result wrappers
 
