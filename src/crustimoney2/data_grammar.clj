@@ -112,7 +112,7 @@
        character          \\c
        regex              #\"[a-z]\"
        eof                $
-       epsilon            ε
+       empty-string       ε
        any-non-newline    .
 
        ;; refs and grouping
