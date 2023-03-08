@@ -36,10 +36,11 @@
                        (c/with-value unescape-brackets
                          (c/regex #"\[(\\]|[^]])*][?*+]?")))
 
-    :special-char (c/choice (c/with-name :end-of-file
-                              (c/literal "$"))
-                            (c/with-name :epsilon
-                              (c/literal "ε")))
+    :special-char (c/with-name :special-char
+                    (c/with-value
+                      (c/choice (c/literal "$")
+                                (c/literal "ε")
+                                (c/literal "."))))
 
     :cut (c/with-name :cut
            (c/with-value {">>" :hard-cut, ">" :soft-cut}
@@ -187,13 +188,12 @@
       "+" [:repeat+ parser]
       "*" [:repeat* parser])))
 
-(defmethod vector-tree-for :end-of-file
-  [_node]
-  [:eof])
-
-(defmethod vector-tree-for :epsilon
-  [_node]
-  [:epsilon])
+(defmethod vector-tree-for :special-char
+  [node]
+  (case (r/success->attr node :value)
+    "$" [:eof]
+    "ε" [:epsilon]
+    "." [:regex "."]))
 
 (defmethod vector-tree-for :cut
   [node]
@@ -223,7 +223,7 @@
       non-terminal    <- (:non-terminal [a-zA-Z_-]+)
       literal         <- '\\'' > (:literal ('\\\\'' / [^'])*) '\\''
       character-class <- (:character-class '[' ('\\]' / [^\\]])* ']' [?*+]?)
-      special-char    <- (:end-of-file '$') / (:epsilon 'ε')
+      special-char    <- (:special-char '$' / 'ε' / '.')
 
       group-name      <- ':' > (:group-name [a-zA-Z_-]+)
       group           <- (:group '(' > group-name? space choice space ')')
@@ -261,7 +261,8 @@
 
   ;;; I heard you like string grammars...
 
-  ;; TODO: Add comments, using #
+  ;; TODO: Add comments, using #.
+  ;; TODO: Do we really need named groups?
 
   (def superdogfood "
     space           <- [\\s]*
@@ -269,7 +270,7 @@
     non-terminal    <- (:non-terminal [a-zA-Z_-]+)
     literal         <- '\\'' > (:literal ('\\\\'' / [^'])*) '\\''
     character-class <- (:character-class '[' ('\\]' / [^\\]])* ']' [?*+]?)
-    special-char    <- (:end-of-file '$') / (:epsilon 'ε')
+    special-char    <- (:special-char '$' / 'ε' / '.')
 
     group-name      <- ':' > (:group-name [a-zA-Z_-]+)
     group           <- (:group '(' > group-name? space choice space ')')

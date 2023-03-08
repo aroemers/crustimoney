@@ -76,6 +76,7 @@
     (case ref-name
       "$"  [:eof]
       "ε"  [:epsilon]
+      "."  [:regex "."]
       ">>" :hard-cut
       ">"  :soft-cut
       [:ref (keyword ref-name)])))
@@ -112,6 +113,7 @@
        regex              #\"[a-z]\"
        eof                $
        epsilon            ε
+       any-non-newline    .
 
        ;; refs and grouping
        reference          literal
@@ -158,7 +160,7 @@
       non-terminal    (:non-terminal #"[a-zA-Z_-]+")
       literal         ("'" > (:literal ("\\'" / #"[^']")*) "'")
       character-class (:character-class "[" ("\\]" / #"[^]]")* "]")
-      special-char    ((:end-of-file "$") / (:epsilon "ε"))
+      special-char    (:special-char "$" / "ε" / ".")
 
       group-name (":" > (:group-name #"[a-zA-Z_-]+"))
       group      (:group "(" > group-name ? space choice space ")")
