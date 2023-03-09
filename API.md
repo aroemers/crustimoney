@@ -22,7 +22,6 @@
     -  [`repeat+`](#crustimoney2.combinators/repeat+) - Eagerly try to match the parser as many times as possible, expecting at least one match.
     -  [`with-error`](#crustimoney2.combinators/with-error) - Wrap the parser, replacing any errors with a single error with the supplied error key.
     -  [`with-name`](#crustimoney2.combinators/with-name) - Wrap the parser, assigning a name to the (success) result of the parser.
-    -  [`with-value`](#crustimoney2.combinators/with-value) - Wrap the parser, adding a <code>:value</code> attribute to its success, containing the matched text.
 -  [`crustimoney2.core`](#crustimoney2.core)  - The main parsing functions.
     -  [`parse`](#crustimoney2.core/parse) - Use the given parser to parse the supplied text string.
 -  [`crustimoney2.data-grammar`](#crustimoney2.data-grammar)  - Create a parser based on a data grammar.
@@ -40,17 +39,13 @@
     -  [`push->parser`](#crustimoney2.results/push->parser) - Returns the parser of a push value.
     -  [`push->state`](#crustimoney2.results/push->state) - Returns the state of a push value.
     -  [`push?`](#crustimoney2.results/push?) - Returns obj if obj is a push value.
-    -  [`success->attr`](#crustimoney2.results/success->attr) - Returns an attribute value of a success.
-    -  [`success->attrs`](#crustimoney2.results/success->attrs) - Return the attributes of a success.
     -  [`success->children`](#crustimoney2.results/success->children) - Returns the children of a success.
     -  [`success->end`](#crustimoney2.results/success->end) - Return the end index of a success.
     -  [`success->name`](#crustimoney2.results/success->name) - Return the name of a success.
     -  [`success->start`](#crustimoney2.results/success->start) - Return the start index of a success.
     -  [`success->text`](#crustimoney2.results/success->text) - Returns the matched text of a success, given the full text.
+    -  [`success->texts`](#crustimoney2.results/success->texts) - Sets the matched text as the only child of any (nested) success which name is in the node-names collection.
     -  [`success?`](#crustimoney2.results/success?) - Returns obj if obj is a success value, nil otherwise.
-    -  [`with-success-attrs`](#crustimoney2.results/with-success-attrs) - Add extra success attributes to the given success.
-    -  [`with-success-children`](#crustimoney2.results/with-success-children) - Set the children of a success.
-    -  [`with-success-name`](#crustimoney2.results/with-success-name) - Set the name of the success value.
 -  [`crustimoney2.string-grammar`](#crustimoney2.string-grammar)  - Create a parser based on a string grammar.
     -  [`create-parser`](#crustimoney2.string-grammar/create-parser) - Create a parser based on a string-based grammar definition.
     -  [`vector-tree`](#crustimoney2.string-grammar/vector-tree) - Low-level function which translates the string grammar into an intermediary vector-based representation.
@@ -367,18 +362,6 @@ Wrap the parser, assigning a name to the (success) result of the
   parsing.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L274-L281">Source</a></sub></p>
 
-## <a name="crustimoney2.combinators/with-value">`with-value`</a><a name="crustimoney2.combinators/with-value"></a>
-``` clojure
-
-(with-value parser)
-(with-value f parser)
-```
-
-Wrap the parser, adding a `:value` attribute to its success,
-  containing the matched text. Optionally takes a function f, applied
-  to the text value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L293-L304">Source</a></sub></p>
-
 -----
 # <a name="crustimoney2.core">crustimoney2.core</a>
 
@@ -580,7 +563,7 @@ Return the key of an error.
 ## <a name="crustimoney2.results/errors->line-column">`errors->line-column`</a><a name="crustimoney2.results/errors->line-column"></a>
 ``` clojure
 
-(errors->line-column errors text)
+(errors->line-column text errors)
 ```
 
 Returns the errors with `:line` and `:column` entries added.
@@ -622,24 +605,6 @@ Returns the state of a push value.
 Returns obj if obj is a push value.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L107-L111">Source</a></sub></p>
 
-## <a name="crustimoney2.results/success->attr">`success->attr`</a><a name="crustimoney2.results/success->attr"></a>
-``` clojure
-
-(success->attr success attr)
-```
-
-Returns an attribute value of a success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L62-L65">Source</a></sub></p>
-
-## <a name="crustimoney2.results/success->attrs">`success->attrs`</a><a name="crustimoney2.results/success->attrs"></a>
-``` clojure
-
-(success->attrs success)
-```
-
-Return the attributes of a success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L57-L60">Source</a></sub></p>
-
 ## <a name="crustimoney2.results/success->children">`success->children`</a><a name="crustimoney2.results/success->children"></a>
 ``` clojure
 
@@ -647,7 +612,7 @@ Return the attributes of a success.
 ```
 
 Returns the children of a success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L37-L40">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L31-L34">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success->end">`success->end`</a><a name="crustimoney2.results/success->end"></a>
 ``` clojure
@@ -665,7 +630,7 @@ Return the end index of a success.
 ```
 
 Return the name of a success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L47-L50">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L36-L39">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success->start">`success->start`</a><a name="crustimoney2.results/success->start"></a>
 ``` clojure
@@ -679,11 +644,25 @@ Return the start index of a success.
 ## <a name="crustimoney2.results/success->text">`success->text`</a><a name="crustimoney2.results/success->text"></a>
 ``` clojure
 
-(success->text success text)
+(success->text text success)
 ```
 
 Returns the matched text of a success, given the full text.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L67-L70">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L41-L44">Source</a></sub></p>
+
+## <a name="crustimoney2.results/success->texts">`success->texts`</a><a name="crustimoney2.results/success->texts"></a>
+``` clojure
+
+(success->texts text success node-names)
+```
+
+Sets the matched text as the only child of any (nested) success which
+  name is in the node-names collection.
+
+  Not intended to be used for normal success node walking/processing;
+  it is more performant to use [`success->text`](#crustimoney2.results/success->text) during walking. This is
+  here for debugging.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L57-L70">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success?">`success?`</a><a name="crustimoney2.results/success?"></a>
 ``` clojure
@@ -693,33 +672,6 @@ Returns the matched text of a success, given the full text.
 
 Returns obj if obj is a success value, nil otherwise.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L15-L19">Source</a></sub></p>
-
-## <a name="crustimoney2.results/with-success-attrs">`with-success-attrs`</a><a name="crustimoney2.results/with-success-attrs"></a>
-``` clojure
-
-(with-success-attrs success attrs)
-```
-
-Add extra success attributes to the given success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L52-L55">Source</a></sub></p>
-
-## <a name="crustimoney2.results/with-success-children">`with-success-children`</a><a name="crustimoney2.results/with-success-children"></a>
-``` clojure
-
-(with-success-children success children)
-```
-
-Set the children of a success.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L31-L35">Source</a></sub></p>
-
-## <a name="crustimoney2.results/with-success-name">`with-success-name`</a><a name="crustimoney2.results/with-success-name"></a>
-``` clojure
-
-(with-success-name key success)
-```
-
-Set the name of the success value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L42-L45">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.string-grammar">crustimoney2.string-grammar</a>
@@ -735,7 +687,7 @@ Create a parser based on a string grammar. The grammar is translated
 ``` clojure
 
 (create-parser text)
-(create-parser text other-parsers)
+(create-parser text {:keys [other-parsers]})
 ```
 
 Create a parser based on a string-based grammar definition. If the
@@ -769,13 +721,36 @@ Create a parser based on a string-based grammar definition. If the
       no-rules        <- (:no-rules space choice space)
       root            <- (:root rules / no-rules) $
 
-  Optionally an existing map of parsers can be supplied, which can be
-  used by the string grammar. For example:
-
-      (create-parser "root <- 'Hello ' email" {:email (regex "...")})
-
   To capture nodes in the parse result, you need to use named groups.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L215-L258">Source</a></sub></p>
+
+  An options map can be supplied. The following options are available:
+
+  - `:other-parsers`, an existing map of parsers, which can be used by
+  the string grammar. For example:
+
+      (create-parser "root <- 'Hello ' email"
+                     {:other-parsers
+                      {:email (regex "...")}})
+
+  - `:auto-name`, if set to true, all rules are wrapped with a named
+  group corresponding to the rule name. To disable this for a rule,
+  wrap its name with `<...>`. For example:
+
+      (create-parser "root       <- (prefixed ' ')+
+                      <prefixed> <- (:prefixed '!' body) / body
+                      body       <- [a-z]+"
+                     {:auto-name true})
+
+  Parsing "foo !bar" would result in the following result tree:
+
+      [:root {:start 0, :end 8}
+       [:body {:start 0, :end 3}]
+       [:prefixed {:start 4, :end 8}
+        [:body {:start 5, :end 8}]]]
+
+  This option is off by default, as it is encouraged to be intentional
+  about which nodes should be captured and when.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L207-L273">Source</a></sub></p>
 
 ## <a name="crustimoney2.string-grammar/vector-tree">`vector-tree`</a><a name="crustimoney2.string-grammar/vector-tree"></a>
 ``` clojure
@@ -787,7 +762,7 @@ Low-level function which translates the string grammar into an
   intermediary vector-based representation. See
   [`crustimoney2.vector-grammar`](#crustimoney2.vector-grammar) for more on this format. This can be
   useful for debugging.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L204-L213">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L196-L205">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.vector-grammar">crustimoney2.vector-grammar</a>

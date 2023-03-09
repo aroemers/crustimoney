@@ -28,46 +28,46 @@
   [success]
   (-> success second :end))
 
-(defn with-success-children
-  "Set the children of a success."
-  [success children]
-  (let [[name attrs] success]
-    (into [name attrs] children)))
-
 (defn success->children
   "Returns the children of a success."
   [success]
   (drop 2 success))
-
-(defn with-success-name
-  "Set the name of the success value."
-  [key success]
-  (vec (cons key (rest success))))
 
 (defn success->name
   "Return the name of a success."
   [success]
   (first success))
 
-(defn with-success-attrs
-  "Add extra success attributes to the given success."
-  [success attrs]
-  (update success 1 merge attrs))
-
-(defn success->attrs
-  "Return the attributes of a success."
-  [success]
-  (dissoc (second success) :start :end))
-
-(defn success->attr
-  "Returns an attribute value of a success."
-  [success attr]
-  (get (second success) attr))
-
 (defn success->text
   "Returns the matched text of a success, given the full text."
-  [success text]
+  [text success]
   (subs text (success->start success) (success->end success)))
+
+(defn ^:no-doc with-success-children
+  "Set the children of a success."
+  [success children]
+  (let [[name attrs] success]
+    (into [name attrs] children)))
+
+(defn ^:no-doc with-success-name
+  "Set the name of the success value."
+  [key success]
+  (vec (cons key (rest success))))
+
+(defn success->texts
+  "Sets the matched text as the only child of any (nested) success which
+  name is in the node-names collection.
+
+  Not intended to be used for normal success node walking/processing;
+  it is more performant to use `success->text` during walking. This is
+  here for debugging."
+  [text success node-names]
+  (let [names (set node-names)
+        inner (fn f [success]
+                (if (names (success->name success))
+                  (with-success-children success [(success->text text success)])
+                  (with-success-children success (map f (success->children success)))))]
+    (inner success)))
 
 ;;; Error functions
 
@@ -145,7 +145,7 @@
 
 (defn errors->line-column
   "Returns the errors with `:line` and `:column` entries added."
-  [errors text]
+  [text errors]
   (let [grouped   (group-by error->index errors)
         line-cols (indices->line-columns text (keys grouped))]
     (->> (map #(merge %1 (line-cols (error->index %1))) errors)

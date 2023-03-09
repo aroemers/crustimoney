@@ -121,7 +121,7 @@
            (cond-> (r/->success (-> state :children first r/success->start)
                                 (-> state :children last r/success->end)
                                 (:children state))
-             (:hard-cut state) (r/with-success-attrs {:hard-cut true}))))
+             (:hard-cut state) (with-meta {:hard-cut true}))))
 
        (if (:soft-cut state)
          (with-meta result {:soft-cut true})
@@ -168,7 +168,7 @@
 
     ([text index result _state]
      (if (r/success? result)
-       #{(r/->error :unexpected-match index {:text (r/success->text result text)})}
+       #{(r/->error :unexpected-match index {:text (r/success->text text result)})}
        (r/->success index index)))))
 
 ;;; Extra combinators
@@ -289,19 +289,6 @@
       (if (set? result)
         #{(r/->error key index)}
         result))))
-
-(defn with-value
-  "Wrap the parser, adding a `:value` attribute to its success,
-  containing the matched text. Optionally takes a function f, applied
-  to the text value."
-  ([parser]
-   (with-value identity parser))
-  ([f parser]
-   (fn [text & args]
-     (let [result (apply parser text args)]
-       (cond-> result
-         (r/success? result)
-         (r/with-success-attrs {:value (f (r/success->text result text))}))))))
 
 (comment
 

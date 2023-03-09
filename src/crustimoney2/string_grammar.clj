@@ -22,35 +22,29 @@
    {:space (c/regex #"\s*")
 
     :non-terminal (c/with-name :non-terminal
-                    (c/with-value
-                      (c/regex "[a-zA-Z_-]+")))
+                    (c/regex "[a-zA-Z_-]+"))
 
     :literal (c/chain (c/literal "'")
                       :soft-cut
                       (c/with-name :literal
-                        (c/with-value unescape-quotes
-                          (c/regex #"(\\'|[^'])*")))
+                        (c/regex #"(\\'|[^'])*"))
                       (c/literal "'"))
 
     :character-class (c/with-name :character-class
-                       (c/with-value unescape-brackets
-                         (c/regex #"\[(\\]|[^]])*][?*+]?")))
+                       (c/regex #"\[(\\]|[^]])*][?*+]?"))
 
     :special-char (c/with-name :special-char
-                    (c/with-value
-                      (c/choice (c/literal "$")
-                                (c/literal "ε")
-                                (c/literal "."))))
+                    (c/choice (c/literal "$")
+                              (c/literal "ε")
+                              (c/literal ".")))
 
     :cut (c/with-name :cut
-           (c/with-value {">>" :hard-cut, ">" :soft-cut}
-             (c/choice (c/literal ">>") (c/literal ">"))))
+           (c/choice (c/literal ">>") (c/literal ">")))
 
     :group-name (c/chain (c/literal ":")
                          :soft-cut
                          (c/with-name :group-name
-                           (c/with-value
-                             (c/regex "[a-zA-Z_-]+"))))
+                           (c/regex "[a-zA-Z_-]+")))
 
     :group (c/with-name :group
              (c/chain (c/literal "(")
@@ -72,14 +66,12 @@
     :quantified (c/choice (c/with-name :quantified
                             (c/chain (c/ref :expr)
                                      (c/with-name :operand
-                                       (c/with-value
-                                         (c/regex "[?+*]")))))
+                                       (c/regex "[?+*]"))))
                           (c/ref :expr))
 
     :lookahead (c/choice (c/with-name :lookahead
                            (c/chain (c/with-name :operand
-                                      (c/with-value
-                                        (c/regex "[&!]")))
+                                      (c/regex "[&!]"))
                                     :soft-cut
                                     (c/ref :quantified)))
                          (c/ref :quantified))
@@ -122,82 +114,82 @@
 ;;; Parse result processing
 
 (defmulti ^:no-doc vector-tree-for
-  (fn [node]
+  (fn [_text node]
     (r/success->name node)))
 
 (defmethod vector-tree-for :root
-  [node]
-  (-> node r/success->children first vector-tree-for))
+  [text node]
+  (->> node r/success->children first (vector-tree-for text)))
 
 (defmethod vector-tree-for :rules
-  [node]
-  (into {} (map vector-tree-for (r/success->children node))))
+  [text node]
+  (into {} (map (partial vector-tree-for text) (r/success->children node))))
 
 (defmethod vector-tree-for :no-rules
-  [node]
+  [_ node]
   (vector-tree-for (first (r/success->children node))))
 
 (defmethod vector-tree-for :rule
-  [node]
+  [text node]
   (let [[child1 child2] (r/success->children node)
-        rule-name       (keyword (r/success->attr child1 :value))]
-    [rule-name (vector-tree-for child2)]))
+        rule-name       (keyword (r/success->text text child1))]
+    [rule-name (vector-tree-for text child2)]))
 
 (defmethod vector-tree-for :non-terminal
-  [node]
-  [:ref (keyword (r/success->attr node :value))])
+  [text node]
+  [:ref (keyword (r/success->text text node))])
 
 (defmethod vector-tree-for :literal
-  [node]
-  [:literal (r/success->attr node :value)])
+  [text node]
+  [:literal (unescape-quotes (r/success->text text node))])
 
 (defmethod vector-tree-for :group
-  [node]
+  [text node]
   (let [[child1 child2] (r/success->children node)]
     (if (= (r/success->name child1) :group-name)
-      [:with-name (keyword (r/success->attr child1 :value))
-       (vector-tree-for child2)]
-      (vector-tree-for child1))))
+      [:with-name (keyword (r/success->text text child1))
+       (vector-tree-for text child2)]
+      (vector-tree-for text child1))))
 
 (defmethod vector-tree-for :character-class
-  [node]
-  [:regex (r/success->attr node :value)])
+  [text node]
+  [:regex (unescape-brackets (r/success->text text node))])
 
 (defmethod vector-tree-for :chain
-  [node]
-  (into [:chain] (map vector-tree-for (r/success->children node))))
+  [text node]
+  (into [:chain] (map (partial vector-tree-for text) (r/success->children node))))
 
 (defmethod vector-tree-for :choice
-  [node]
-  (into [:choice] (map vector-tree-for (r/success->children node))))
+  [text node]
+  (into [:choice] (map (partial vector-tree-for text) (r/success->children node))))
 
 (defmethod vector-tree-for :lookahead
-  [node]
+  [text node]
   (let [[operand expr] (r/success->children node)
-        parser         (vector-tree-for expr)]
-    (case (r/success->attr operand :value)
+        parser         (vector-tree-for text expr)]
+    (case (r/success->text text operand)
       "!" [:negate parser]
       "&" [:lookahead parser])))
 
 (defmethod vector-tree-for :quantified
-  [node]
+  [text node]
   (let [[expr operand] (r/success->children node)
-        parser         (vector-tree-for expr)]
-    (case (r/success->attr operand :value)
+        parser         (vector-tree-for text expr)]
+    (case (r/success->text text operand)
       "?" [:maybe parser]
       "+" [:repeat+ parser]
       "*" [:repeat* parser])))
 
 (defmethod vector-tree-for :special-char
-  [node]
-  (case (r/success->attr node :value)
+  [text node]
+  (case (r/success->text text node)
     "$" [:eof]
     "ε" [:epsilon]
     "." [:regex "."]))
 
 (defmethod vector-tree-for :cut
-  [node]
-  (r/success->attr node :value))
+  [text node]
+  ({">>" :hard-cut, ">" :soft-cut} (r/success->text text node)))
 
 ;;; Public namespace API
 
@@ -210,7 +202,7 @@
   (let [result (core/parse (:root grammar) text)]
     (if (set? result)
       (throw (ex-info "Failed to parse grammar" {:errors (r/errors->line-column result text)}))
-      (vector-tree-for result))))
+      (vector-tree-for text result))))
 
 (defn create-parser
   "Create a parser based on a string-based grammar definition. If the
@@ -244,15 +236,38 @@
       no-rules        <- (:no-rules space choice space)
       root            <- (:root rules / no-rules) $
 
-  Optionally an existing map of parsers can be supplied, which can be
-  used by the string grammar. For example:
+  To capture nodes in the parse result, you need to use named groups.
 
-      (create-parser \"root <- 'Hello ' email\" {:email (regex \"...\")})
+  An options map can be supplied. The following options are available:
 
-  To capture nodes in the parse result, you need to use named groups."
+  - `:other-parsers`, an existing map of parsers, which can be used by
+  the string grammar. For example:
+
+      (create-parser \"root <- 'Hello ' email\"
+                     {:other-parsers
+                      {:email (regex \"...\")}})
+
+  - `:auto-name`, if set to true, all rules are wrapped with a named
+  group corresponding to the rule name. To disable this for a rule,
+  wrap its name with `<...>`. For example:
+
+      (create-parser \"root       <- (prefixed ' ')+
+                      <prefixed> <- (:prefixed '!' body) / body
+                      body       <- [a-z]+\"
+                     {:auto-name true})
+
+  Parsing \"foo !bar\" would result in the following result tree:
+
+      [:root {:start 0, :end 8}
+       [:body {:start 0, :end 3}]
+       [:prefixed {:start 4, :end 8}
+        [:body {:start 5, :end 8}]]]
+
+  This option is off by default, as it is encouraged to be intentional
+  about which nodes should be captured and when."
   ([text]
    (create-parser text nil))
-  ([text other-parsers]
+  ([text {:keys [other-parsers]}]
    (-> (vector-tree text)
        (vector-grammar/merge-other other-parsers)
        (vector-grammar/create-parser))))
@@ -262,7 +277,6 @@
   ;;; I heard you like string grammars...
 
   ;; TODO: Add comments, using #.
-  ;; TODO: Do we really need named groups?
 
   (def superdogfood "
     space           <- [\\s]*
@@ -281,12 +295,37 @@
     quantified      <- (:quantified expr (:operand [?+*])) / expr
     lookahead       <- (:lookahead (:operand [&!]) > quantified) / quantified
 
-    cut             <- (:hard-cut '>>') / (:soft-cut '>')
+    cut             <- (:cut '>>' / '>')
 
     chain           <- (:chain lookahead (space (cut / lookahead))+) / lookahead
     choice          <- (:choice chain (space '/' space chain)+) / chain
 
     rule            <- (:rule (:rule-name non-terminal) space '<-' >> space choice)
     root            <- (:root (:rules (space rule space)+) / (:no-rules space choice space)) $")
+
+  (def optionaldogfood "
+    <space>         <- [\\s]*
+
+    non-terminal    <- [a-zA-Z_-]+
+    <literal>       <- '\\'' > (:literal ('\\\\'' / [^'])*) '\\''
+    character-class <- '[' ('\\]' / [^\\]])* ']' [?*+]?
+    special-char    <- '$' / 'ε' / '.'
+
+    <group-name>    <- ':' > (:group-name [a-zA-Z_-]+)
+    group           <- '(' > group-name? space choice space ')'
+
+    <expr>          <- (non-terminal space !'<-') /
+                       group / literal / character-class / special-char
+
+    <quantified>    <- (:quantified expr (:operand [?+*])) / expr
+    <lookahead>     <- (:lookahead (:operand [&!]) > quantified) / quantified
+
+    cut             <- '>>' / '>'
+
+    <chain>         <- (:chain lookahead (space (cut / lookahead))+) / lookahead
+    <choice>        <- (:choice chain (space '/' space chain)+) / chain
+
+    rule            <- (:rule-name non-terminal) space '<-' >> space choice
+    root            <- (:rules (space rule space)+) / (:no-rules space choice space) $")
 
 )

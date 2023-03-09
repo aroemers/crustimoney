@@ -103,10 +103,10 @@
              (r/success? result)
              (let [processed (post-success result)]
                ;; Check if it was a hard-cut success
-               (if (r/success->attr result :hard-cut)
+               (if (-> result meta :hard-cut)
                  (do (caches/cut cache (r/success->end result))
                      (recur (pop stack) processed state' (r/success->end result)))
-                 (do (caches/store cache parser index processed)
+                 (do (caches/store cache parser index processed) ; TODO only named nodes perhaps?
                      (recur (pop stack) processed state' cut-at))))
 
              ;; Handle a set of errors
