@@ -76,7 +76,6 @@
     (case ref-name
       "$"  [:eof]
       "ε"  [:literal ""]
-      "."  [:regex "."]
       ">>" :hard-cut
       ">"  :soft-cut
       [:ref (keyword ref-name)])))
@@ -113,9 +112,8 @@
        regex              #\"[a-z]\"
        eof                $
        empty-string       ε
-       any-non-newline    .
 
-       ;; refs and grouping
+       ;; refs, chains, choices and grouping
        reference          literal
        chain              (literal regex)
        choices            (literal / regex / \"alice\" \"bob\")
@@ -132,8 +130,8 @@
        negative-lookahead (!\"alice\")
 
        ;; cuts
-       soft-cut           ('[' > expr? ']')
-       hard-cut           ((class-open class class-close >>)*
+       soft-cut           ('[' > expr? ']') ; note the >
+       hard-cut           ((class-open class class-close >>)*) ; note the >>
 
        ;; direct combinator calls
        combinator-call    [:with-error #crust/plain :fail!

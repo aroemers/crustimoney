@@ -37,7 +37,7 @@
   A success result looks like this:
 
       [:name {:start 0, :end 3}
-       [:child-1 {:start 0, :end 2, :value \"aa\"}]
+       [:child-1 {:start 0, :end 2}]
        [:child-2 {:start 2, :end 3}]]
 
   An error result looks like this:

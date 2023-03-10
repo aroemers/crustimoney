@@ -52,8 +52,8 @@
 (defn chain
   "Chain multiple consecutive parsers.
 
-  The chain combinator supports cuts. At least one normal parser needs
-  to precede a cut. That parser must consume input, which no other
+  The chain combinator supports cuts. At least one normal parser must
+  precede a cut. That parser must consume input, which no other
   parser (via a choice) up in the combinator tree could also consume
   at that point.
 
@@ -303,7 +303,7 @@
 
       root=    <- prefixed (' ' prefixed)*
       prefixed <- (:prefixed '!' body) / body
-      body=    <- [a-z]+\")
+      body=    <- [a-z]+
 
   Parsing \"foo !bar\" would result in the following result tree:
 

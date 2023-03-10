@@ -33,7 +33,8 @@
     :special-char (c/with-name :special-char
                     (c/choice (c/literal "$")
                               (c/literal "ε")
-                              (c/literal ".")))
+                              (c/chain (c/literal ".")
+                                       (c/regex "[?+*]?"))))
 
     :ref (c/chain (c/ref :non-terminal)
                   (c/negate (c/literal "="))
@@ -186,7 +187,10 @@
   (case (r/success->text text node)
     "$" [:eof]
     "ε" [:literal ""]
-    "." [:regex "."]))
+    "." [:regex "."]
+    ".?" [:regex ".?"]
+    ".+" [:regex ".+"]
+    ".*" [:regex ".*"]))
 
 (defmethod vector-tree-for :cut
   [text node]
