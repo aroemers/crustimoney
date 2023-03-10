@@ -106,7 +106,7 @@
                (if (-> result meta :hard-cut)
                  (do (caches/cut cache (r/success->end result))
                      (recur (pop stack) processed state' (r/success->end result)))
-                 (do (caches/store cache parser index processed) ; TODO only named nodes perhaps?
+                 (do (caches/store cache parser index processed)
                      (recur (pop stack) processed state' cut-at))))
 
              ;; Handle a set of errors
