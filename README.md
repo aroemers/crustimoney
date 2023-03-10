@@ -6,9 +6,29 @@
 
 # 📙 crustimoney
 
-A Clojure library for ...
+A Clojure library for PEG parsing, supporting various grammars, packrat caching and cuts.
 
 ![Banner](banner.png)
+
+## Motivation
+
+Version 1 of crustimoney was my first library in Clojure, a long time ago.
+Simply put, this version is the mental excercise of making it better.
+I like to think it turned out well.
+Maybe you like it too.
+
+## Features
+
+- Create parsers from **combinator** functions
+- .. or from **string-based** definitions
+- .. or from **data-driven** definitions
+- Packrat **caching**, optimizing cpu usage
+- Concept of **cuts**, optimizing memory usage - and error messages
+- Focus on capture groups, resulting in **lean parse trees**, less coupled to grammar structure
+- **Minimal parse tree** data, fetch only whats needed at post-processing
+- Virtual stack, preventing stack overflows
+- Infinite **loop detection** (runtime)
+- Missing rule references detection (compile time)
 
 ## Usage
 
