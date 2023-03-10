@@ -136,9 +136,9 @@
        hard-cut           ((class-open class class-close >>)*
 
        ;; direct combinator calls
-       combinator-call       [:with-value (:bax \"bar\" / \"baz\")]
-       combinator-plain-data [:with-error #crust/plain :fail! \"foo\"]
-       custom-combinator     [:my.app/my-combinator literal]}
+       combinator-call    [:with-error #crust/plain :fail!
+                           (\"fooba\" #\"r|z\")]
+       custom-combinator  [:my.app/my-combinator literal]}
 
   Optionally an existing map of parsers can be supplied, which can
   refered to by the data grammar.
