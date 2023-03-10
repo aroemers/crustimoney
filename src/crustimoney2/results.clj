@@ -47,12 +47,14 @@
   "Set the children of a success."
   [success children]
   (let [[name attrs] success]
-    (into [name attrs] children)))
+    (-> (into [name attrs] children)
+        (with-meta (meta success)))))
 
 (defn ^:no-doc with-success-name
   "Set the name of the success value."
   [key success]
-  (vec (cons key (rest success))))
+  (-> (vec (cons key (rest success)))
+      (with-meta (meta success))))
 
 ;;; Error functions
 
