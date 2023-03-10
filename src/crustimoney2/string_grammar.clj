@@ -289,4 +289,27 @@
     rule=            <- (:rule-name non-terminal '='?) space '<-' >> space choice
     root=            <- (:rules (space rule space)+) / (:no-rules space choice space) $")
 
+  (def json "
+    root=    <- space value space
+    value    <- (string / number / boolean / array / null / object)
+    string   <- '\"' > (:string ('\\\"' / [^\"])*) '\"'
+    number=  <- [0-9]+
+    boolean= <- 'true' / 'false'
+    array=   <- '[' > space (value (space ',' space value)*)? space ']'
+    null=    <- 'null'
+    object=  <- '{' > space (entry (space ',' space entry)*)? space '}' >>
+    entry=   <- string space ':' space value
+    space    <- [\\s]*")
+
+  ;; TODO: Can we find a solution for the inefficient string parsing?
+  ;; Using the parser below is 4 times faster!
+
+  (def string (c/chain (c/literal "\"")
+                       :soft-cut
+                       (c/with-name :string
+                         (c/regex #"(\\\"|[^\"])*"))
+                       (c/literal "\"")))
+
+  (def jp (:root (create-parser json {:string string})))
+
 )
