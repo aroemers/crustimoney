@@ -12,9 +12,6 @@
 (defn- unescape-quotes [s]
   (str/replace s "\\'" "'"))
 
-(defn- unescape-brackets [s]
-  (str/replace s "\\]" "]"))
-
 ;;; Grammar definition
 
 (def ^:private grammar
@@ -157,7 +154,7 @@
 
 (defmethod vector-tree-for :character-class
   [text node]
-  [:regex (unescape-brackets (r/success->text text node))])
+  [:regex (r/success->text text node)])
 
 (defmethod vector-tree-for :chain
   [text node]
