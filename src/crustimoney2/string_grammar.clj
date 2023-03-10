@@ -130,8 +130,8 @@
   (into {} (map (partial vector-tree-for text) (r/success->children node))))
 
 (defmethod vector-tree-for :no-rules
-  [_ node]
-  (vector-tree-for (first (r/success->children node))))
+  [text node]
+  (vector-tree-for text (first (r/success->children node))))
 
 (defmethod vector-tree-for :rule
   [text node]
