@@ -75,7 +75,7 @@
   (let [ref-name (str data)]
     (case ref-name
       "$"  [:eof]
-      "ε"  [:epsilon]
+      "ε"  [:literal ""]
       "."  [:regex "."]
       ">>" :hard-cut
       ">"  :soft-cut

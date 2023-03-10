@@ -226,11 +226,6 @@
   []
   (negate (regex ".")))
 
-(defn epsilon
-  "Matches the empty string."
-  []
-  (literal ""))
-
 ;;; Result wrappers
 
 (defn with-name

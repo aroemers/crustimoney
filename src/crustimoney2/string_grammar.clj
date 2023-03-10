@@ -185,7 +185,7 @@
   [text node]
   (case (r/success->text text node)
     "$" [:eof]
-    "ε" [:epsilon]
+    "ε" [:literal ""]
     "." [:regex "."]))
 
 (defmethod vector-tree-for :cut
