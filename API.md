@@ -173,8 +173,8 @@ Parsers combinator functions.
 
 Chain multiple consecutive parsers.
 
-  The chain combinator supports cuts. At least one normal parser needs
-  to precede a cut. That parser must consume input, which no other
+  The chain combinator supports cuts. At least one normal parser must
+  precede a cut. That parser must consume input, which no other
   parser (via a choice) up in the combinator tree could also consume
   at that point.
 
@@ -264,7 +264,7 @@ Takes (something that evaluates to) a map, in which the entries can
 
       root=    <- prefixed (' ' prefixed)*
       prefixed <- (:prefixed '!' body) / body
-      body=    <- [a-z]+")
+      body=    <- [a-z]+
 
   Parsing "foo !bar" would result in the following result tree:
 
@@ -396,7 +396,7 @@ Use the given parser to parse the supplied text string. The result
   A success result looks like this:
 
       [:name {:start 0, :end 3}
-       [:child-1 {:start 0, :end 2, :value "aa"}]
+       [:child-1 {:start 0, :end 2}]
        [:child-2 {:start 2, :end 3}]]
 
   An error result looks like this:
@@ -449,9 +449,8 @@ Create a parser based on a data grammar definition. If a map with
        regex              #"[a-z]"
        eof                $
        empty-string       ε
-       any-non-newline    .
 
-       ;; refs and grouping
+       ;; refs, chains, choices and grouping
        reference          literal
        chain              (literal regex)
        choices            (literal / regex / "alice" "bob")
@@ -468,8 +467,8 @@ Create a parser based on a data grammar definition. If a map with
        negative-lookahead (!"alice")
 
        ;; cuts
-       soft-cut           ('[' > expr? ']')
-       hard-cut           ((class-open class class-close >>)*
+       soft-cut           ('[' > expr? ']') ; note the >
+       hard-cut           ((class-open class class-close >>)*) ; note the >>
 
        ;; direct combinator calls
        combinator-call    [:with-error #crust/plain :fail!
@@ -483,7 +482,7 @@ Create a parser based on a data grammar definition. If a map with
   If you postfix a rule name with `=`, the expression is automatically
   captured using the rule's name (without the postfix). Please read up
   on this at [`crustimoney2.combinators/grammar`](#crustimoney2.combinators/grammar).
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L104-L155">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L103-L153">Source</a></sub></p>
 
 ## <a name="crustimoney2.data-grammar/vector-tree-for">`vector-tree-for`</a><a name="crustimoney2.data-grammar/vector-tree-for"></a>
 
@@ -731,7 +730,7 @@ Create a parser based on a string-based grammar definition. If the
 
       (create-parser "root <- 'Hello ' email"
                      {:email (regex "...")})
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L208-L255">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L212-L259">Source</a></sub></p>
 
 ## <a name="crustimoney2.string-grammar/vector-tree">`vector-tree`</a><a name="crustimoney2.string-grammar/vector-tree"></a>
 ``` clojure
@@ -743,7 +742,7 @@ Low-level function which translates the string grammar into an
   intermediary vector-based representation. See
   [`crustimoney2.vector-grammar`](#crustimoney2.vector-grammar) for more on this format. This can be
   useful for debugging.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L197-L206">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L201-L210">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.vector-grammar">crustimoney2.vector-grammar</a>
