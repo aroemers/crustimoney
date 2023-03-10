@@ -54,21 +54,6 @@
   [key success]
   (vec (cons key (rest success))))
 
-(defn success->texts
-  "Sets the matched text as the only child of any (nested) success which
-  name is in the node-names collection.
-
-  Not intended to be used for normal success node walking/processing;
-  it is more performant to use `success->text` during walking. This is
-  here for debugging."
-  [text success node-names]
-  (let [names (set node-names)
-        inner (fn f [success]
-                (if (names (success->name success))
-                  (with-success-children success [(success->text text success)])
-                  (with-success-children success (map f (success->children success)))))]
-    (inner success)))
-
 ;;; Error functions
 
 (defn ->error
