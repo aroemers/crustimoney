@@ -120,6 +120,7 @@
        chain              (literal regex)
        choices            (literal / regex / \"alice\" \"bob\")
        named-group        (:my-name literal / \"the end\" $)
+       auto-named-group=  (literal / \"the end\" $)
 
        ;; quantifiers
        zero-to-many       (literal *)
@@ -142,7 +143,10 @@
   Optionally an existing map of parsers can be supplied, which can
   refered to by the data grammar.
 
-  To capture nodes in the parse result, you need to use named groups."
+  To capture nodes in the parse result, you need to use named groups.
+  If you postfix a rule name with `=`, the expression is automatically
+  captured using the rule's name (without the postfix). Please read up
+  on this at `crustimoney2.combinators/grammar`."
   ([data]
    (create-parser data nil))
   ([data other-parsers]
@@ -157,26 +161,26 @@
   (def superdogfood
     '{space #"\s*"
 
-      non-terminal    (:non-terminal #"[a-zA-Z_-]+")
-      literal         ("'" > (:literal ("\\'" / #"[^']")*) "'")
-      character-class (:character-class "[" ("\\]" / #"[^]]")* "]")
-      special-char    (:special-char "$" / "ε" / ".")
+      non-terminal=    #"[a-zA-Z_-]+"
+      literal          ("'" > (:literal ("\\'" / #"[^']")*) "'")
+      character-class= ("[" ("\\]" / #"[^]]")* "]")
+      special-char=    ("$" / "ε" / ".")
+      ref              (non-terminal !"=" space !"<-")
 
       group-name (":" > (:group-name #"[a-zA-Z_-]+"))
-      group      (:group "(" > group-name ? space choice space ")")
+      group=     ("(" > group-name ? space choice space ")")
 
-      expr ((non-terminal space !"<-") /
-            group / literal / character-class / special-char)
+      expr (ref / group / literal / character-class / special-char)
 
       quantified ((:quantified expr (:operand #"[?+*]")) / expr)
       lookahead  ((:lookahead (:operand #"[&!]") > quantified) / quantified)
 
-      cut ((:hard-cut ">>") / (:soft-cut ">"))
+      cut= (">>" / ">")
 
       chain  ((:chain lookahead (space (cut / lookahead))+) / lookahead)
       choice ((:choice chain (space "/" space chain)+) / chain)
 
-      rule (:rule (:rule-name non-terminal) space "<-" >> space choice)
-      root ((:root (:rules (space rule space)+) / (:no-rules space choice space)) $)})
+      rule= ((:rule-name non-terminal "="?) space "<-" >> space choice)
+      root= ((:rules (space rule space)+) / (:no-rules space choice space) $)})
 
   )

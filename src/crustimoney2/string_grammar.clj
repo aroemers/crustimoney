@@ -38,6 +38,11 @@
                               (c/literal "ε")
                               (c/literal ".")))
 
+    :ref (c/chain (c/ref :non-terminal)
+                  (c/negate (c/literal "="))
+                  (c/ref :space)
+                  (c/negate (c/literal "<-")))
+
     :cut (c/with-name :cut
            (c/choice (c/literal ">>") (c/literal ">")))
 
@@ -55,9 +60,7 @@
                       (c/ref :space)
                       (c/literal ")")))
 
-    :expr (c/choice (c/chain (c/ref :non-terminal)
-                             (c/ref :space)
-                             (c/negate (c/literal "<-")))
+    :expr (c/choice (c/ref :ref)
                     (c/ref :group)
                     (c/ref :literal)
                     (c/ref :character-class)
@@ -93,7 +96,8 @@
 
     :rule (c/with-name :rule
             (c/chain (c/with-name :rule-name
-                       (c/ref :non-terminal))
+                       (c/chain (c/ref :non-terminal)
+                                (c/maybe (c/literal "="))))
                      (c/ref :space)
                      (c/literal "<-")
                      :hard-cut
@@ -131,9 +135,9 @@
 
 (defmethod vector-tree-for :rule
   [text node]
-  (let [[child1 child2] (r/success->children node)
-        rule-name       (keyword (r/success->text text child1))]
-    [rule-name (vector-tree-for text child2)]))
+  (let [[name choice] (r/success->children node)
+        rule-name     (keyword (r/success->text text name))]
+    [rule-name (vector-tree-for text choice)]))
 
 (defmethod vector-tree-for :non-terminal
   [text node]
@@ -201,7 +205,7 @@
   [text]
   (let [result (core/parse (:root grammar) text)]
     (if (set? result)
-      (throw (ex-info "Failed to parse grammar" {:errors (r/errors->line-column result text)}))
+      (throw (ex-info "Failed to parse grammar" {:errors (r/errors->line-column text result)}))
       (vector-tree-for text result))))
 
 (defn create-parser
@@ -210,64 +214,45 @@
   The following definition describes the string grammar syntax in
   itself:
 
-      space           <- [\\s]*
+      space            <- [\\s]*
 
-      non-terminal    <- (:non-terminal [a-zA-Z_-]+)
-      literal         <- '\\'' > (:literal ('\\\\'' / [^'])*) '\\''
-      character-class <- (:character-class '[' ('\\]' / [^\\]])* ']' [?*+]?)
-      special-char    <- (:special-char '$' / 'ε' / '.')
+      non-terminal=    <- [a-zA-Z_-]+
+      literal          <- '\\'' > (:literal ('\\\\'' / [^'])*) '\\''
+      character-class= <- '[' ('\\]' / [^\\]])* ']' [?*+]?
+      special-char=    <- '$' / 'ε' / '.'
+      ref              <- (non-terminal !'=' space !'<-')
 
-      group-name      <- ':' > (:group-name [a-zA-Z_-]+)
-      group           <- (:group '(' > group-name? space choice space ')')
+      group-name       <- ':' > (:group-name [a-zA-Z_-]+)
+      group=           <- '(' > group-name? space choice space ')'
 
-      expr            <- (non-terminal space !'<-') /
-                         group / literal / character-class / special-char
+      expr             <- ref / group / literal / character-class / special-char
 
-      quantified      <- (:quantified expr (:operand [?+*])) / expr
-      lookahead       <- (:lookahead (:operand [&!]) > quantified) / quantified
+      quantified       <- (:quantified expr (:operand [?+*])) / expr
+      lookahead        <- (:lookahead (:operand [&!]) > quantified) / quantified
 
-      cut             <- (:hard-cut '>>') / (:soft-cut '>')
+      cut=             <- '>>' / '>'
 
-      chain           <- (:chain lookahead (space (cut / lookahead))+) / lookahead
-      choice          <- (:choice chain (space '/' space chain)+) / chain
+      chain            <- (:chain lookahead (space (cut / lookahead))+) / lookahead
+      choice           <- (:choice chain (space '/' space chain)+) / chain
 
-      rule            <- (:rule (:rule-name non-terminal) space '<-' >> space choice)
-      rules           <- (:rules (space rule space)+)
-      no-rules        <- (:no-rules space choice space)
-      root            <- (:root rules / no-rules) $
+      rule=            <- (:rule-name non-terminal '='?) space '<-' >> space choice
+      root=            <- (:rules (space rule space)+) / (:no-rules space choice space) $
 
   To capture nodes in the parse result, you need to use named groups.
+  If you postfix a rule name with `=`, the expression is automatically
+  captured using the rule's name (without the postfix). Please read up
+  on this at `crustimoney2.combinators/grammar`.
 
-  An options map can be supplied. The following options are available:
+  A map of existing parsers can be supplied, which can be used by the
+  string grammar.
 
-  - `:other-parsers`, an existing map of parsers, which can be used by
-  the string grammar. For example:
+  For example:
 
       (create-parser \"root <- 'Hello ' email\"
-                     {:other-parsers
-                      {:email (regex \"...\")}})
-
-  - `:auto-name`, if set to true, all rules are wrapped with a named
-  group corresponding to the rule name. To disable this for a rule,
-  wrap its name with `<...>`. For example:
-
-      (create-parser \"root       <- (prefixed ' ')+
-                      <prefixed> <- (:prefixed '!' body) / body
-                      body       <- [a-z]+\"
-                     {:auto-name true})
-
-  Parsing \"foo !bar\" would result in the following result tree:
-
-      [:root {:start 0, :end 8}
-       [:body {:start 0, :end 3}]
-       [:prefixed {:start 4, :end 8}
-        [:body {:start 5, :end 8}]]]
-
-  This option is off by default, as it is encouraged to be intentional
-  about which nodes should be captured and when."
+                     {:email (regex \"...\")})"
   ([text]
    (create-parser text nil))
-  ([text {:keys [other-parsers]}]
+  ([text other-parsers]
    (-> (vector-tree text)
        (vector-grammar/merge-other other-parsers)
        (vector-grammar/create-parser))))
@@ -276,56 +261,31 @@
 
   ;;; I heard you like string grammars...
 
-  ;; TODO: Add comments, using #.
+  ;; TODO: Add comments?
 
   (def superdogfood "
-    space           <- [\\s]*
+    space            <- [\\s]*
 
-    non-terminal    <- (:non-terminal [a-zA-Z_-]+)
-    literal         <- '\\'' > (:literal ('\\\\'' / [^'])*) '\\''
-    character-class <- (:character-class '[' ('\\]' / [^\\]])* ']' [?*+]?)
-    special-char    <- (:special-char '$' / 'ε' / '.')
+    non-terminal=    <- [a-zA-Z_-]+
+    literal          <- '\\'' > (:literal ('\\\\'' / [^'])*) '\\''
+    character-class= <- '[' ('\\]' / [^\\]])* ']' [?*+]?
+    special-char=    <- '$' / 'ε' / '.'
+    ref              <- (non-terminal !'=' space !'<-')
 
-    group-name      <- ':' > (:group-name [a-zA-Z_-]+)
-    group           <- (:group '(' > group-name? space choice space ')')
+    group-name       <- ':' > (:group-name [a-zA-Z_-]+)
+    group=           <- '(' > group-name? space choice space ')'
 
-    expr            <- (non-terminal space !'<-') /
-                       group / literal / character-class / special-char
+    expr             <- ref / group / literal / character-class / special-char
 
-    quantified      <- (:quantified expr (:operand [?+*])) / expr
-    lookahead       <- (:lookahead (:operand [&!]) > quantified) / quantified
+    quantified       <- (:quantified expr (:operand [?+*])) / expr
+    lookahead        <- (:lookahead (:operand [&!]) > quantified) / quantified
 
-    cut             <- (:cut '>>' / '>')
+    cut=             <- '>>' / '>'
 
-    chain           <- (:chain lookahead (space (cut / lookahead))+) / lookahead
-    choice          <- (:choice chain (space '/' space chain)+) / chain
+    chain            <- (:chain lookahead (space (cut / lookahead))+) / lookahead
+    choice           <- (:choice chain (space '/' space chain)+) / chain
 
-    rule            <- (:rule (:rule-name non-terminal) space '<-' >> space choice)
-    root            <- (:root (:rules (space rule space)+) / (:no-rules space choice space)) $")
-
-  (def optionaldogfood "
-    <space>         <- [\\s]*
-
-    non-terminal    <- [a-zA-Z_-]+
-    <literal>       <- '\\'' > (:literal ('\\\\'' / [^'])*) '\\''
-    character-class <- '[' ('\\]' / [^\\]])* ']' [?*+]?
-    special-char    <- '$' / 'ε' / '.'
-
-    <group-name>    <- ':' > (:group-name [a-zA-Z_-]+)
-    group           <- '(' > group-name? space choice space ')'
-
-    <expr>          <- (non-terminal space !'<-') /
-                       group / literal / character-class / special-char
-
-    <quantified>    <- (:quantified expr (:operand [?+*])) / expr
-    <lookahead>     <- (:lookahead (:operand [&!]) > quantified) / quantified
-
-    cut             <- '>>' / '>'
-
-    <chain>         <- (:chain lookahead (space (cut / lookahead))+) / lookahead
-    <choice>        <- (:choice chain (space '/' space chain)+) / chain
-
-    rule            <- (:rule-name non-terminal) space '<-' >> space choice
-    root            <- (:rules (space rule space)+) / (:no-rules space choice space) $")
+    rule=            <- (:rule-name non-terminal '='?) space '<-' >> space choice
+    root=            <- (:rules (space rule space)+) / (:no-rules space choice space) $")
 
 )

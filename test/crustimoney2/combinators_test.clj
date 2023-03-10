@@ -160,14 +160,3 @@
   (let [p (c/with-error :fail (c/literal "foo"))]
     (is (= (r/->success 0 3) (parse p "foo")))
     (is (= #{(r/->error :fail 0)} (parse p "not-foo")))))
-
-(deftest with-value-test
-  (testing "without transform function"
-    (let [p (c/with-value (c/literal "foo"))]
-      (is (= "foo" (r/success->attr (parse p "foobar") :value)))
-      (is (= #{(r/->error :expected-literal 0 {:literal "foo"})}
-             (parse p "not-foo")))))
-
-  (testing "with transform function"
-    (let [p (c/with-value parse-long (c/regex "[0-9]+"))]
-      (is (= 42 (r/success->attr (parse p "42cm") :value))))))

@@ -231,44 +231,6 @@
   []
   (literal ""))
 
-;;; Recursive grammar definition
-
-(def ^:dynamic ^:no-doc *parsers*)
-
-(defn ref
-  "Wrap another parser function, which is referred to by the given key.
-  Needs to be called within the lexical scope of `grammar`."
-  [key]
-  (assert (bound? #'*parsers*)
-    "Cannot use ref function outside grammar macro")
-
-  (swap! *parsers* assoc key nil)
-  (let [parsers *parsers*]
-    (fn
-      ([_ index]
-       (r/->push (get @parsers key) index))
-      ([_ _ result _]
-       result))))
-
-(defn ^:no-doc grammar* [f]
-  (assert (not (bound? #'*parsers*)) "Cannot nest grammar macro")
-
-  (binding [*parsers* (atom nil)]
-    (let [result (swap! *parsers* merge (f))]
-      (if-let [unknown-refs (seq (remove result (keys result)))]
-        (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unknown-refs}))
-        result))))
-
-(defmacro grammar
-  "Takes (something that evaluates to) a map, in which the entries can
-  refer to each other using the `ref` function. In other words, a
-  recursive map. For example:
-
-      (grammar {:foo  (literal \"foo\")
-                :root (chain (ref :foo) \"bar\")})"
-  [m]
-  `(grammar* (fn [] ~m)))
-
 ;;; Result wrappers
 
 (defn with-name
@@ -289,6 +251,74 @@
       (if (set? result)
         #{(r/->error key index)}
         result))))
+
+;;; Recursive grammar definition
+
+(def ^:dynamic ^:no-doc *parsers*)
+
+(defn ref
+  "Wrap another parser function, which is referred to by the given key.
+  Needs to be called within the lexical scope of `grammar`."
+  [key]
+  (assert (bound? #'*parsers*)
+    "Cannot use ref function outside grammar macro")
+
+  (swap! *parsers* assoc key nil)
+  (let [parsers *parsers*]
+    (fn
+      ([_ index]
+       (r/->push (get @parsers key) index))
+      ([_ _ result _]
+       result))))
+
+(defn- auto-capture [m]
+  (reduce-kv (fn [a k v]
+               (let [rule-name     (name k)
+                     auto-capture? (= (last rule-name) \=)
+                     rule-key      (keyword (cond-> rule-name auto-capture? (subs 0 (dec (count rule-name)))))
+                     rule-expr     (cond->> v auto-capture? (with-name rule-key))]
+                 (assoc a rule-key rule-expr)))
+             {} m))
+
+(defn ^:no-doc grammar* [f]
+  (assert (not (bound? #'*parsers*)) "Cannot nest grammar macro")
+
+  (binding [*parsers* (atom nil)]
+    (let [result (swap! *parsers* merge (auto-capture (f)))]
+      (if-let [unknown-refs (seq (remove result (keys result)))]
+        (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unknown-refs}))
+        result))))
+
+(defmacro grammar
+  "Takes (something that evaluates to) a map, in which the entries can
+  refer to each other using the `ref` function. In other words, a
+  recursive map. For example:
+
+      (grammar {:foo  (literal \"foo\")
+                :root (chain (ref :foo) \"bar\")})
+
+  A rule's name key can be postfixed with `=`. The rule's parser is
+  then wrapped with `with-name` (without the postfix). A `ref` to such
+  rule is also without the postfix.
+
+  However, it is encouraged to be very intentional about which nodes
+  should be captured and when. For example, the following (string)
+  grammar ensures that the `:prefixed` node is only in the result when
+  applicable.
+
+      root=    <- prefixed (' ' prefixed)*
+      prefixed <- (:prefixed '!' body) / body
+      body=    <- [a-z]+\")
+
+  Parsing \"foo !bar\" would result in the following result tree:
+
+      [:root {:start 0, :end 8}
+       [:body {:start 0, :end 3}]
+       [:prefixed {:start 4, :end 8}
+        [:body {:start 5, :end 8}]]]
+"
+  [m]
+  `(grammar* (fn [] ~m)))
 
 (comment
 

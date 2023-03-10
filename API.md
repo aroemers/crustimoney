@@ -258,12 +258,33 @@ Matches the empty string.
 Function.
 
 Takes (something that evaluates to) a map, in which the entries can
-  refer to each other using the [`ref`](#crustimoney2.combinators/ref) function. In other words, a
+  refer to each other using the [[`ref`](#crustimoney2.combinators/ref)](#crustimoney2.combinators/ref) function. In other words, a
   recursive map. For example:
 
       (grammar {:foo  (literal "foo")
                 :root (chain (ref :foo) "bar")})
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L262-L270">Source</a></sub></p>
+
+  A rule's name key can be postfixed with `=`. The rule's parser is
+  then wrapped with [`with-name`](#crustimoney2.combinators/with-name) (without the postfix). A [[`ref`](#crustimoney2.combinators/ref)](#crustimoney2.combinators/ref) to such
+  rule is also without the postfix.
+
+  However, it is encouraged to be very intentional about which nodes
+  should be captured and when. For example, the following (string)
+  grammar ensures that the `:prefixed` node is only in the result when
+  applicable.
+
+      root=    <- prefixed (' ' prefixed)*
+      prefixed <- (:prefixed '!' body) / body
+      body=    <- [a-z]+")
+
+  Parsing "foo !bar" would result in the following result tree:
+
+      [:root {:start 0, :end 8}
+       [:body {:start 0, :end 3}]
+       [:prefixed {:start 4, :end 8}
+        [:body {:start 5, :end 8}]]]
+
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L292-L321">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/literal">`literal`</a><a name="crustimoney2.combinators/literal"></a>
 ``` clojure
@@ -311,7 +332,7 @@ Negative lookahead for the given parser, i.e. this succeeds if the
 
 Wrap another parser function, which is referred to by the given key.
   Needs to be called within the lexical scope of [`grammar`](#crustimoney2.combinators/grammar).
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L238-L251">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L259-L272">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/regex">`regex`</a><a name="crustimoney2.combinators/regex"></a>
 ``` clojure
@@ -349,7 +370,7 @@ Eagerly try to match the parser as many times as possible, expecting
 
 Wrap the parser, replacing any errors with a single error with the
   supplied error key.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L283-L291">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L245-L253">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/with-name">`with-name`</a><a name="crustimoney2.combinators/with-name"></a>
 ``` clojure
@@ -360,7 +381,7 @@ Wrap the parser, replacing any errors with a single error with the
 Wrap the parser, assigning a name to the (success) result of the
   parser. Nameless parsers are filtered out by default during
   parsing.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L274-L281">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L236-L243">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.core">crustimoney2.core</a>
@@ -446,6 +467,7 @@ Create a parser based on a data grammar definition. If a map with
        chain              (literal regex)
        choices            (literal / regex / "alice" "bob")
        named-group        (:my-name literal / "the end" $)
+       auto-named-group=  (literal / "the end" $)
 
        ;; quantifiers
        zero-to-many       (literal *)
@@ -469,7 +491,10 @@ Create a parser based on a data grammar definition. If a map with
   refered to by the data grammar.
 
   To capture nodes in the parse result, you need to use named groups.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L104-L151">Source</a></sub></p>
+  If you postfix a rule name with `=`, the expression is automatically
+  captured using the rule's name (without the postfix). Please read up
+  on this at [`crustimoney2.combinators/grammar`](#crustimoney2.combinators/grammar).
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L104-L155">Source</a></sub></p>
 
 ## <a name="crustimoney2.data-grammar/vector-tree-for">`vector-tree-for`</a><a name="crustimoney2.data-grammar/vector-tree-for"></a>
 
@@ -687,7 +712,7 @@ Create a parser based on a string grammar. The grammar is translated
 ``` clojure
 
 (create-parser text)
-(create-parser text {:keys [other-parsers]})
+(create-parser text other-parsers)
 ```
 
 Create a parser based on a string-based grammar definition. If the
@@ -695,62 +720,43 @@ Create a parser based on a string-based grammar definition. If the
   The following definition describes the string grammar syntax in
   itself:
 
-      space           <- [\s]*
+      space            <- [\s]*
 
-      non-terminal    <- (:non-terminal [a-zA-Z_-]+)
-      literal         <- '\'' > (:literal ('\\'' / [^'])*) '\''
-      character-class <- (:character-class '[' ('\]' / [^\]])* ']' [?*+]?)
-      special-char    <- (:special-char '$' / 'ε' / '.')
+      non-terminal=    <- [a-zA-Z_-]+
+      literal          <- '\'' > (:literal ('\\'' / [^'])*) '\''
+      character-class= <- '[' ('\]' / [^\]])* ']' [?*+]?
+      special-char=    <- '$' / 'ε' / '.'
+      ref              <- (non-terminal !'=' space !'<-')
 
-      group-name      <- ':' > (:group-name [a-zA-Z_-]+)
-      group           <- (:group '(' > group-name? space choice space ')')
+      group-name       <- ':' > (:group-name [a-zA-Z_-]+)
+      group=           <- '(' > group-name? space choice space ')'
 
-      expr            <- (non-terminal space !'<-') /
-                         group / literal / character-class / special-char
+      expr             <- ref / group / literal / character-class / special-char
 
-      quantified      <- (:quantified expr (:operand [?+*])) / expr
-      lookahead       <- (:lookahead (:operand [&!]) > quantified) / quantified
+      quantified       <- (:quantified expr (:operand [?+*])) / expr
+      lookahead        <- (:lookahead (:operand [&!]) > quantified) / quantified
 
-      cut             <- (:hard-cut '>>') / (:soft-cut '>')
+      cut=             <- '>>' / '>'
 
-      chain           <- (:chain lookahead (space (cut / lookahead))+) / lookahead
-      choice          <- (:choice chain (space '/' space chain)+) / chain
+      chain            <- (:chain lookahead (space (cut / lookahead))+) / lookahead
+      choice           <- (:choice chain (space '/' space chain)+) / chain
 
-      rule            <- (:rule (:rule-name non-terminal) space '<-' >> space choice)
-      rules           <- (:rules (space rule space)+)
-      no-rules        <- (:no-rules space choice space)
-      root            <- (:root rules / no-rules) $
+      rule=            <- (:rule-name non-terminal '='?) space '<-' >> space choice
+      root=            <- (:rules (space rule space)+) / (:no-rules space choice space) $
 
   To capture nodes in the parse result, you need to use named groups.
+  If you postfix a rule name with `=`, the expression is automatically
+  captured using the rule's name (without the postfix). Please read up
+  on this at [`crustimoney2.combinators/grammar`](#crustimoney2.combinators/grammar).
 
-  An options map can be supplied. The following options are available:
+  A map of existing parsers can be supplied, which can be used by the
+  string grammar.
 
-  - `:other-parsers`, an existing map of parsers, which can be used by
-  the string grammar. For example:
+  For example:
 
       (create-parser "root <- 'Hello ' email"
-                     {:other-parsers
-                      {:email (regex "...")}})
-
-  - `:auto-name`, if set to true, all rules are wrapped with a named
-  group corresponding to the rule name. To disable this for a rule,
-  wrap its name with `<...>`. For example:
-
-      (create-parser "root       <- (prefixed ' ')+
-                      <prefixed> <- (:prefixed '!' body) / body
-                      body       <- [a-z]+"
-                     {:auto-name true})
-
-  Parsing "foo !bar" would result in the following result tree:
-
-      [:root {:start 0, :end 8}
-       [:body {:start 0, :end 3}]
-       [:prefixed {:start 4, :end 8}
-        [:body {:start 5, :end 8}]]]
-
-  This option is off by default, as it is encouraged to be intentional
-  about which nodes should be captured and when.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L207-L273">Source</a></sub></p>
+                     {:email (regex "...")})
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L211-L258">Source</a></sub></p>
 
 ## <a name="crustimoney2.string-grammar/vector-tree">`vector-tree`</a><a name="crustimoney2.string-grammar/vector-tree"></a>
 ``` clojure
@@ -762,7 +768,7 @@ Low-level function which translates the string grammar into an
   intermediary vector-based representation. See
   [`crustimoney2.vector-grammar`](#crustimoney2.vector-grammar) for more on this format. This can be
   useful for debugging.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L196-L205">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L200-L209">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.vector-grammar">crustimoney2.vector-grammar</a>
