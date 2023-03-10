@@ -176,11 +176,13 @@
 (defn regex
   "A parser that matches the given regular expression."
   [re]
-  (let [pattern (re-pattern (str "^(" re ")"))]
+  (let [^java.util.regex.Pattern pattern (re-pattern re)]
     (fn [text index]
-      (if-let [[match] (re-find pattern (subs text index))]
-        (r/->success index (+ index (count match)))
-        #{(r/->error :expected-match index {:regex re})}))))
+      (let [^java.util.regex.Matcher matcher (.matcher pattern text)]
+        (.region matcher index (count text))
+        (if (.lookingAt matcher)
+          (r/->success index (long (.end matcher)))
+          #{(r/->error :expected-match index {:regex re})})))))
 
 (defn repeat+
   "Eagerly try to match the parser as many times as possible, expecting
