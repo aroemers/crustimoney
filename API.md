@@ -10,7 +10,6 @@
     -  [`chain`](#crustimoney2.combinators/chain) - Chain multiple consecutive parsers.
     -  [`choice`](#crustimoney2.combinators/choice) - Match the first of the ordered parsers that is successful.
     -  [`eof`](#crustimoney2.combinators/eof) - Succeed only if the entire text has been parsed.
-    -  [`epsilon`](#crustimoney2.combinators/epsilon) - Matches the empty string.
     -  [`grammar`](#crustimoney2.combinators/grammar) - Takes (something that evaluates to) a map, in which the entries can refer to each other using the <code>ref</code> function.
     -  [`literal`](#crustimoney2.combinators/literal) - A parser that matches an exact literal string.
     -  [`lookahead`](#crustimoney2.combinators/lookahead) - Lookahead for the given parser, i.e.
@@ -44,7 +43,6 @@
     -  [`success->name`](#crustimoney2.results/success->name) - Return the name of a success.
     -  [`success->start`](#crustimoney2.results/success->start) - Return the start index of a success.
     -  [`success->text`](#crustimoney2.results/success->text) - Returns the matched text of a success, given the full text.
-    -  [`success->texts`](#crustimoney2.results/success->texts) - Sets the matched text as the only child of any (nested) success which name is in the node-names collection.
     -  [`success?`](#crustimoney2.results/success?) - Returns obj if obj is a success value, nil otherwise.
 -  [`crustimoney2.string-grammar`](#crustimoney2.string-grammar)  - Create a parser based on a string grammar.
     -  [`create-parser`](#crustimoney2.string-grammar/create-parser) - Create a parser based on a string-based grammar definition.
@@ -241,15 +239,6 @@ Match the first of the ordered parsers that is successful.
 Succeed only if the entire text has been parsed.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L224-L227">Source</a></sub></p>
 
-## <a name="crustimoney2.combinators/epsilon">`epsilon`</a><a name="crustimoney2.combinators/epsilon"></a>
-``` clojure
-
-(epsilon)
-```
-
-Matches the empty string.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L229-L232">Source</a></sub></p>
-
 ## <a name="crustimoney2.combinators/grammar">`grammar`</a><a name="crustimoney2.combinators/grammar"></a>
 ``` clojure
 
@@ -284,7 +273,7 @@ Takes (something that evaluates to) a map, in which the entries can
        [:prefixed {:start 4, :end 8}
         [:body {:start 5, :end 8}]]]
 
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L292-L321">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L287-L316">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/literal">`literal`</a><a name="crustimoney2.combinators/literal"></a>
 ``` clojure
@@ -332,7 +321,7 @@ Negative lookahead for the given parser, i.e. this succeeds if the
 
 Wrap another parser function, which is referred to by the given key.
   Needs to be called within the lexical scope of [`grammar`](#crustimoney2.combinators/grammar).
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L259-L272">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L254-L267">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/regex">`regex`</a><a name="crustimoney2.combinators/regex"></a>
 ``` clojure
@@ -370,7 +359,7 @@ Eagerly try to match the parser as many times as possible, expecting
 
 Wrap the parser, replacing any errors with a single error with the
   supplied error key.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L245-L253">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L240-L248">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/with-name">`with-name`</a><a name="crustimoney2.combinators/with-name"></a>
 ``` clojure
@@ -381,7 +370,7 @@ Wrap the parser, replacing any errors with a single error with the
 Wrap the parser, assigning a name to the (success) result of the
   parser. Nameless parsers are filtered out by default during
   parsing.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L236-L243">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L231-L238">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.core">crustimoney2.core</a>
@@ -533,7 +522,7 @@ Result constructors, accessors and predicates
 
 Create an error result, given an error key and an index. An extra
   detail object can be added.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L74-L80">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L61-L67">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/->push">`->push`</a><a name="crustimoney2.results/->push"></a>
 ``` clojure
@@ -544,7 +533,7 @@ Create an error result, given an error key and an index. An extra
 
 Create a push value, given a parser function and an index. Optionally
   a state object can be added.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L99-L105">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L86-L92">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/->success">`->success`</a><a name="crustimoney2.results/->success"></a>
 ``` clojure
@@ -565,7 +554,7 @@ Create a success result, given a start index (inclusive) and end
 ```
 
 Return the detail object of an error.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L92-L95">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L79-L82">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/error->index">`error->index`</a><a name="crustimoney2.results/error->index"></a>
 ``` clojure
@@ -574,7 +563,7 @@ Return the detail object of an error.
 ```
 
 Return the index of an error
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L87-L90">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L74-L77">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/error->key">`error->key`</a><a name="crustimoney2.results/error->key"></a>
 ``` clojure
@@ -583,7 +572,7 @@ Return the index of an error
 ```
 
 Return the key of an error.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L82-L85">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L69-L72">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/errors->line-column">`errors->line-column`</a><a name="crustimoney2.results/errors->line-column"></a>
 ``` clojure
@@ -592,7 +581,7 @@ Return the key of an error.
 ```
 
 Returns the errors with `:line` and `:column` entries added.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L146-L152">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L133-L139">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/push->index">`push->index`</a><a name="crustimoney2.results/push->index"></a>
 ``` clojure
@@ -601,7 +590,7 @@ Returns the errors with `:line` and `:column` entries added.
 ```
 
 Returns the index of a push value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L118-L121">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L105-L108">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/push->parser">`push->parser`</a><a name="crustimoney2.results/push->parser"></a>
 ``` clojure
@@ -610,7 +599,7 @@ Returns the index of a push value.
 ```
 
 Returns the parser of a push value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L113-L116">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L100-L103">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/push->state">`push->state`</a><a name="crustimoney2.results/push->state"></a>
 ``` clojure
@@ -619,7 +608,7 @@ Returns the parser of a push value.
 ```
 
 Returns the state of a push value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L123-L126">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L110-L113">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/push?">`push?`</a><a name="crustimoney2.results/push?"></a>
 ``` clojure
@@ -628,7 +617,7 @@ Returns the state of a push value.
 ```
 
 Returns obj if obj is a push value.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L107-L111">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L94-L98">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success->children">`success->children`</a><a name="crustimoney2.results/success->children"></a>
 ``` clojure
@@ -674,20 +663,6 @@ Return the start index of a success.
 
 Returns the matched text of a success, given the full text.
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L41-L44">Source</a></sub></p>
-
-## <a name="crustimoney2.results/success->texts">`success->texts`</a><a name="crustimoney2.results/success->texts"></a>
-``` clojure
-
-(success->texts text success node-names)
-```
-
-Sets the matched text as the only child of any (nested) success which
-  name is in the node-names collection.
-
-  Not intended to be used for normal success node walking/processing;
-  it is more performant to use [`success->text`](#crustimoney2.results/success->text) during walking. This is
-  here for debugging.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/results.clj#L57-L70">Source</a></sub></p>
 
 ## <a name="crustimoney2.results/success?">`success?`</a><a name="crustimoney2.results/success?"></a>
 ``` clojure
@@ -756,7 +731,7 @@ Create a parser based on a string-based grammar definition. If the
 
       (create-parser "root <- 'Hello ' email"
                      {:email (regex "...")})
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L211-L258">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L208-L255">Source</a></sub></p>
 
 ## <a name="crustimoney2.string-grammar/vector-tree">`vector-tree`</a><a name="crustimoney2.string-grammar/vector-tree"></a>
 ``` clojure
@@ -768,7 +743,7 @@ Low-level function which translates the string grammar into an
   intermediary vector-based representation. See
   [`crustimoney2.vector-grammar`](#crustimoney2.vector-grammar) for more on this format. This can be
   useful for debugging.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L200-L209">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/string_grammar.clj#L197-L206">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.vector-grammar">crustimoney2.vector-grammar</a>
