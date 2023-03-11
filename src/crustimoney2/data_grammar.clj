@@ -75,7 +75,6 @@
   (let [ref-name (str data)]
     (case ref-name
       "$"  [:eof]
-      "ε"  [:literal ""]
       ">>" :hard-cut
       ">"  :soft-cut
       [:ref (keyword ref-name)])))
@@ -160,15 +159,16 @@
     '{space #"\s*"
 
       non-terminal=    #"[a-zA-Z_-]+"
-      literal          ("'" > (:literal ("\\'" / #"[^']")*) "'")
-      character-class= ("[" ("\\]" / #"[^]]")* "]")
-      special-char=    ("$" / "ε" / ".")
+      literal          ("'" > (:literal #"(\\'|[^'])*") "'")
+      character-class= ("[" > #"(\\]|[^]])*" "]")
+      regex=           ("#" > literal)
+      end-of-file=     "$"
       ref              (non-terminal !"=" space !"<-")
 
       group-name (":" > (:group-name #"[a-zA-Z_-]+"))
       group=     ("(" > group-name ? space choice space ")")
 
-      expr (ref / group / literal / character-class / special-char)
+      expr (ref / group / literal / character-class / end-of-file / regex)
 
       quantified ((:quantified expr (:operand #"[?+*]")) / expr)
       lookahead  ((:lookahead (:operand #"[&!]") > quantified) / quantified)

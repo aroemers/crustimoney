@@ -18,8 +18,7 @@
   (c/grammar
    {:space (c/regex #"\s*")
 
-    :non-terminal (c/with-name :non-terminal
-                    (c/regex "[a-zA-Z_-]+"))
+    :non-terminal= (c/regex "[a-zA-Z_-]+")
 
     :literal (c/chain (c/literal "'")
                       :soft-cut
@@ -27,42 +26,44 @@
                         (c/regex #"(\\'|[^'])*"))
                       (c/literal "'"))
 
-    :character-class (c/with-name :character-class
-                       (c/regex #"\[(\\]|[^]])*][?*+]?"))
+    :character-class= (c/chain (c/literal "[")
+                               :soft-cut
+                               (c/regex #"(\\]|[^]])*")
+                               (c/literal "]")
+                               (c/regex #"[?*+]?"))
 
-    :special-char (c/with-name :special-char
-                    (c/choice (c/literal "$")
-                              (c/literal "ε")
-                              (c/chain (c/literal ".")
-                                       (c/regex "[?+*]?"))))
+    :regex= (c/chain (c/literal "#")
+                     :soft-cut
+                     (c/ref :literal))
+
+    :end-of-file= (c/literal "$")
 
     :ref (c/chain (c/ref :non-terminal)
                   (c/negate (c/literal "="))
                   (c/ref :space)
                   (c/negate (c/literal "<-")))
 
-    :cut (c/with-name :cut
-           (c/choice (c/literal ">>") (c/literal ">")))
+    :cut= (c/choice (c/literal ">>") (c/literal ">"))
 
     :group-name (c/chain (c/literal ":")
                          :soft-cut
                          (c/with-name :group-name
                            (c/regex "[a-zA-Z_-]+")))
 
-    :group (c/with-name :group
-             (c/chain (c/literal "(")
-                      :soft-cut
-                      (c/maybe (c/ref :group-name))
-                      (c/ref :space)
-                      (c/ref :choice)
-                      (c/ref :space)
-                      (c/literal ")")))
+    :group= (c/chain (c/literal "(")
+                     :soft-cut
+                     (c/maybe (c/ref :group-name))
+                     (c/ref :space)
+                     (c/ref :choice)
+                     (c/ref :space)
+                     (c/literal ")"))
 
     :expr (c/choice (c/ref :ref)
                     (c/ref :group)
                     (c/ref :literal)
                     (c/ref :character-class)
-                    (c/ref :special-char))
+                    (c/ref :end-of-file)
+                    (c/ref :regex))
 
     :quantified (c/choice (c/with-name :quantified
                             (c/chain (c/ref :expr)
@@ -92,26 +93,24 @@
                                                      (c/ref :chain)))))
                       (c/ref :chain))
 
-    :rule (c/with-name :rule
-            (c/chain (c/with-name :rule-name
-                       (c/chain (c/ref :non-terminal)
-                                (c/maybe (c/literal "="))))
-                     (c/ref :space)
-                     (c/literal "<-")
-                     :hard-cut
-                     (c/ref :space)
-                     (c/ref :choice)))
+    :rule= (c/chain (c/with-name :rule-name
+                      (c/chain (c/ref :non-terminal)
+                               (c/maybe (c/literal "="))))
+                    (c/ref :space)
+                    (c/literal "<-")
+                    :hard-cut
+                    (c/ref :space)
+                    (c/ref :choice))
 
-    :root (c/with-name :root
-            (c/chain (c/choice (c/with-name :rules
-                                 (c/repeat+ (c/chain (c/ref :space)
-                                                     (c/ref :rule)
-                                                     (c/ref :space))))
-                               (c/with-name :no-rules
-                                 (c/chain (c/ref :space)
-                                          (c/ref :choice)
-                                          (c/ref :space))))
-                     (c/eof)))}))
+    :root= (c/chain (c/choice (c/with-name :rules
+                                (c/repeat+ (c/chain (c/ref :space)
+                                                    (c/ref :rule)
+                                                    (c/ref :space))))
+                              (c/with-name :no-rules
+                                (c/chain (c/ref :space)
+                                         (c/ref :choice)
+                                         (c/ref :space))))
+                    (c/eof))}))
 
 ;;; Parse result processing
 
@@ -157,6 +156,11 @@
   [text node]
   [:regex (r/success->text text node)])
 
+(defmethod vector-tree-for :regex
+  [text node]
+  (let [literal (first (r/success->children node))]
+    [:regex (unescape-quotes (r/success->text text literal))]))
+
 (defmethod vector-tree-for :chain
   [text node]
   (into [:chain] (map (partial vector-tree-for text) (r/success->children node))))
@@ -182,15 +186,9 @@
       "+" [:repeat+ parser]
       "*" [:repeat* parser])))
 
-(defmethod vector-tree-for :special-char
-  [text node]
-  (case (r/success->text text node)
-    "$" [:eof]
-    "ε" [:literal ""]
-    "." [:regex "."]
-    ".?" [:regex ".?"]
-    ".+" [:regex ".+"]
-    ".*" [:regex ".*"]))
+(defmethod vector-tree-for :end-of-file
+  [_text _node]
+  [:eof])
 
 (defmethod vector-tree-for :cut
   [text node]
@@ -218,15 +216,16 @@
       space            <- [\\s]*
 
       non-terminal=    <- [a-zA-Z_-]+
-      literal          <- '\\'' > (:literal ('\\\\'' / [^'])*) '\\''
-      character-class= <- '[' ('\\]' / [^\\]])* ']' [?*+]?
-      special-char=    <- '$' / 'ε' / '.'
+      literal          <- '\\'' > (:literal #'(\\\\\\'|[^\\'])*') '\\''
+      character-class= <- '[' > #'(\\\\]|[^]])*' ']' [?*+]?
+      regex=           <- '#' > literal
       ref              <- (non-terminal !'=' space !'<-')
+      end-of-file=     <- '$'
 
       group-name       <- ':' > (:group-name [a-zA-Z_-]+)
       group=           <- '(' > group-name? space choice space ')'
 
-      expr             <- ref / group / literal / character-class / special-char
+      expr             <- ref / group / literal / character-class / end-of-file / regex
 
       quantified       <- (:quantified expr (:operand [?+*])) / expr
       lookahead        <- (:lookahead (:operand [&!]) > quantified) / quantified
@@ -268,20 +267,21 @@
     space            <- [\\s]*
 
     non-terminal=    <- [a-zA-Z_-]+
-    literal          <- '\\'' > (:literal ('\\\\'' / [^'])*) '\\''
-    character-class= <- '[' ('\\]' / [^\\]])* ']' [?*+]?
-    special-char=    <- '$' / 'ε' / '.'
+    literal          <- '\\'' > (:literal #'(\\\\\\'|[^\\'])*') '\\''
+    character-class= <- '[' > #'(\\\\]|[^]])*' ']' [?*+]?
+    regex=           <- '#' > literal
     ref              <- (non-terminal !'=' space !'<-')
+    end-of-file=     <- '$'
 
     group-name       <- ':' > (:group-name [a-zA-Z_-]+)
     group=           <- '(' > group-name? space choice space ')'
 
-    expr             <- ref / group / literal / character-class / special-char
+    expr             <- ref / group / literal / character-class / end-of-file / regex
 
     quantified       <- (:quantified expr (:operand [?+*])) / expr
     lookahead        <- (:lookahead (:operand [&!]) > quantified) / quantified
 
-    cut=             <- '>>' / '>'
+    cut=             <- #'>>|>'
 
     chain            <- (:chain lookahead (space (cut / lookahead))+) / lookahead
     choice           <- (:choice chain (space '/' space chain)+) / chain
@@ -292,7 +292,7 @@
   (def json "
     root=    <- space value space $
     value    <- (string / number / boolean / array / null / object)
-    string   <- '\"' > (:string ('\\\"' / [^\"])*) '\"'
+    string   <- '\"' > (:string #'((\\\\\")|[^\"])*+') '\"'
     number=  <- [0-9]+
     boolean= <- 'true' / 'false'
     array=   <- '[' > space (value (space ',' space value)*)? space ']'
@@ -301,15 +301,6 @@
     entry=   <- string space ':' space value
     space    <- [\\s]*")
 
-  ;; TODO: Can we find a solution for the inefficient string parsing?
-  ;; Using the parser below is 4 times faster!
-
-  (def string (c/chain (c/literal "\"")
-                       :soft-cut
-                       (c/with-name :string
-                         (c/regex #"(\\\"|[^\"])*"))
-                       (c/literal "\"")))
-
-  (def jp (:root (create-parser json {:string string})))
+  (def jp (:root (create-parser json)))
 
 )

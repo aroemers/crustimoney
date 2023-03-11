@@ -176,9 +176,9 @@
 (defn regex
   "A parser that matches the given regular expression."
   [re]
-  (let [^java.util.regex.Pattern pattern (re-pattern re)]
+  (let [pattern (re-pattern re)]
     (fn [text index]
-      (let [^java.util.regex.Matcher matcher (.matcher pattern text)]
+      (let [matcher (re-matcher pattern text)]
         (.region matcher index (count text))
         (if (.lookingAt matcher)
           (r/->success index (long (.end matcher)))
