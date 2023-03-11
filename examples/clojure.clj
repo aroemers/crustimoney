@@ -1,4 +1,4 @@
-;; Support for tags and reader literals is missing
+;; Support for tags, reader literals, syntax-quote and splice is missing
 {root= ((spacing form spacing)* $)
  form  (list / vector / map / set / string / regex / symbol / keyword / number / character / quote / meta / comma)
 
