@@ -110,7 +110,6 @@
        character          \\c
        regex              #\"[a-z]\"
        eof                $
-       empty-string       ε
 
        ;; refs, chains, choices and grouping
        reference          literal
@@ -194,5 +193,32 @@
       space    #"\s*"})
 
   (def jp (:root (create-parser json)))
+
+  (def clojure
+    ;; Support for tags and reader literals is missing
+    '{root= ((spacing form spacing)* $)
+      form  (list / vector / map / set / string / regex / symbol / keyword / number / character / quote / meta / comma)
+
+      list=   ("(" > (spacing form spacing)* ")")
+      vector= ("[" > (spacing form spacing)* "]")
+      map=    ("{" > (spacing form spacing)* "}")
+      set=    ("#{" > (spacing form spacing)* "}")
+
+      string= ("\"" > #"(\\\"|[^\"])*" "\"")
+      regex=  ("#\"" > #"(\\\"|[^\"])*" "\"")
+
+      symbol=    #"[a-zA-Z-_\.<>*+=!$%&?/][a-zA-Z0-9-_\.<>*+=!$%&?/]*"
+      keyword=   (#":{1,2}" > symbol)
+      number=    #"\d+"
+      character= #"\\\S"
+
+      quote= ("'" form)
+      meta=  ("^" (keyword / map))
+
+      comma ","
+
+      spacing #"(\s*(;.*)?)*"})
+
+  (def cp (:root (create-parser clojure)))
 
   )
