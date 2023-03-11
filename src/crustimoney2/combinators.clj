@@ -42,11 +42,11 @@
 
 (defn literal
   "A parser that matches an exact literal string."
-  [s]
-  (fn [text index]
-    (let [end (+ index (count s))]
-      (if (and (<= end (count text)) (= (subs text index end) s))
-        (r/->success index end)
+  [^String s]
+  (let [size (count s)]
+    (fn [^String text index]
+      (if (.startsWith text s index)
+        (r/->success index (+ index size))
         #{(r/->error :expected-literal index {:literal s})}))))
 
 (defn chain
@@ -100,9 +100,9 @@
   performance wise. A hard cut is implicitly also a soft cut."
   [& parsers]
   (assert (not (#{:soft-cut :hard-cut} (first parsers)))
-    "Cannot place a cut in first posision of a chain")
+          "Cannot place a cut in first posision of a chain")
   (assert (empty? (remove #{:soft-cut :hard-cut} (filter keyword? parsers)))
-    "Only :soft-cut and :hard-cut keywords are supported")
+          "Only :soft-cut and :hard-cut keywords are supported")
 
   (fn
     ([_text index]
