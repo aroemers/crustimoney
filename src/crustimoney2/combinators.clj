@@ -312,35 +312,6 @@
       [:root {:start 0, :end 8}
        [:body {:start 0, :end 3}]
        [:prefixed {:start 4, :end 8}
-        [:body {:start 5, :end 8}]]]
-"
+        [:body {:start 5, :end 8}]]]"
   [m]
   `(grammar* (fn [] ~m)))
-
-(comment
-
-  (def soft-cut-grammar
-    (grammar
-     {:prefix (chain (literal "<")
-                     :hard-cut
-                     (maybe (ref :expr))
-                     (literal ">"))
-      :expr (choice (chain (maybe (ref :prefix))
-                           (literal "foo"))
-                    (chain (maybe (ref :prefix))
-                           (literal "bar")))}))
-
-  (def hard-cut-grammar
-    (repeat* (chain (literal "{")
-                    (literal "body")
-                    (literal "}")
-                    :hard-cut)))
-
-  (def soft-and-hard-cut-grammar
-    (repeat* (chain (literal "{")
-                    :soft-cut
-                    (literal "body")
-                    (literal "}")
-                    :hard-cut)))
-
-  )

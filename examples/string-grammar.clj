@@ -1,0 +1,24 @@
+{space #"\s*"
+
+ non-terminal=    #"[a-zA-Z_-]+"
+ literal          ("'" > (:literal #"(\\'|[^'])*") "'")
+ character-class= ("[" > #"(\\]|[^]])*" "]")
+ regex=           ("#" > literal)
+ end-of-file=     "$"
+ ref              (non-terminal !"=" space !"<-")
+
+ group-name (":" > (:group-name #"[a-zA-Z_-]+"))
+ group=     ("(" > group-name ? space choice space ")")
+
+ expr (ref / group / literal / character-class / end-of-file / regex)
+
+ quantified ((:quantified expr (:operand #"[?+*]")) / expr)
+ lookahead  ((:lookahead (:operand #"[&!]") > quantified) / quantified)
+
+ cut= (">>" / ">")
+
+ chain  ((:chain lookahead (space (cut / lookahead))+) / lookahead)
+ choice ((:choice chain (space "/" space chain)+) / chain)
+
+ rule= ((:rule-name non-terminal "="?) space "<-" >> space choice)
+ root= ((:rules (space rule space)+) / (:no-rules space choice space) $)}
