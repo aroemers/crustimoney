@@ -226,7 +226,7 @@
 (defn eof
   "Succeed only if the entire text has been parsed."
   []
-  (negate (regex ".")))
+  (negate (regex ".|\\n")))
 
 ;;; Result wrappers
 
