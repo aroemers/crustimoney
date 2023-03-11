@@ -181,4 +181,18 @@
       rule= ((:rule-name non-terminal "="?) space "<-" >> space choice)
       root= ((:rules (space rule space)+) / (:no-rules space choice space) $)})
 
+  (def json
+    '{root=    (space value space $)
+      value    (string / number / boolean / array / null / object)
+      string   ("\"" > (:string #"(\\\"|[^\"])*") "\"")
+      number=  #"\d+"
+      boolean= ("true" / "false")
+      array=   ("[" > space (value (space "," space value)*)? space "]")
+      null=    "null"
+      object=  ("{" > space (entry (space "," space entry)*)? space "}" >>)
+      entry=   (string space ":" space value)
+      space    #"\s*"})
+
+  (def jp (:root (create-parser json)))
+
   )

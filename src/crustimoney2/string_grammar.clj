@@ -290,7 +290,7 @@
     root=            <- (:rules (space rule space)+) / (:no-rules space choice space) $")
 
   (def json "
-    root=    <- space value space
+    root=    <- space value space $
     value    <- (string / number / boolean / array / null / object)
     string   <- '\"' > (:string ('\\\"' / [^\"])*) '\"'
     number=  <- [0-9]+
