@@ -481,7 +481,7 @@ Create a parser based on a data grammar definition. If a map with
   captured using the rule's name (without the postfix). Please read up
   on this at [`crustimoney2.combinators/grammar`](#crustimoney2.combinators/grammar).
 
-  When you want to use an EDN grammar file or string, you can use
+  If you want to use an EDN grammar file or string, you can use
   `#crust/regex` tagged literal for regular expressions. To read this,
   use the following:
 

@@ -32,7 +32,51 @@ Maybe you like it too.
 
 ## Usage
 
-FIXME
+First, add this library to your dependencies.
+The instructions for the latest version can be found here: [![Clojars Project](https://img.shields.io/clojars/v/functionalbytes/crustimoney.svg)](https://clojars.org/functionalbytes/crustimoney)
+
+### The combinators
+
+The combinators are at the heart of the library.
+Even if you decide to never use them directly, it is a good starting point.
+Below is a list of available combinators.
+
+The essentials:
+
+- `literal`, match an exact literal string
+- `chain`, chain multiple consecutive parsers
+- `choice`, match the first successful parsers
+- `repeat*`, eagerly match a parser as many times as possible
+- `negate`, succeed of the given parser does not
+
+Those are actually enough for parsing any PEG-parseable text
+But more combinators are provided.
+For ease of use, nicer result trees and better performance:
+
+- `regex`, match a regular expression
+- `repeat+`, eagerly match a parser as many times as possible, require at least one match
+- `lookahead`, succeed if the given parser does, without advancing
+- `maybe`, try the given parser, succeed anyway
+- `eof`, succeed if there is no more input
+
+Each combinator returns a parser.
+Some combinators take one or more parsers, making them composable.
+
+Such a parser can be supplied to `core/parse`, together with the string to parse.
+
+### Parse results
+
+The result is a "hiccup"-style parse tree, for example:
+
+```clj
+[:node {:start 0, :end 6}
+ [:child-node {:start 0, :end 3}]
+ [:child-node {:start 3, :end 6}]]
+```
+
+To actually capture a node during parsing, the parser must be "named".
+This is done via `combinators/with-name` (or by other means, depending on the grammar type).
+Results without a name are filtered out, though its named children are kept.
 
 ## License
 
