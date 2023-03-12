@@ -142,7 +142,13 @@
   To capture nodes in the parse result, you need to use named groups.
   If you postfix a rule name with `=`, the expression is automatically
   captured using the rule's name (without the postfix). Please read up
-  on this at `crustimoney2.combinators/grammar`."
+  on this at `crustimoney2.combinators/grammar`.
+
+  When you want to use an EDN grammar file or string, you can use
+  `#crust/regex` tagged literal for regular expressions. To read this,
+  use the following:
+
+      (clojure.edn/read-string {:readers *data-readers*} ...)"
   ([data]
    (create-parser data nil))
   ([data other-parsers]

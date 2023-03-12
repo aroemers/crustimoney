@@ -272,8 +272,7 @@ Takes (something that evaluates to) a map, in which the entries can
        [:body {:start 0, :end 3}]
        [:prefixed {:start 4, :end 8}
         [:body {:start 5, :end 8}]]]
-
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L289-L318">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/combinators.clj#L289-L317">Source</a></sub></p>
 
 ## <a name="crustimoney2.combinators/literal">`literal`</a><a name="crustimoney2.combinators/literal"></a>
 ``` clojure
@@ -448,7 +447,6 @@ Create a parser based on a data grammar definition. If a map with
        character          \c
        regex              #"[a-z]"
        eof                $
-       empty-string       ε
 
        ;; refs, chains, choices and grouping
        reference          literal
@@ -482,7 +480,13 @@ Create a parser based on a data grammar definition. If a map with
   If you postfix a rule name with `=`, the expression is automatically
   captured using the rule's name (without the postfix). Please read up
   on this at [`crustimoney2.combinators/grammar`](#crustimoney2.combinators/grammar).
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L102-L152">Source</a></sub></p>
+
+  When you want to use an EDN grammar file or string, you can use
+  `#crust/regex` tagged literal for regular expressions. To read this,
+  use the following:
+
+      (clojure.edn/read-string {:readers *data-readers*} ...)
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L102-L157">Source</a></sub></p>
 
 ## <a name="crustimoney2.data-grammar/vector-tree-for">`vector-tree-for`</a><a name="crustimoney2.data-grammar/vector-tree-for"></a>
 

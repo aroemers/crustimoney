@@ -1,0 +1,11 @@
+{sum ((:sum product sum-op >> sum) / product)
+
+ product ((:product value product-op >> product) / value)
+
+ value (number / "(" > sum ? ")")
+
+ sum-op (:operation #crust/regex "[+-]")
+
+ product-op (:operation #crust/regex "[*/]")
+
+ number= #crust/regex "[0-9]+"}
