@@ -104,7 +104,7 @@ These allow you to get the text of a success node for example, or add `:line` an
 ### Recursive grammars
 
 Composing a single parser can be enough in some cases.
-More complex texts need recursive grammar, i.e. named parsers that can refer to each other.
+More complex texts need or are better expressed with a recursive grammar, i.e. named parsers that can refer to each other.
 For this the `grammar` macro and `ref` function is used.
 For example:
 
@@ -140,7 +140,7 @@ This would update the grammar to:
 ```
 
 Note that the `ref` keys are still without the postfix.
-Parsing it again, would yield the following result:
+Parsing it again would yield the following result:
 
 ```clj
 [:root {:start 0, :end 6}
@@ -150,7 +150,7 @@ Parsing it again, would yield the following result:
 
 A word of caution though.
 It is encouraged to be very intentional about which nodes should be captured and when.
-For example, using the following grammar would only yield a `:wrapped` node if the `:expr` is really wrapped:
+For example, using the following grammar would _only_ yield a `:wrapped` node if the `:expr` is really wrapped in parentheses:
 
 ```clj
 {:wrapped (choice (with-name :wrapped
@@ -158,9 +158,59 @@ For example, using the following grammar would only yield a `:wrapped` node if t
                            (ref :expr)
                            (literal ")")))
                   (ref :expr))
- :expr    (literal "e")}
+ :expr=   (literal "e")}
 ```
 
+This approach results in shallower result trees and thus less post-processing.
+
+### Concept of cuts
+
+Most PEG-parsers share the downside of this class of parsers: memory intensive.
+This is due to the packrat caching (see further down below for more on caching), that allows one of the upsides of PEG-parsers: linear parsing time.
+
+...
+
+
+### String-based grammar
+
+A parser or grammar can be defined in a string.
+The discussed combinators translate to this string-based grammar in the following way:
+
+```
+literal   <- 'foo'
+chain     <- 'foo' 'bar'
+choice    <- 'bar' / 'baz'
+
+repeat*   <- 'foo'*
+repeat+   <- 'foo'+
+maybe     <- 'foo'?
+
+negate    <- !'foo'
+lookahead <- &'foo'
+
+regex     <- #'ba(r|z)'
+chars     <- [a-zA-Z]*
+
+eof       <- $
+ref       <- literal
+
+group     <- ('foo' 'bar' / 'alice')
+named     <- (:bax regex)
+
+soft-cut  <- ('(' > expr? ')')
+hard-cut  <- ('(' > expr? ')' >>)
+```
+
+The function `string-grammar/create-parser` is used to create a parser out of such a string.
+Note that above "example" has rules and thus describes a recursive grammar.
+Therefore a map is returned by `create-parser`.
+Howover, it is perfectly valid to define a single parser, such as:
+
+```
+'alice and ' !'eve' [a-z]+
+```
+
+### Data-based grammar
 
 ## License
 
