@@ -166,7 +166,7 @@ This approach results in shallower result trees and thus less post-processing.
 ### Concept of cuts
 
 Most PEG-parsers share the downside of this class of parsers: memory intensive.
-This is due to the packrat caching (see further down below for more on caching), that allows one of the upsides of PEG-parsers: linear parsing time.
+This is due to the packrat caching (see further down), that allows one of the upsides of PEG-parsers: linear parsing time.
 
 ...
 
@@ -174,6 +174,7 @@ This is due to the packrat caching (see further down below for more on caching),
 ### String-based grammar
 
 A parser or grammar can be defined in a string.
+While direct combinators have the most flexibility, a string-based definition is far denser.
 The discussed combinators translate to this string-based grammar in the following way:
 
 ```
@@ -209,6 +210,10 @@ Howover, it is perfectly valid to define a single parser, such as:
 ```
 'alice and ' !'eve' [a-z]+
 ```
+
+Note - for the purists - that the `.` (dot, match any non-newline char) and `ε` (epsilon, match the empty string) from the original PEG paper are missing.
+This is on purpose.
+The other available constructs, such as regular expression support, have far better performance characteristics and nicer result trees.
 
 ### Data-based grammar
 
