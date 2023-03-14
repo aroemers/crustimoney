@@ -1,6 +1,6 @@
-;; Support for tags, reader literals, syntax-quote and splice is missing
+;; Not complete (yet)
 {root= ((spacing form spacing)* $)
- form  (list / vector / map / set / string / regex / symbol / keyword / number / character / quote / meta / comma)
+ form  (list / vector / map / set / string / regex / symbol / keyword / number / character / quote / meta)
 
  list=   ("(" > (spacing form spacing)* ")")
  vector= ("[" > (spacing form spacing)* "]")
@@ -10,14 +10,19 @@
  string= ("\"" > #"(\\\"|[^\"])*" "\"")
  regex=  ("#\"" > #"(\\\"|[^\"])*" "\"")
 
- symbol=    #"[a-zA-Z-_\.<>*+=!$%&?/][a-zA-Z0-9-_\.<>*+=!$%&?/]*"
+ sym-start  #"[a-zA-Z-_\.<>*+=!$%&?/]"
+ sym-more   #"[0-9':]"
+ symbol=    (sym-start (sym-start / sym-more)*)
  keyword=   (#":{1,2}" > symbol)
- number=    #"\d+"
+
+ long=      #"\d+"
+ radix=     #"[2-9][0-9]?r\d+"
+ hex=       #"0x\d+"
+ number     (long / radix / hex)
+
  character= #"\\\S"
 
  quote= ("'" form)
  meta=  ("^" (keyword / map))
 
- comma ","
-
- spacing #"(\s*(;.*)?)*"}
+ spacing #"([\s,]*(;.*)?)*"}
