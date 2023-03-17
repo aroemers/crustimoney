@@ -342,7 +342,7 @@ It does have an extra feature: direct combinator calls, using vectors.
 The first keyword in the vector determines the combinator.
 For keywords without a namespace, `crustimoney2.combinators` is assumed.
 The other arguments are left as-is, except those tagged with `#crust/parser`.
-With that tag, the data is processed again as aparser definition.
+With that tag, the data is processed again as a parser definition.
 
 ## Vector-based grammar
 
@@ -386,8 +386,8 @@ The 2-arity variant is called when the parser was pushed onto the stack.
 It receives the entire text and the index it should begin parsing.
 
 If it returns a "push" result, the 4-arity variant is called when that parser is done.
-It again receives the text and the original index, but also the result of the pushed parser and any state that was pushed with it.
-Now it can again decide whether to return a success, a set of errors, or again a push.
+It receives the text and the original index, but also the result of the pushed parser and any state that was pushed with it.
+Now it can decide whether to return a success, a set of errors, or again a push.
 
 Before you write your own combinator, do realise that the provided combinators are complete in the sense that they can parse any structured text.
 
