@@ -165,11 +165,91 @@ This approach results in shallower result trees and thus less post-processing.
 
 ### Concept of cuts
 
-Most PEG-parsers share the downside of this class of parsers: memory intensive.
-This is due to the packrat caching (see further down), that allows one of the upsides of PEG-parsers: linear parsing time.
+Most PEG parsers share a downside: they are memory hungry.
+This is due to their packrat caching (see further down), that provides one of their upsides: linear parsing time.
 
-...
+[This paper](https://www.researchgate.net/publication/221292729_Packrat_parsers_can_handle_practical_grammars_in_mostly_constant_space) describes adding _cuts_ to PEGs, a concept that is known from Prolog.
+Crustimoney expands on this by differentiating between _hard_ cuts and _soft_ cuts.
 
+#### Hard cuts
+
+A hard cut tells the parser that it should never backtrack beyond the position where it encountered a hard cut.
+This has two major benefits.
+The first is better and more localized error messages.
+The following example shows this, and also how to add a hard cut in the `chain` combinator.
+
+```clj
+(def example
+  (maybe (chain (literal "[")
+                :hard-cut
+                (regex #"\d+")
+                (literal "]"))))
+
+(core/parse example "[")
+;=> #{{:key :expected-match, :at 1, :detail {:regex #"\d"}}}
+```
+
+Without the hard cut, the parse would be successful (because of the `maybe` combinator).
+But, since the text clearly opens a bracket, it would be better to fail.
+The hard cut enforces this, as the mismatched `regex` error cannot backtrack.
+So from a user's standpoint, a cut can already very beneficial.
+
+The second major benefit is that the parser can release everything in its cache before the cut position.
+It will never need this again.
+This behaviour makes that well placed hard cuts - especially when parsing repeating structures - can alleviate the memory requirements to be constant.
+
+Note that a cut can only be used within a `chain`, and never as the first element.
+The preceding parser(s) should consume some input, and that input should only be valid for that chain of parser(s) at that point.
+
+#### Soft cuts
+
+There are situations that localized error messages are desired, but backtracking should still be possible.
+For such situations a soft cut can be used.
+Such a cut also disallows backtracking, but only while inside the `chain`.
+I.e. once the chain is successfully parsed, the soft cut has no effect anymore.
+
+Consider the expansion of the previous example:
+
+```clj
+(def example
+  (grammar
+   {:prefix= (maybe (chain (literal "[")
+                    :soft-cut
+                    (regex #"\d+")
+                    (literal "]")))
+    :expr=   (choice (with-name :foo
+                       (chain (ref :prefix)
+                              (literal "foo")))
+                     (with-name :bax
+                       (chain (ref :prefix)
+                              (regex #"ba(r|z)"))))}))
+
+(core/parse (:expr example) "[")
+;=> #{{:key :expected-match, :at 1, :detail {:regex #"\d"}}}
+
+(core/parse (:expr example) "[25]baz")
+;=> [:expr {:start 0, :end 7}
+;    [:bax {:start 0, :end 7}
+;     [:prefix {:start 0, :end 4}]]]
+```
+
+The `:hard-cut` has been replaced with a `:soft-cut`.
+As shown, this still shows a localized error for the unfinished `:prefix`, yet it also allows backtracking to the `:bax` choice.
+
+Since backtracking before the soft cut is still allowed outside of the chain's scope, the cache is not affected.
+However, soft and hard cuts can be combined in a grammar.
+We could for instance add another rule to our example grammar:
+
+```clj
+:root (repeat+ (chain (ref :expr) :hard-cut))
+```
+
+This effectively says that after each finished `:expr`, we won't backtrack, that part is done.
+Many of such consecutive `:expr`s can be parsed, without memory requirements growing (except for the growing parse result tree of course).
+
+The significance of cuts in PEGs must not be underestimated.
+Try to use them in your grammar on somewhat larger inputs.
+The overhead is small, and is actually countered because of faster cache lookups.
 
 ### String-based grammar
 
