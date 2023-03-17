@@ -21,9 +21,9 @@
 ;;; Parser creation
 
 (defn- key-to-combinator [key]
-  (ns-resolve (or (some-> key namespace symbol)
-                  'crustimoney2.combinators)
-              (symbol (name key))))
+  (requiring-resolve (symbol (or (some-> key namespace)
+                                 'crustimoney2.combinators)
+                             (name key))))
 
 (defn create-parser
   "Create a parser based on a vector-driven combinator tree. For

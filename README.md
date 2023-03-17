@@ -346,7 +346,7 @@ With that tag, the data is processed again as aparser definition.
 
 ## Vector-based grammar
 
-The former section on data-based grammar definitions described that a vector is a valid data type.
+The former section on data-based grammars describes that a vector is a valid data type.
 That means that it is possible to write the entire grammar using vectors.
 Thing is, _this is actually what both the string-based and data-based parser generators do_.
 Both generators use it as an intermediary format, and use `vector-grammar/create-parser` to actually turn it into combinators calls.
@@ -355,14 +355,41 @@ One benefit of this, next to simplifying the generators themselves, is that the 
 To see what combinator tree would be formed by a string- or data-based definition, you can call `string-grammar/vector-tree` or `data-grammar/vector-tree`.
 This will show the entire combinator tree in vector format.
 
-Another benefit is that data-grammar generator can easily be extended.
+Another benefit is that the data-grammar can easily be extended.
 The function `data-grammar/vector-tree` is actually a protocol function.
-This makes it possible to add support for other data types.
-The implementation simply has to return a vector, possibly pointing to your own combinator.
+This makes it possible to add support for other data types, using Clojure's `extend-type`.
+The implementation simply returns a vector, possibly pointing to your own combinator.
 
 ## Writing your own combinator
 
-...
+A parser combinator returns a function that takes a text input and a position.
+It returns either a success or (a set of) errors.
+It does this using the `results` namespace, which has functions like `->success` and `->error`.
+Some combinators take other parser functions as their argument, making them composeable.
+
+However, the parsers returned by the combinators do not call other parsers directly.
+This could lead to stack overflows.
+So next to a `->success` or `->error` result, it can also return a `->push` result.
+This pushes another parser onto a virtual stack, together with an index and possibly some state.
+
+For this reason, a parser function has the following signature:
+
+```clj
+(fn
+  ([text index]
+    ...)
+  ([text index result state]
+   ...))
+```
+
+The 2-arity variant is called when the parser was pushed onto the stack.
+It receives the entire text and the index it should begin parsing.
+
+If it returns a "push" result, the 4-arity variant is called when that parser is done.
+It again receives the text and the original index, but also the result of the pushed parser and any state that was pushed with it.
+Now it can again decide whether to return a success, a set of errors, or again a push.
+
+Before you write your own combinator, do realise that the provided combinators are complete in the sense that they can parse any structured text.
 
 ## License
 
