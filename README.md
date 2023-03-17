@@ -391,6 +391,8 @@ Now it can again decide whether to return a success, a set of errors, or again a
 
 Before you write your own combinator, do realise that the provided combinators are complete in the sense that they can parse any structured text.
 
+_That's it. As always, have fun!_ 🚀
+
 ## License
 
 Copyright © 2022-2023 Arnout Roemers
