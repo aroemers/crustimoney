@@ -30,12 +30,12 @@ Maybe you like it too.
 - Infinite **loop detection** (runtime)
 - Missing rule references detection (compile time)
 
-## Usage
+## Add to project
 
 First, add this library to your dependencies.
 The instructions for the latest version can be found here: [![Clojars Project](https://img.shields.io/clojars/v/functionalbytes/crustimoney.svg)](https://clojars.org/functionalbytes/crustimoney)
 
-### The combinators
+## The combinators
 
 The combinators are at the heart of the library.
 Even if you decide to never use them directly, it is a good starting point.
@@ -62,7 +62,7 @@ Each combinator returns a parser.
 Some combinators take one or more parsers, making them composable.
 Such a parser can be supplied to `core/parse`, together with the string to parse.
 
-### Parse results
+## Parse results
 
 The result is a "hiccup"-style parse tree, for example:
 
@@ -101,7 +101,7 @@ For example:
 To work with these successes and errorss, the functions in the `results` namespace can be used.
 These allow you to get the text of a success node for example, or add `:line` and `:column` keys to the errors.
 
-### Recursive grammars
+## Recursive grammars
 
 Composing a single parser can be enough in some cases.
 More complex texts need or are better expressed with a recursive grammar, i.e. named parsers that can refer to each other.
@@ -125,7 +125,7 @@ This grammar can be used as follows:
 :=> [nil {:start 0, :end 6}]
 ```
 
-### Auto-named rules
+## Auto-named rules
 
 The example above shows that all success nodes are filtered out, except the root node, as they are nameless.
 The parsers could be wrapped with `with-name`, but the names can be the same as the grammar rule names in this case.
@@ -163,7 +163,7 @@ For example, using the following grammar would _only_ yield a `:wrapped` node if
 
 This approach results in shallower result trees and thus less post-processing.
 
-### Cuts
+## Cuts
 
 Most PEG parsers share a downside: they are memory hungry.
 This is due to their packrat caching, that provides one of their upsides: linear parsing time.
@@ -171,7 +171,7 @@ This is due to their packrat caching, that provides one of their upsides: linear
 [This paper](https://www.researchgate.net/publication/221292729_Packrat_parsers_can_handle_practical_grammars_in_mostly_constant_space) describes adding _cuts_ to PEGs, a concept that is known from Prolog.
 Crustimoney expands on this by differentiating between _hard_ cuts and _soft_ cuts.
 
-#### Hard cuts
+### Hard cuts
 
 A hard cut tells the parser that it should never backtrack beyond the position where it encountered a hard cut.
 This has two major benefits.
@@ -201,7 +201,7 @@ This behaviour makes that well placed hard cuts - especially when parsing repeat
 Note that a cut can only be used within a `chain`, and never as the first element.
 The preceding parser(s) should consume some input, and that input should only be valid for that chain of parser(s) at that point.
 
-#### Soft cuts
+### Soft cuts
 
 There are situations that localized error messages are desired, but backtracking should still be possible.
 For such situations a soft cut can be used.
@@ -251,7 +251,7 @@ The significance of cuts in PEGs must not be underestimated.
 Try to use them in your grammar on somewhat larger inputs.
 The overhead is small, and is actually countered by faster cache lookups.
 
-### String-based grammar
+## String-based grammar
 
 A parser or grammar can be defined in a string.
 While direct combinators have the most flexibility, a string-based definition is far denser.
@@ -297,7 +297,7 @@ Note (for the purists) that the `.` (dot, match any non-newline char) and `ε` (
 This is on purpose.
 The other available constructs, such as regular expression support, have far better performance characteristics and nicer result trees.
 
-### Data-based grammar
+## Data-based grammar
 
 Next to the string-based definition, there is also a data-driven variant available.
 The grammar below shows how such a definition is formed.
@@ -329,7 +329,7 @@ It is very similar to the string-based grammar.
   hard-cut   ("(" > expr? ")" >>)
 
   combinator-call   [:with-error :fail!
-                     #crust/parser ("fooba" #"r|z|)]
+                     #crust/parser ("fooba" #"r|z")]
   custom-combinator [:my.app/my-combinator (literal character)]}
 ```
 
@@ -344,7 +344,7 @@ For keywords without a namespace, `crustimoney2.combinators` is assumed.
 The other arguments are left as-is, except those tagged with `#crust/parser`.
 With that tag, the data is processed again as aparser definition.
 
-### Vector-based grammar
+## Vector-based grammar
 
 The former section on data-based grammar definitions described that a vector is a valid data type.
 That means that it is possible to write the entire grammar using vectors.
@@ -352,7 +352,7 @@ Thing is, _this is actually what both the string-based and data-based parser gen
 
 ...
 
-### Writing your own combinator
+## Writing your own combinator
 
 ...
 
