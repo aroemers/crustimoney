@@ -143,10 +143,6 @@
     (is (= #{(r/->error :unexpected-match 0 {:text "m"})}
            (parse p "more")))))
 
-(deftest epsilon-test
-  (let [p (c/epsilon)]
-    (is (= (r/->success 0 0) (parse p "anything")))))
-
 ;;; Result wrappers
 
 (deftest with-name-test
@@ -160,3 +156,17 @@
   (let [p (c/with-error :fail (c/literal "foo"))]
     (is (= (r/->success 0 3) (parse p "foo")))
     (is (= #{(r/->error :fail 0)} (parse p "not-foo")))))
+
+;;; Recursive grammar
+
+(deftest grammar-test
+  (testing "simple grammar"
+    (let [p (c/grammar {:root (c/ref :foo)
+                        :foo  (c/literal "foo")})]
+      (is (= (r/->success 0 3) (parse (:root p) "foo")))))
+
+  (testing "auto-capture rules"
+    (let [p (c/grammar {:root (c/ref :foo)
+                        :foo= (c/literal "foo")})]
+      (is (= (r/with-success-name :foo (r/->success 0 3))
+             (parse (:root p) "foo"))))))
