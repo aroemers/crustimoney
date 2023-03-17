@@ -349,8 +349,16 @@ With that tag, the data is processed again as aparser definition.
 The former section on data-based grammar definitions described that a vector is a valid data type.
 That means that it is possible to write the entire grammar using vectors.
 Thing is, _this is actually what both the string-based and data-based parser generators do_.
+Both generators use it as an intermediary format, and use `vector-grammar/create-parser` to actually turn it into combinators calls.
 
-...
+One benefit of this, next to simplifying the generators themselves, is that the generators can be debugged.
+To see what combinator tree would be formed by a string- or data-based definition, you can call `string-grammar/vector-tree` or `data-grammar/vector-tree`.
+This will show the entire combinator tree in vector format.
+
+Another benefit is that data-grammar generator can easily be extended.
+The function `data-grammar/vector-tree` is actually a protocol function.
+This makes it possible to add support for other data types.
+The implementation simply has to return a vector, possibly pointing to your own combinator.
 
 ## Writing your own combinator
 

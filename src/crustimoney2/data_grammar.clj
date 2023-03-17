@@ -10,37 +10,40 @@
 
 ;;; Parser tree generator
 
-(defmulti vector-tree-for
-  "Low-level (multi method) function which translates the data grammar
+(defprotocol DataGrammar
+  (vector-tree [data]
+    "Low-level protocol function which translates the data type
   into an intermediary vector-based representation. See
   `crustimoney2.vector-grammar` for more on this format. This can be
   useful for debugging, or adding your own data type.
 
   In the latter case, add your type like so:
 
-      (defmethod vector-tree-for java.util.Date [date]
-        [:my-namespace/my-flexible-date-parser date])
+      (extend-type java.util.Date
+        DataGrammar
+        (vector-tree [date]
+          [:my-namespace/my-flexible-date-parser date]))
 
-  To see which data types are already supported, use `(methods
-  vector-tree-for)`"
-  (fn [data]
-    (type data)))
+  To see which data types are already supported, use `(->
+  DataGrammar :impls keys)`"))
 
-(defmethod vector-tree-for :default
-  [data]
-  (throw (ex-info (str "Unknown data type: " (class data)) {:class (class data) :data data})))
+(extend-type Object
+  DataGrammar
+  (vector-tree [data]
+    (throw (ex-info (str "Unknown data type: " (class data)) {:class (class data) :data data}))))
 
-(defmethod vector-tree-for clojure.lang.IPersistentMap
-  [data]
-  (map-kv (comp keyword name) vector-tree-for data))
+(extend-type clojure.lang.IPersistentMap
+  DataGrammar
+  (vector-tree [data]
+    (map-kv (comp keyword name) vector-tree data)))
 
 (defn- wrap-quantifiers [data]
   (->> data
        (reduce (fn [a e]
                  (condp = e
-                   '* (conj (pop a) [:repeat* (vector-tree-for (last a))])
-                   '+ (conj (pop a) [:repeat+ (vector-tree-for (last a))])
-                   '? (conj (pop a) [:maybe (vector-tree-for (last a))])
+                   '* (conj (pop a) [:repeat* (vector-tree (last a))])
+                   '+ (conj (pop a) [:repeat+ (vector-tree (last a))])
+                   '? (conj (pop a) [:maybe (vector-tree (last a))])
                    (conj a e)))
                [])
        (apply list)))
@@ -49,47 +52,52 @@
   (->> (reverse data)
        (reduce (fn [a e]
                  (condp = e
-                   '! (conj (rest a) [:negate (vector-tree-for (first a))])
-                   '& (conj (rest a) [:lookahead (vector-tree-for (first a))])
+                   '! (conj (rest a) [:negate (vector-tree (first a))])
+                   '& (conj (rest a) [:lookahead (vector-tree (first a))])
                    (conj a e)))
                ())))
 
-(defmethod vector-tree-for clojure.lang.IPersistentVector
-  [data]
-  data)
+(extend-type clojure.lang.IPersistentVector
+  DataGrammar
+  (vector-tree [data] data))
 
-(defmethod vector-tree-for clojure.lang.IPersistentList
-  [data]
-  (if (keyword? (first data))
-    [:with-name (first data) (vector-tree-for (apply list (rest data)))]
-    (let [choices (->> data (partition-by #{'/}) (take-nth 2) (map (partial apply list)))]
-      (if (= (count choices) 1)
-        (let [wrapped (-> data wrap-quantifiers wrap-lookahead)]
-          (if (= (count wrapped) 1)
-            (vector-tree-for (first wrapped))
-            (into [:chain] (map vector-tree-for wrapped))))
-        (into [:choice] (map vector-tree-for choices))))))
+(extend-type clojure.lang.IPersistentList
+  DataGrammar
+  (vector-tree [data]
+    (if (keyword? (first data))
+      [:with-name (first data) (vector-tree (apply list (rest data)))]
+      (let [choices (->> data (partition-by #{'/}) (take-nth 2) (map (partial apply list)))]
+        (if (= (count choices) 1)
+          (let [wrapped (-> data wrap-quantifiers wrap-lookahead)]
+            (if (= (count wrapped) 1)
+              (vector-tree (first wrapped))
+              (into [:chain] (map vector-tree wrapped))))
+          (into [:choice] (map vector-tree choices)))))))
 
-(defmethod vector-tree-for clojure.lang.Symbol
-  [data]
-  (let [ref-name (str data)]
-    (case ref-name
-      "$"  [:eof]
-      ">>" :hard-cut
-      ">"  :soft-cut
-      [:ref (keyword ref-name)])))
+(extend-type clojure.lang.Symbol
+  DataGrammar
+  (vector-tree [data]
+    (let [ref-name (str data)]
+      (case ref-name
+        "$"  [:eof]
+        ">>" :hard-cut
+        ">"  :soft-cut
+        [:ref (keyword ref-name)]))))
 
-(defmethod vector-tree-for java.lang.String
-  [data]
-  [:literal data])
+(extend-type String
+  DataGrammar
+  (vector-tree [data]
+    [:literal data]))
 
-(defmethod vector-tree-for java.util.regex.Pattern
-  [data]
-  [:regex data])
+(extend-type java.util.regex.Pattern
+  DataGrammar
+  (vector-tree [data]
+    [:regex data]))
 
-(defmethod vector-tree-for java.lang.Character
-  [data]
-  [:literal (str data)])
+(extend-type Character
+  DataGrammar
+  (vector-tree [data]
+    [:literal (str data)]))
 
 ;;; Parser creation
 
@@ -146,6 +154,6 @@
   ([data]
    (create-parser data nil))
   ([data other-parsers]
-   (-> (vector-tree-for data)
+   (-> (vector-tree data)
        (vector-grammar/merge-other other-parsers)
        (vector-grammar/create-parser))))

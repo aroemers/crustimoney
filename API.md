@@ -24,8 +24,9 @@
 -  [`crustimoney2.core`](#crustimoney2.core)  - The main parsing functions.
     -  [`parse`](#crustimoney2.core/parse) - Use the given parser to parse the supplied text string.
 -  [`crustimoney2.data-grammar`](#crustimoney2.data-grammar)  - Create a parser based on a data grammar.
+    -  [`DataGrammar`](#crustimoney2.data-grammar/DataGrammar)
     -  [`create-parser`](#crustimoney2.data-grammar/create-parser) - Create a parser based on a data grammar definition.
-    -  [`vector-tree-for`](#crustimoney2.data-grammar/vector-tree-for) - Low-level (multi method) function which translates the data grammar into an intermediary vector-based representation.
+    -  [`vector-tree`](#crustimoney2.data-grammar/vector-tree) - Low-level protocol function which translates the data type into an intermediary vector-based representation.
 -  [`crustimoney2.reader`](#crustimoney2.reader) 
     -  [`CachingReader`](#crustimoney2.reader/CachingReader)
     -  [`caching-reader`](#crustimoney2.reader/caching-reader)
@@ -437,6 +438,12 @@ Create a parser based on a data grammar. The data is translated into
 
 
 
+## <a name="crustimoney2.data-grammar/DataGrammar">`DataGrammar`</a><a name="crustimoney2.data-grammar/DataGrammar"></a>
+
+
+
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L13-L28">Source</a></sub></p>
+
 ## <a name="crustimoney2.data-grammar/create-parser">`create-parser`</a><a name="crustimoney2.data-grammar/create-parser"></a>
 ``` clojure
 
@@ -493,26 +500,29 @@ Create a parser based on a data grammar definition. If a map with
   use the following:
 
       (clojure.edn/read-string {:readers *data-readers*} ...)
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L96-L151">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L104-L159">Source</a></sub></p>
 
-## <a name="crustimoney2.data-grammar/vector-tree-for">`vector-tree-for`</a><a name="crustimoney2.data-grammar/vector-tree-for"></a>
+## <a name="crustimoney2.data-grammar/vector-tree">`vector-tree`</a><a name="crustimoney2.data-grammar/vector-tree"></a>
+``` clojure
 
+(vector-tree data)
+```
 
-
-
-Low-level (multi method) function which translates the data grammar
+Low-level protocol function which translates the data type
   into an intermediary vector-based representation. See
   [`crustimoney2.vector-grammar`](#crustimoney2.vector-grammar) for more on this format. This can be
   useful for debugging, or adding your own data type.
 
   In the latter case, add your type like so:
 
-      (defmethod vector-tree-for java.util.Date [date]
-        [:my-namespace/my-flexible-date-parser date])
+      (extend-type java.util.Date
+        DataGrammar
+        (vector-tree [date]
+          [:my-namespace/my-flexible-date-parser date]))
 
-  To see which data types are already supported, use `(methods
-  vector-tree-for)`
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L13-L27">Source</a></sub></p>
+  To see which data types are already supported, use `(->
+  DataGrammar :impls keys)`
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L14-L28">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.reader">crustimoney2.reader</a>
