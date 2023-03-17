@@ -1,2 +1,2 @@
-{crust/plain crustimoney2.data-grammar/->Plain
- crust/regex clojure.core/re-pattern}
+{crust/parser crustimoney2.data-grammar/vector-tree-for
+ crust/regex  clojure.core/re-pattern}

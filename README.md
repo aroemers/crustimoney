@@ -330,7 +330,7 @@ It is very similar to the string-based grammar.
 
   combinator-call   [:with-error :fail!
                      #crust/parser ("fooba" #"r|z")]
-  custom-combinator [:my.app/my-combinator (literal character)]}
+  custom-combinator [:my.app/my-combinator ...]}
 ```
 
 The function `data-grammar/create-parser` is used to create a parser out of such a definition.

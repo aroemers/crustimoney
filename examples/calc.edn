@@ -8,4 +8,5 @@
 
  product-op (:operation #crust/regex "[*/]")
 
- number= #crust/regex "[0-9]+"}
+ number= [:with-error :expected-number
+          #crust/parser (#crust/regex "[0-9]+")]}

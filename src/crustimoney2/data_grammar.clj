@@ -38,9 +38,9 @@
   (->> data
        (reduce (fn [a e]
                  (condp = e
-                   '* (conj (pop a) [:repeat* (last a)])
-                   '+ (conj (pop a) [:repeat+ (last a)])
-                   '? (conj (pop a) [:maybe (last a)])
+                   '* (conj (pop a) [:repeat* (vector-tree-for (last a))])
+                   '+ (conj (pop a) [:repeat+ (vector-tree-for (last a))])
+                   '? (conj (pop a) [:maybe (vector-tree-for (last a))])
                    (conj a e)))
                [])
        (apply list)))
@@ -49,14 +49,14 @@
   (->> (reverse data)
        (reduce (fn [a e]
                  (condp = e
-                   '! (conj (rest a) [:negate (first a)])
-                   '& (conj (rest a) [:lookahead (first a)])
+                   '! (conj (rest a) [:negate (vector-tree-for (first a))])
+                   '& (conj (rest a) [:lookahead (vector-tree-for (first a))])
                    (conj a e)))
                ())))
 
 (defmethod vector-tree-for clojure.lang.IPersistentVector
   [data]
-  (into [(first data)] (map vector-tree-for (rest data))))
+  data)
 
 (defmethod vector-tree-for clojure.lang.IPersistentList
   [data]
@@ -90,12 +90,6 @@
 (defmethod vector-tree-for java.lang.Character
   [data]
   [:literal (str data)])
-
-(deftype ^:no-doc Plain [data])
-
-(defmethod vector-tree-for Plain
-  [plain]
-  (.data plain))
 
 ;;; Parser creation
 
@@ -132,9 +126,9 @@
        hard-cut           ((class-open class class-close >>)*) ; note the >>
 
        ;; direct combinator calls
-       combinator-call    [:with-error #crust/plain :fail!
-                           (\"fooba\" #\"r|z\")]
-       custom-combinator  [:my.app/my-combinator literal]}
+       combinator-call    [:with-error :fail!
+                           #crust/parser (\"fooba\" #\"r|z\")]
+       custom-combinator  [:my.app/my-combinator ...]}
 
   Optionally an existing map of parsers can be supplied, which can
   refered to by the data grammar.

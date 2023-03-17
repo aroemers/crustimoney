@@ -26,6 +26,13 @@
 -  [`crustimoney2.data-grammar`](#crustimoney2.data-grammar)  - Create a parser based on a data grammar.
     -  [`create-parser`](#crustimoney2.data-grammar/create-parser) - Create a parser based on a data grammar definition.
     -  [`vector-tree-for`](#crustimoney2.data-grammar/vector-tree-for) - Low-level (multi method) function which translates the data grammar into an intermediary vector-based representation.
+-  [`crustimoney2.reader`](#crustimoney2.reader) 
+    -  [`CachingReader`](#crustimoney2.reader/CachingReader)
+    -  [`caching-reader`](#crustimoney2.reader/caching-reader)
+    -  [`cut`](#crustimoney2.reader/cut)
+    -  [`line-column`](#crustimoney2.reader/line-column)
+    -  [`match-literal`](#crustimoney2.reader/match-literal)
+    -  [`match-regex`](#crustimoney2.reader/match-regex)
 -  [`crustimoney2.results`](#crustimoney2.results)  - Result constructors, accessors and predicates.
     -  [`->error`](#crustimoney2.results/->error) - Create an error result, given an error key and an index.
     -  [`->push`](#crustimoney2.results/->push) - Create a push value, given a parser function and an index.
@@ -469,9 +476,9 @@ Create a parser based on a data grammar definition. If a map with
        hard-cut           ((class-open class class-close >>)*) ; note the >>
 
        ;; direct combinator calls
-       combinator-call    [:with-error #crust/plain :fail!
-                           ("fooba" #"r|z")]
-       custom-combinator  [:my.app/my-combinator literal]}
+       combinator-call    [:with-error :fail!
+                           #crust/parser ("fooba" #"r|z")]
+       custom-combinator  [:my.app/my-combinator ...]}
 
   Optionally an existing map of parsers can be supplied, which can
   refered to by the data grammar.
@@ -486,7 +493,7 @@ Create a parser based on a data grammar definition. If a map with
   use the following:
 
       (clojure.edn/read-string {:readers *data-readers*} ...)
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L102-L157">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L96-L151">Source</a></sub></p>
 
 ## <a name="crustimoney2.data-grammar/vector-tree-for">`vector-tree-for`</a><a name="crustimoney2.data-grammar/vector-tree-for"></a>
 
@@ -506,6 +513,55 @@ Low-level (multi method) function which translates the data grammar
   To see which data types are already supported, use `(methods
   vector-tree-for)`
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/data_grammar.clj#L13-L27">Source</a></sub></p>
+
+-----
+# <a name="crustimoney2.reader">crustimoney2.reader</a>
+
+
+
+
+
+
+## <a name="crustimoney2.reader/CachingReader">`CachingReader`</a><a name="crustimoney2.reader/CachingReader"></a>
+
+
+
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/reader.clj#L3-L10">Source</a></sub></p>
+
+## <a name="crustimoney2.reader/caching-reader">`caching-reader`</a><a name="crustimoney2.reader/caching-reader"></a>
+``` clojure
+
+(caching-reader reader)
+```
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/reader.clj#L59-L60">Source</a></sub></p>
+
+## <a name="crustimoney2.reader/cut">`cut`</a><a name="crustimoney2.reader/cut"></a>
+``` clojure
+
+(cut this index)
+```
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/reader.clj#L10-L10">Source</a></sub></p>
+
+## <a name="crustimoney2.reader/line-column">`line-column`</a><a name="crustimoney2.reader/line-column"></a>
+``` clojure
+
+(line-column this index)
+```
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/reader.clj#L8-L8">Source</a></sub></p>
+
+## <a name="crustimoney2.reader/match-literal">`match-literal`</a><a name="crustimoney2.reader/match-literal"></a>
+``` clojure
+
+(match-literal this index s)
+```
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/reader.clj#L4-L4">Source</a></sub></p>
+
+## <a name="crustimoney2.reader/match-regex">`match-regex`</a><a name="crustimoney2.reader/match-regex"></a>
+``` clojure
+
+(match-regex this index re)
+```
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney2/reader.clj#L6-L6">Source</a></sub></p>
 
 -----
 # <a name="crustimoney2.results">crustimoney2.results</a>
