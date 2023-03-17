@@ -163,10 +163,10 @@ For example, using the following grammar would _only_ yield a `:wrapped` node if
 
 This approach results in shallower result trees and thus less post-processing.
 
-### Concept of cuts
+### Cuts
 
 Most PEG parsers share a downside: they are memory hungry.
-This is due to their packrat caching (see further down), that provides one of their upsides: linear parsing time.
+This is due to their packrat caching, that provides one of their upsides: linear parsing time.
 
 [This paper](https://www.researchgate.net/publication/221292729_Packrat_parsers_can_handle_practical_grammars_in_mostly_constant_space) describes adding _cuts_ to PEGs, a concept that is known from Prolog.
 Crustimoney expands on this by differentiating between _hard_ cuts and _soft_ cuts.
@@ -249,7 +249,7 @@ Many of such consecutive `:expr`s can be parsed, without memory requirements gro
 
 The significance of cuts in PEGs must not be underestimated.
 Try to use them in your grammar on somewhat larger inputs.
-The overhead is small, and is actually countered because of faster cache lookups.
+The overhead is small, and is actually countered by faster cache lookups.
 
 ### String-based grammar
 
@@ -291,11 +291,70 @@ Howover, it is perfectly valid to define a single parser, such as:
 'alice and ' !'eve' [a-z]+
 ```
 
-Note - for the purists - that the `.` (dot, match any non-newline char) and `ε` (epsilon, match the empty string) from the original PEG paper are missing.
+The names of the rules can have an `=` sign appended, for the auto-named feature discussed earlier.
+
+Note (for the purists) that the `.` (dot, match any non-newline char) and `ε` (epsilon, match the empty string) from the original PEG paper are missing.
 This is on purpose.
 The other available constructs, such as regular expression support, have far better performance characteristics and nicer result trees.
 
 ### Data-based grammar
+
+Next to the string-based definition, there is also a data-driven variant available.
+The grammar below shows how such a definition is formed.
+It is very similar to the string-based grammar.
+
+```clj
+'{literal    "foo"
+  character  \f
+  regex      #"ba(r|z)"
+  data-regex #crust/regex "ba(r|z)" ; EDN support
+
+  chain      ("foo "bar")
+  choice     ("bar" / "baz")
+
+  repeat*    ("foo"*)
+  repeat+    ("foo"+)
+  maybe      ("foo"?)
+
+  negate     (!"foo")
+  lookahead  (&"foo")
+
+  eof        $
+  ref        literal
+
+  group      ("foo" "bar" / "alice")
+  named      (:bax regex)
+
+  soft-cut   ("(" > expr? ")")
+  hard-cut   ("(" > expr? ")" >>)
+
+  combinator-call   [:with-error :fail!
+                     #crust/parser ("fooba" #"r|z|)]
+  custom-combinator [:my.app/my-combinator (literal character)]}
+```
+
+The function `data-grammar/create-parser` is used to create a parser out of such a definition.
+
+The data-based definition is quite similar to the string-based one.
+It works the same way in supporting both recursive and non-recursive parsers, and also has auto-naming (the `=` postfix).
+
+It does have an extra feature: direct combinator calls, using vectors.
+The first keyword in the vector determines the combinator.
+For keywords without a namespace, `crustimoney2.combinators` is assumed.
+The other arguments are left as-is, except those tagged with `#crust/parser`.
+With that tag, the data is processed again as aparser definition.
+
+### Vector-based grammar
+
+The former section on data-based grammar definitions described that a vector is a valid data type.
+That means that it is possible to write the entire grammar using vectors.
+Thing is, _this is actually what both the string-based and data-based parser generators do_.
+
+...
+
+### Writing your own combinator
+
+...
 
 ## License
 
