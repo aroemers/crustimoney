@@ -309,7 +309,7 @@ It is very similar to the string-based grammar.
   regex      #"ba(r|z)"
   data-regex #crusti/regex "ba(r|z)" ; EDN support
 
-  chain      ("foo "bar")
+  chain      ("foo" "bar")
   choice     ("bar" / "baz")
 
   repeat*    ("foo"*)
