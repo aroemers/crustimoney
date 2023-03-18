@@ -39,6 +39,20 @@
       (is (= #{{:key :unexpected-match :at 3 :detail {:text "b"}}}
              (core/parse p "foobar")))))
 
+  (testing "chain"
+    (let [p (create-parser "'foo' 'bar'")]
+      (is (= (r/->success 0 6) (core/parse p "foobar")))
+      (is (= #{{:key :expected-literal :at 3, :detail {:literal "bar"}}}
+             (core/parse p "foobaz")))))
+
+  (testing "choice"
+    (let [p (create-parser "'foo' / 'bar'")]
+      (is (= (r/->success 0 3) (core/parse p "foo")))
+      (is (= (r/->success 0 3) (core/parse p "bar")))
+      (is (= #{{:key :expected-literal :at 0, :detail {:literal "foo"}}
+               {:key :expected-literal :at 0, :detail {:literal "bar"}}}
+             (core/parse p "neither")))))
+
   (testing "nameless group"
     (let [p (create-parser "('foo' 'bar')+")]
       (is (= (r/->success 0 6) (core/parse p "foobar")))
@@ -54,6 +68,11 @@
     (let [p (create-parser "expr <- foo bar foo <- 'foo'\nbar <- 'bar'")]
       (is (r/success? (core/parse (:expr p) "foobar")))))
 
+  (testing "auto-named rule"
+    (let [p (create-parser "expr= <- 'foo' $")]
+      (is (= (r/with-success-name :expr (r/->success 0 3))
+             (core/parse (:expr p) "foo")))))
+
   (testing "star quantifier"
     (let [p (create-parser "'foo'*")]
       (is (= (r/->success 0 0) (core/parse p "")))
@@ -63,7 +82,45 @@
 
   (testing "plus quantifier"
     (let [p (create-parser "'foo'+")]
+      (is (= #{{:key :expected-literal :at 0, :detail {:literal "foo"}}}
+             (core/parse p "")))
+      (is (= (r/->success 0 3) (core/parse p "foo")))
+      (is (= (r/->success 0 6) (core/parse p "foofoo")))))
+
+  (testing "question mark quantifier"
+    (let [p (create-parser "'foo'?")]
       (is (= (r/->success 0 0) (core/parse p "")))
       (is (= (r/->success 0 3) (core/parse p "foo")))
+      (is (= (r/->success 0 3) (core/parse p "foofoo")))
+      (is (= (r/->success 0 0) (core/parse p "bar")))))
+
+  (testing "lookahead"
+    (let [p (create-parser "&'foo'")]
+      (is (= (r/->success 0 0) (core/parse p "foo")))
+      (is (= #{{:key :expected-literal :at 0, :detail {:literal "foo"}}}
+             (core/parse p "bar")))))
+
+  (testing "negative lookahead"
+    (let [p (create-parser "!'foo'")]
+      (is (= (r/->success 0 0) (core/parse p "bar")))
+      (is (= #{{:key :unexpected-match :at 0, :detail {:text "foo"}}}
+             (core/parse p "foo")))))
+
+  (testing "hard cut"
+    (let [p (create-parser "('foo' >>)* $ / 'foobar'")]
       (is (= (r/->success 0 6) (core/parse p "foofoo")))
-      (is (= (r/->success 0 0) (core/parse p "bar"))))))
+      (is (= #{{:key :unexpected-match, :at 3, :detail {:text "b"}}}
+             (core/parse p "foobar")))))
+
+  (testing "soft cut"
+    (let [p (create-parser "('foo' > 'bar') 'baz' / 'foobarz'")]
+      (is (= (r/->success 0 7) (core/parse p "foobarz")))
+      (is (= #{{:key :expected-literal, :at 3, :detail {:literal "bar"}}}
+             (core/parse p "foobaz")))))
+
+  (testing "extra rules"
+    (let [p (create-parser "root <- foo" {:foo (create-parser "'foo'")})]
+      (is (r/success? (core/parse (:root p) "foo"))))
+
+    (is (thrown-with-msg? Exception #"Supplying other parsers needs named rules in input grammar"
+          (create-parser "foo" {:foo (create-parser "'foo'")})))))
