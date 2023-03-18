@@ -129,7 +129,7 @@
 (deftest lookahead-test
   (let [p (c/lookahead (c/literal "foo"))]
     (is (= (r/->success 0 0) (parse p "foo")))
-    (is (= #{(r/->error :failed-lookahead 0)}
+    (is (= #{(r/->error :expected-literal 0 {:literal "foo"})}
            (parse p "not-foo")))))
 
 (deftest maybe-test

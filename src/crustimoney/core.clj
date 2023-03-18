@@ -41,8 +41,8 @@
 
   An error result looks like this:
 
-      ({:key :failed-lookahead, :at 0}
-       {:key :expected-literal, :at 0, :detail {:literal \"foo\"}})
+      ({:key :expected-literal, :at 0, :detail {:literal \"foo\"}}
+       {:key :unexpected-match, :at 8, :detail {:text \"eve\"}})
 
   The parse function can take an options map, with the following
   options:

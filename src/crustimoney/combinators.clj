@@ -210,7 +210,7 @@
     ([_text index result _state]
      (if (r/success? result)
        (r/->success index index)
-       #{(r/->error :failed-lookahead index)}))))
+       result))))
 
 (defn maybe
   "Try to parse the given parser, but succeed anyway."
