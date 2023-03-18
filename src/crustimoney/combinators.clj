@@ -320,33 +320,39 @@
 
 (defn ^:no-doc streaming
   "Experimental: like repeat*, but pushes results to callback function,
-  instead of returning them as children."
-  [parser callback]
-  (fn
-    ([_text index]
-     (r/->push parser index {:end index}))
+  instead of returning them as children.
 
-    ([_text index result state]
-     (if (r/success? result)
-       (let [end (r/success->end result)]
-         (callback result)
-         (r/->push parser end {:end end}))
-       (r/->success index (:end state))))))
+  If callback is a symbol, it is resolved using `requiring-resolve`."
+  [parser callback]
+  (let [callback (cond-> callback (symbol? callback) requiring-resolve)]
+    (fn
+      ([_text index]
+       (r/->push parser index {:end index}))
+
+      ([_text index result state]
+       (if (r/success? result)
+         (let [end (r/success->end result)]
+           (callback result)
+           (r/->push parser end {:end end}))
+         (r/->success index (:end state)))))))
 
 (defn ^:no-doc recovering
   "Experimental: try to turn errors from the wrapped parser into a
-  success, by giving the callback a chance to find a new index."
-  [parser callback]
-  (fn
-    ([_text index]
-     (r/->push parser index))
+  success, by giving the callback a chance to find a new index.
 
-    ([text index result _state]
-     (if (r/success? result)
-       result
-       (if-let [end (callback text index result)]
-         (r/->success index end)
-         result)))))
+  If callback is a symbol, it is resolved using `requiring-resolve`."
+  [parser callback]
+  (let [callback (cond-> callback (symbol? callback) requiring-resolve)]
+    (fn
+      ([_text index]
+       (r/->push parser index))
+
+      ([text index result _state]
+       (if (r/success? result)
+         result
+         (if-let [end (callback text index result)]
+           (r/->success index end)
+           result))))))
 
 (defn ^:no-doc range
   "Experimental: like repeat, but the times the wrapped parser is
