@@ -111,6 +111,7 @@
        literal            \"foo\"
        character          \\c
        regex              #\"[a-z]\"
+       regex-tag          #crusti/regex \"[a-z]\" ; EDN support
        eof                $
 
        ;; refs, chains, choices and grouping
@@ -137,13 +138,16 @@
        combinator-call    [:with-error :fail #crusti/parser (\"fooba\" #\"r|z\")]
        custom-combinator  [:my.app/my-combinator ...]}
 
-  Optionally an existing map of parsers can be supplied, which can
-  refered to by the data grammar.
-
   To capture nodes in the parse result, you need to use named groups.
   If you postfix a rule name with `=`, the expression is automatically
   captured using the rule's name (without the postfix). Please read up
   on this at `crustimoney.combinators/grammar`.
+
+  Optionally an existing map of parsers can be supplied, which can
+  refered to by the data grammar. For example:
+
+      (create-parser '{root (\"Hello \" email)}
+                     {:email (regex \"...\")})
 
   If you want to use an EDN grammar file or string, you can use
   `#crusti/regex` tagged literal for regular expressions. To read

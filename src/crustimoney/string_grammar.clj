@@ -244,9 +244,7 @@
   on this at `crustimoney.combinators/grammar`.
 
   A map of existing parsers can be supplied, which can be used by the
-  string grammar.
-
-  For example:
+  string grammar. For example:
 
       (create-parser \"root <- 'Hello ' email\"
                      {:email (regex \"...\")})"

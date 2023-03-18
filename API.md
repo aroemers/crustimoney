@@ -453,6 +453,7 @@ Create a parser based on a data grammar definition. If a map with
        literal            "foo"
        character          \c
        regex              #"[a-z]"
+       regex-tag          #crusti/regex "[a-z]" ; EDN support
        eof                $
 
        ;; refs, chains, choices and grouping
@@ -479,20 +480,23 @@ Create a parser based on a data grammar definition. If a map with
        combinator-call    [:with-error :fail #crusti/parser ("fooba" #"r|z")]
        custom-combinator  [:my.app/my-combinator ...]}
 
-  Optionally an existing map of parsers can be supplied, which can
-  refered to by the data grammar.
-
   To capture nodes in the parse result, you need to use named groups.
   If you postfix a rule name with `=`, the expression is automatically
   captured using the rule's name (without the postfix). Please read up
   on this at [`crustimoney.combinators/grammar`](#crustimoney.combinators/grammar).
+
+  Optionally an existing map of parsers can be supplied, which can
+  refered to by the data grammar. For example:
+
+      (create-parser '{root ("Hello " email)}
+                     {:email (regex "...")})
 
   If you want to use an EDN grammar file or string, you can use
   `#crusti/regex` tagged literal for regular expressions. To read
   this, use the following:
 
       (clojure.edn/read-string {:readers *data-readers*} ...)
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/data_grammar.clj#L104-L158">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/data_grammar.clj#L104-L162">Source</a></sub></p>
 
 ## <a name="crustimoney.data-grammar/vector-tree">`vector-tree`</a><a name="crustimoney.data-grammar/vector-tree"></a>
 ``` clojure
@@ -738,13 +742,11 @@ Create a parser based on a string-based grammar definition. If the
   on this at [`crustimoney.combinators/grammar`](#crustimoney.combinators/grammar).
 
   A map of existing parsers can be supplied, which can be used by the
-  string grammar.
-
-  For example:
+  string grammar. For example:
 
       (create-parser "root <- 'Hello ' email"
                      {:email (regex "...")})
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/string_grammar.clj#L210-L258">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/string_grammar.clj#L210-L256">Source</a></sub></p>
 
 ## <a name="crustimoney.string-grammar/vector-tree">`vector-tree`</a><a name="crustimoney.string-grammar/vector-tree"></a>
 ``` clojure
