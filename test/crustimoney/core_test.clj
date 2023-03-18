@@ -1,8 +1,8 @@
-(ns crustimoney2.core-test
+(ns crustimoney.core-test
   (:require [clojure.test :refer [deftest is testing]]
-            [crustimoney2.core :as core]
-            [crustimoney2.combinators :as c]
-            [crustimoney2.results :as r]))
+            [crustimoney.core :as core]
+            [crustimoney.combinators :as c]
+            [crustimoney.results :as r]))
 
 (deftest parse-test
   (testing "start at non-zero index"

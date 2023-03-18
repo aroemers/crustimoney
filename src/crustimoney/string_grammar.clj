@@ -1,11 +1,11 @@
-(ns crustimoney2.string-grammar
+(ns crustimoney.string-grammar
   "Create a parser based on a string grammar. The grammar is translated
   into combinators."
   (:require [clojure.string :as str]
-            [crustimoney2.combinators :as c]
-            [crustimoney2.core :as core]
-            [crustimoney2.results :as r]
-            [crustimoney2.vector-grammar :as vector-grammar]))
+            [crustimoney.combinators :as c]
+            [crustimoney.core :as core]
+            [crustimoney.results :as r]
+            [crustimoney.vector-grammar :as vector-grammar]))
 
 ;;; Value transformers
 
@@ -199,7 +199,7 @@
 (defn vector-tree
   "Low-level function which translates the string grammar into an
   intermediary vector-based representation. See
-  `crustimoney2.vector-grammar` for more on this format. This can be
+  `crustimoney.vector-grammar` for more on this format. This can be
   useful for debugging."
   [text]
   (let [result (core/parse (:root grammar) text)]
@@ -241,7 +241,7 @@
   To capture nodes in the parse result, you need to use named groups.
   If you postfix a rule name with `=`, the expression is automatically
   captured using the rule's name (without the postfix). Please read up
-  on this at `crustimoney2.combinators/grammar`.
+  on this at `crustimoney.combinators/grammar`.
 
   A map of existing parsers can be supplied, which can be used by the
   string grammar.

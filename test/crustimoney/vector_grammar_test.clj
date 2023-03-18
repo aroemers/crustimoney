@@ -1,9 +1,9 @@
-(ns crustimoney2.vector-grammar-test
+(ns crustimoney.vector-grammar-test
   (:require [clojure.test :refer [deftest is testing]]
-            [crustimoney2.combinators :as c]
-            [crustimoney2.core :as core]
-            [crustimoney2.results :as r]
-            [crustimoney2.vector-grammar :refer [create-parser]]))
+            [crustimoney.combinators :as c]
+            [crustimoney.core :as core]
+            [crustimoney.results :as r]
+            [crustimoney.vector-grammar :refer [create-parser]]))
 
 (deftest create-parser-test
   (testing "simple literal vector"

@@ -1,4 +1,4 @@
-(ns crustimoney2.combinators
+(ns crustimoney.combinators
   "Parsers combinator functions.
 
   Each combinator functions creates a parser function that is suitable
@@ -30,13 +30,13 @@
   state that was pushed with it.
 
   Both arities can return a success, a set of errors, or a push. The
-  `crustimoney2.results` namespace should be used for creating and
+  `crustimoney.results` namespace should be used for creating and
   reading these results.
 
   Before you write your own combinator, do realise that the provided
   combinators are complete in the sense that they can parse any text."
   (:refer-clojure :exclude [ref])
-  (:require [crustimoney2.results :as r]))
+  (:require [crustimoney.results :as r]))
 
 ;;; Primitives
 

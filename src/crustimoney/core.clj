@@ -1,8 +1,7 @@
-(ns crustimoney2.core
+(ns crustimoney.core
   "The main parsing functions."
-  (:require [crustimoney2.caches :as caches]
-            [crustimoney2.combinators :as c]
-            [crustimoney2.results :as r]))
+  (:require [crustimoney.caches :as caches]
+            [crustimoney.results :as r]))
 
 ;;; Internals
 

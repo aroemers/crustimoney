@@ -1,4 +1,4 @@
-(ns crustimoney2.results
+(ns crustimoney.results
   "Result constructors, accessors and predicates")
 
 ;;; Success functions

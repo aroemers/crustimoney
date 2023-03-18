@@ -1,8 +1,8 @@
-(ns crustimoney2.combinators-test
+(ns crustimoney.combinators-test
   (:require [clojure.test :refer [deftest testing is]]
-            [crustimoney2.combinators :as c]
-            [crustimoney2.core :as core]
-            [crustimoney2.results :as r]))
+            [crustimoney.combinators :as c]
+            [crustimoney.core :as core]
+            [crustimoney.results :as r]))
 
 ;;; Utilities
 

@@ -1,6 +1,6 @@
-(ns crustimoney2.vector-grammar
+(ns crustimoney.vector-grammar
   "A basic vector-driven parser generator."
-  (:require [crustimoney2.combinators :as c]))
+  (:require [crustimoney.combinators :as c]))
 
 ;;; Utility functions
 
@@ -22,7 +22,7 @@
 
 (defn- key-to-combinator [key]
   (requiring-resolve (symbol (or (some-> key namespace)
-                                 "crustimoney2.combinators")
+                                 "crustimoney.combinators")
                              (name key))))
 
 (defn create-parser
@@ -37,8 +37,8 @@
 
   Each vector is expanded into the combinator invocation, referenced
   by the first keyword. If the keyword does not have a namespace,
-  `crustimoney2.combinators` is assumed. Maps are walked as well,
-  wrapped in `crustimoney2.combinators/grammar`. Other data is left
+  `crustimoney.combinators` is assumed. Maps are walked as well,
+  wrapped in `crustimoney.combinators/grammar`. Other data is left
   as-is.
 
   This type of parser generator is not intended to be used directly,

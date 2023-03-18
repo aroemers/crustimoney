@@ -1,4 +1,4 @@
-(ns crustimoney2.caches
+(ns crustimoney.caches
   "Packrat caches for the core/parse function.
 
   A single cache instance is *not* intended to be used for multiple

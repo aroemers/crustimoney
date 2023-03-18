@@ -1,7 +1,7 @@
-(ns crustimoney2.data-grammar
+(ns crustimoney.data-grammar
   "Create a parser based on a data grammar. The data is translated into
   combinators."
-  (:require [crustimoney2.vector-grammar :as vector-grammar]))
+  (:require [crustimoney.vector-grammar :as vector-grammar]))
 
 ;;; Utility functions
 
@@ -14,7 +14,7 @@
   (vector-tree [data]
     "Low-level protocol function which translates the data type
   into an intermediary vector-based representation. See
-  `crustimoney2.vector-grammar` for more on this format. This can be
+  `crustimoney.vector-grammar` for more on this format. This can be
   useful for debugging, or adding your own data type.
 
   In the latter case, add your type like so:
@@ -144,7 +144,7 @@
   To capture nodes in the parse result, you need to use named groups.
   If you postfix a rule name with `=`, the expression is automatically
   captured using the rule's name (without the postfix). Please read up
-  on this at `crustimoney2.combinators/grammar`.
+  on this at `crustimoney.combinators/grammar`.
 
   If you want to use an EDN grammar file or string, you can use
   `#crusti/regex` tagged literal for regular expressions. To read

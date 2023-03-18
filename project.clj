@@ -6,7 +6,7 @@
 
   :dependencies [[org.clojure/clojure "1.11.1"]]
 
-  :repl-options {:init-ns crustimoney2.core}
+  :repl-options {:init-ns crustimoney.core}
 
   :profiles
   {:dev {:dependencies [[instaparse/instaparse "1.4.12"]
