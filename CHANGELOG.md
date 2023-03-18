@@ -1,24 +1,21 @@
 # Change Log
-All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
+
+All notable changes to this project will be documented in this file.
+This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## [Unreleased]
-### Changed
-- Add a new arity to `make-widget-async` to provide a different widget shape.
 
-## [0.1.1] - 2022-10-07
-### Changed
-- Documentation on how to make the widgets.
+No changes yet
 
-### Removed
-- `make-widget-sync` - we're all async, all the time.
+## 2.0.0-beta1 - 2023-03-??
 
-### Fixed
-- Fixed widget maker to keep working when daylight savings switches over.
+Complete rewrite.
+The old version from 10 years ago served its purpose at the time, but was incomplete and difficult to improve.
+This version intends to fix that.
 
-## 0.1.0 - 2022-10-07
-### Added
-- Files from the new template.
-- Widget maker public API - `make-widget-sync`.
+## 0.1.0 - 2013-02-17
 
-[Unreleased]: https://sourcehost.site/your-name/crustimoney2/compare/0.1.1...HEAD
-[0.1.1]: https://sourcehost.site/your-name/crustimoney2/compare/0.1.0...0.1.1
+Initial version
+
+[Unreleased]: https://github.com/aroemers/crustimoney/compare/v2.0.0-beta1...HEAD
+[2.0.0-beta2]: https://github.com/aroemers/crustimoney/compare/v2.0.0-beta1...v2.0.0-beta2
