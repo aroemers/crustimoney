@@ -35,7 +35,7 @@
 
   Before you write your own combinator, do realise that the provided
   combinators are complete in the sense that they can parse any text."
-  (:refer-clojure :exclude [ref])
+  (:refer-clojure :exclude [ref range])
   (:require [crustimoney.results :as r]))
 
 ;;; Primitives
@@ -100,9 +100,9 @@
   performance wise. A hard cut is implicitly also a soft cut."
   [& parsers]
   (assert (not (#{:soft-cut :hard-cut} (first parsers)))
-          "Cannot place a cut in first posision of a chain")
+    "Cannot place a cut in first posision of a chain")
   (assert (empty? (remove #{:soft-cut :hard-cut} (filter keyword? parsers)))
-          "Only :soft-cut and :hard-cut keywords are supported")
+    "Only :soft-cut and :hard-cut keywords are supported")
 
   (fn
     ([_text index]
@@ -347,3 +347,27 @@
        (if-let [end (callback text index result)]
          (r/->success index end)
          result)))))
+
+(defn ^:no-doc range
+  "Experimental: like repeat, but the times the wrapped parser is
+  matched must lie within the given range. It will not try to parse
+  more than max times."
+  [parser min max]
+  (assert (<= 0 min max) "min must at least be 0, and max must at least be min")
+
+  (fn
+    ([_text index]
+     (if (< 0 max)
+       (r/->push parser index [])
+       (r/->success index index)))
+
+    ([_text index result state]
+     (if (r/success? result)
+       (let [children (update state conj result)]
+         (if (= (count children) max)
+           (r/->success index (-> children last r/success->end) children)
+           (r/->push parser (r/success->end result) children)))
+       (let [children state]
+         (if (< (count children) min)
+           result
+           (r/->success index (-> children last r/success->end) children)))))))
