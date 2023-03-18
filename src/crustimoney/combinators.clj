@@ -370,4 +370,5 @@
        (let [children state]
          (if (< (count children) min)
            result
-           (r/->success index (-> children last r/success->end) children)))))))
+           (let [end (or (some-> children last r/success->end) index)]
+             (r/->success index end children))))))))
