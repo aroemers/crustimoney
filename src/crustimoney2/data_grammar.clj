@@ -135,7 +135,7 @@
 
        ;; direct combinator calls
        combinator-call    [:with-error :fail!
-                           #crust/parser (\"fooba\" #\"r|z\")]
+                           #crusti/parser (\"fooba\" #\"r|z\")]
        custom-combinator  [:my.app/my-combinator ...]}
 
   Optionally an existing map of parsers can be supplied, which can
@@ -147,8 +147,8 @@
   on this at `crustimoney2.combinators/grammar`.
 
   If you want to use an EDN grammar file or string, you can use
-  `#crust/regex` tagged literal for regular expressions. To read this,
-  use the following:
+  `#crusti/regex` tagged literal for regular expressions. To read
+  this, use the following:
 
       (clojure.edn/read-string {:readers *data-readers*} ...)"
   ([data]

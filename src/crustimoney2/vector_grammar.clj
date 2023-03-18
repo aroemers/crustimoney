@@ -22,7 +22,7 @@
 
 (defn- key-to-combinator [key]
   (requiring-resolve (symbol (or (some-> key namespace)
-                                 'crustimoney2.combinators)
+                                 "crustimoney2.combinators")
                              (name key))))
 
 (defn create-parser

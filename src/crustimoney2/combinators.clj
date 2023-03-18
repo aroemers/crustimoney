@@ -315,3 +315,35 @@
         [:body {:start 5, :end 8}]]]"
   [m]
   `(grammar* (fn [] ~m)))
+
+;;; Experimental section
+
+(defn ^:no-doc streaming
+  "Experimental: like repeat*, but pushes results to callback function,
+  instead of returning them as children."
+  [parser callback]
+  (fn
+    ([_text index]
+     (r/->push parser index {:end index}))
+
+    ([_text index result state]
+     (if (r/success? result)
+       (let [end (r/success->end result)]
+         (callback result)
+         (r/->push parser end {:end end}))
+       (r/->success index (:end state))))))
+
+(defn ^:no-doc recovering
+  "Experimental: try to turn errors from the wrapped parser into a
+  success, by giving the callback a chance to find a new index."
+  [parser callback]
+  (fn
+    ([_text index]
+     (r/->push parser index))
+
+    ([text index result _state]
+     (if (r/success? result)
+       result
+       (if-let [end (callback text index result)]
+         (r/->success index end)
+         result)))))

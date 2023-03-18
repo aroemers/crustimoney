@@ -307,7 +307,7 @@ It is very similar to the string-based grammar.
 '{literal    "foo"
   character  \f
   regex      #"ba(r|z)"
-  data-regex #crust/regex "ba(r|z)" ; EDN support
+  data-regex #crusti/regex "ba(r|z)" ; EDN support
 
   chain      ("foo "bar")
   choice     ("bar" / "baz")
@@ -328,9 +328,8 @@ It is very similar to the string-based grammar.
   soft-cut   ("(" > expr? ")")
   hard-cut   ("(" > expr? ")" >>)
 
-  combinator-call   [:with-error :fail!
-                     #crust/parser ("fooba" #"r|z")]
-  custom-combinator [:my.app/my-combinator ...]}
+  combinator-call   [:with-error :fail #crusti/parser ("fooba" #"r|z")]
+  custom-combinator [:my.app/my-combinator #crusti/resolve clojure.string/upper-case]}
 ```
 
 The function `data-grammar/create-parser` is used to create a parser out of such a definition.
@@ -340,9 +339,10 @@ It works the same way in supporting both recursive and non-recursive parsers, an
 
 It does have an extra feature: direct combinator calls, using vectors.
 The first keyword in the vector determines the combinator.
-For keywords without a namespace, `crustimoney2.combinators` is assumed.
-The other arguments are left as-is, except those tagged with `#crust/parser`.
-With that tag, the data is processed again as a parser definition.
+If it is without a namespace, `crustimoney2.combinators` is assumed.
+The other arguments are left as-is, except those tagged with `#crusti/parser` or `#crusti/resolve`.
+With the former, the data is processed again as a parser definition.
+With the latter, it expects a symbol that is then resolved using Clojure's `requiring-resolve`.
 
 ## Vector-based grammar
 

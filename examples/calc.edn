@@ -4,9 +4,9 @@
 
  value (number / "(" > sum ? ")")
 
- sum-op (:operation #crust/regex "[+-]")
+ sum-op (:operation #crusti/regex "[+-]")
 
- product-op (:operation #crust/regex "[*/]")
+ product-op (:operation #crusti/regex "[*/]")
 
  number= [:with-error :expected-number
-          #crust/parser (#crust/regex "[0-9]+")]}
+          #crusti/parser (#crusti/regex "[0-9]+")]}
