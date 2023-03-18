@@ -285,7 +285,7 @@ hard-cut  <- ('(' > expr? ')' >>)
 The function `string-grammar/create-parser` is used to create a parser out of such a string.
 Note that above "example" has rules and thus describes a recursive grammar.
 Therefore a map is returned by `create-parser`.
-Howover, it is perfectly valid to define a single parser, such as:
+However, it is perfectly valid to define a single parser, such as:
 
 ```
 'alice and ' !'eve' [a-z]+
@@ -329,7 +329,7 @@ It is very similar to the string-based grammar.
   hard-cut   ("(" > expr? ")" >>)
 
   combinator-call   [:with-error :fail #crusti/parser ("fooba" #"r|z")]
-  custom-combinator [:my.app/my-combinator #crusti/resolve clojure.string/upper-case]}
+  custom-combinator [:my.app/my-combinator ...]}
 ```
 
 The function `data-grammar/create-parser` is used to create a parser out of such a definition.
@@ -340,9 +340,21 @@ It works the same way in supporting both recursive and non-recursive parsers, an
 It does have an extra feature: direct combinator calls, using vectors.
 The first keyword in the vector determines the combinator.
 If it is without a namespace, `crustimoney.combinators` is assumed.
-The other arguments are left as-is, except those tagged with `#crusti/parser` or `#crusti/resolve`.
-With the former, the data is processed again as a parser definition.
-With the latter, it expects a symbol that is then resolved using Clojure's `requiring-resolve`.
+The other arguments are left as-is, except those tagged with `#crusti/parser`.
+With that tag, the data is processed again as a parser definition.
+
+### EDN support
+
+Since the grammar definition is data, it is perfectly feasible to use the EDN format.
+The `#crusti/...` tags are not automatically supported by Clojure's EDN reader.
+The following code makes it work:
+
+```clj
+(clojure.edn/read-string {:readers *data-readers*} ...)
+```
+
+Note that regular expressions are not supported in plain EDN.
+For this there is the `#crusti/regex` tag (see above example).
 
 ## Vector-based grammar
 

@@ -134,8 +134,7 @@
        hard-cut           ((class-open class class-close >>)*) ; note the >>
 
        ;; direct combinator calls
-       combinator-call    [:with-error :fail!
-                           #crusti/parser (\"fooba\" #\"r|z\")]
+       combinator-call    [:with-error :fail #crusti/parser (\"fooba\" #\"r|z\")]
        custom-combinator  [:my.app/my-combinator ...]}
 
   Optionally an existing map of parsers can be supplied, which can

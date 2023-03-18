@@ -12,4 +12,5 @@
   {:dev {:dependencies [[instaparse/instaparse "1.4.12"]
                         [com.clojure-goes-fast/clj-memory-meter "0.2.2"]]
 
-         :jvm-opts ["-Djdk.attach.allowAttachSelf"]}})
+         :jvm-opts [;; For clj-memory-meter
+                    "-Djdk.attach.allowAttachSelf"]}})

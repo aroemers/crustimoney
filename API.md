@@ -476,8 +476,7 @@ Create a parser based on a data grammar definition. If a map with
        hard-cut           ((class-open class class-close >>)*) ; note the >>
 
        ;; direct combinator calls
-       combinator-call    [:with-error :fail!
-                           #crusti/parser ("fooba" #"r|z")]
+       combinator-call    [:with-error :fail #crusti/parser ("fooba" #"r|z")]
        custom-combinator  [:my.app/my-combinator ...]}
 
   Optionally an existing map of parsers can be supplied, which can
@@ -493,7 +492,7 @@ Create a parser based on a data grammar definition. If a map with
   this, use the following:
 
       (clojure.edn/read-string {:readers *data-readers*} ...)
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/data_grammar.clj#L104-L159">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/data_grammar.clj#L104-L158">Source</a></sub></p>
 
 ## <a name="crustimoney.data-grammar/vector-tree">`vector-tree`</a><a name="crustimoney.data-grammar/vector-tree"></a>
 ``` clojure
