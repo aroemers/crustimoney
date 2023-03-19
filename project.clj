@@ -8,7 +8,8 @@
 
   :repl-options {:init-ns crustimoney.core}
 
-  :plugins [[lein-cloverage "1.2.2"]]
+  :plugins [[lein-cloverage "1.2.2"]
+            [lein-eftest "0.6.0"]]
 
   :profiles
   {:dev {:dependencies [[instaparse/instaparse "1.4.12"]
@@ -17,5 +18,8 @@
          :jvm-opts [;; For clj-memory-meter
                     "-Djdk.attach.allowAttachSelf"]}
 
-   :test {:cloverage {:fail-threshold   80
-                      :ns-exclude-regex [#"crustimoney.reader"]}}})
+   :test {:dependencies [[eftest "0.6.0"]]
+
+          :cloverage {:fail-threshold   80
+                      :ns-exclude-regex [#"crustimoney.reader"]
+                      :runner           :eftest}}})
