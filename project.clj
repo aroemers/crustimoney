@@ -8,7 +8,7 @@
 
   :repl-options {:init-ns crustimoney.core}
 
-  :plugins [[lein-cloverage "1.2.2"]
+  :plugins [[lein-cloverage "1.2.4"]
             [lein-eftest "0.6.0"]]
 
   :profiles
@@ -18,7 +18,9 @@
          :jvm-opts [;; For clj-memory-meter
                     "-Djdk.attach.allowAttachSelf"]}
 
-   :test {:cloverage {:fail-threshold 90
+   :test {:dependencies [[cloverage/cloverage "1.2.4"]]
+
+          :cloverage {:fail-threshold 90
 
                       :ns-exclude-regex [#"crustimoney.reader"
                                          #"crustimoney.combinators.experimental"]}}})
