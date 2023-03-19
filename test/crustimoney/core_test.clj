@@ -36,4 +36,9 @@
     (let [grammar   (c/grammar {:a (c/choice (c/chain (c/literal "a") (c/ref :a))
                                              (c/literal "a"))})
           long-text (apply str (repeat 10000 "a"))]
-      (is (r/success? (core/parse (:a grammar) long-text))))))
+      (is (r/success? (core/parse (:a grammar) long-text)))))
+
+  (testing "report unknown parser function result"
+    (let [thrown (try (core/parse (constantly :whut) "anything") (catch Exception e e))]
+      (is (= "Unexpected result from parser" (.getMessage thrown)))
+      (is (= clojure.lang.Keyword (:type (ex-data thrown)))))))

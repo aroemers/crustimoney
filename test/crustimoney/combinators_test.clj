@@ -169,4 +169,9 @@
     (let [p (c/grammar {:root (c/ref :foo)
                         :foo= (c/literal "foo")})]
       (is (= (r/with-success-name :foo (r/->success 0 3))
-             (parse (:root p) "foo"))))))
+             (parse (:root p) "foo")))))
+
+  (testing "missing references"
+    (let [thrown (try (c/grammar {:root (c/ref :foo)}) (catch Exception e e))]
+      (is (= "Detected unknown keys in refs" (.getMessage thrown)))
+      (is (= {:unknown-keys [:foo]} (ex-data thrown))))))

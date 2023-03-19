@@ -18,8 +18,7 @@
          :jvm-opts [;; For clj-memory-meter
                     "-Djdk.attach.allowAttachSelf"]}
 
-   :test {:dependencies [[eftest "0.6.0"]]
+   :test {:cloverage {:fail-threshold 90
 
-          :cloverage {:fail-threshold   80
-                      :ns-exclude-regex [#"crustimoney.reader"]
-                      :runner           :eftest}}})
+                      :ns-exclude-regex [#"crustimoney.reader"
+                                         #"crustimoney.combinators.experimental"]}}})

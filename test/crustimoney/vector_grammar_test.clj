@@ -36,4 +36,8 @@
     (def my-combinator c/literal)
 
     (let [p (create-parser [::my-combinator "foo"])]
-      (is (= (r/->success 0 3) (core/parse p "foo"))))))
+      (is (= (r/->success 0 3) (core/parse p "foo")))))
+
+  (testing "missing custom combinator"
+    (is (thrown-with-msg? Exception #"combinator-key does not resolve"
+          (create-parser [:missing])))))

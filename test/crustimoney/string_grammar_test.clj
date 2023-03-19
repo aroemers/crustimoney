@@ -126,7 +126,15 @@
       (is (r/success? (core/parse (:root p) "foo"))))
 
     (is (thrown-with-msg? Exception #"Supplying other parsers needs named rules in input grammar"
-                          (create-parser "foo" {:foo (create-parser "'foo'")})))))
+                          (create-parser "foo" {:foo (create-parser "'foo'")}))))
+
+  (testing "report grammar errors"
+    (let [thrown (try (create-parser "(foo") (catch Exception e e))]
+      (is (= "Failed to parse grammar" (.getMessage thrown)))
+      (is (= {:errors #{{:key :expected-literal :at 4
+                         :detail {:literal ")"}
+                         :line 1 :column 5}}}
+             (ex-data thrown))))))
 
 (deftest vector-tree-test
   (is (= [:choice [:chain [:literal "foo"] [:regex "ba(r|z)"]] [:literal "eve"]]

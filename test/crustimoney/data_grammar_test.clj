@@ -11,6 +11,12 @@
       (is (= #{{:key :expected-literal :at 0 :detail {:literal "foo"}}}
              (core/parse p "bar")))))
 
+  (testing "character"
+    (let [p (create-parser \f)]
+      (is (= (r/->success 0 1) (core/parse p "foo")))
+      (is (= #{{:key :expected-literal :at 0 :detail {:literal "f"}}}
+             (core/parse p "bar")))))
+
   (testing "regular expression"
     (let [r #"\d+"
           p (create-parser r)]
@@ -106,7 +112,11 @@
       (is (r/success? (core/parse (:root p) "foo"))))
 
     (is (thrown-with-msg? Exception #"Supplying other parsers needs named rules in input grammar"
-          (create-parser 'foo {:foo (create-parser "'foo'")})))))
+          (create-parser 'foo {:foo (create-parser "'foo'")}))))
+
+  (testing "unknown type"
+    (is (thrown-with-msg? Exception #"Unknown data type"
+          (create-parser (range))))))
 
 (deftest vector-tree-test
   (is (= [:choice [:chain [:literal "foo"] [:literal "bar"]] [:literal "eve"]]
