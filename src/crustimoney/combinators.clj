@@ -35,7 +35,7 @@
 
   Before you write your own combinator, do realise that the provided
   combinators are complete in the sense that they can parse any text."
-  (:refer-clojure :exclude [ref range])
+  (:refer-clojure :exclude [ref])
   (:require [crustimoney.results :as r]))
 
 ;;; Primitives

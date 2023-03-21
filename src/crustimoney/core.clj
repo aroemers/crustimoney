@@ -78,14 +78,24 @@
          (let [parser (r/push->parser stack-item)
                index  (r/push->index stack-item)
                state' (r/push->state stack-item)
-               ;; If there was previously a result, we are
-               ;; backtracking. Otherwise, there was a push.
-               result (if result
-                        (parser text index result state)
-                        (parser text index))]
+
+               ;; Call the parser
+               result
+               (cond
+                 ;; Backtrack further on a soft-cut error result, when the parser is
+                 ;; not tagged as recovering
+                 (and (some-> result meta :soft-cut) (not (-> parser meta :recovering)))
+                 result
+                 ;; Handle backtracking a result
+                 result
+                 (parser text index result state)
+                 ;; Handle a push
+                 :else
+                 (parser text index))]
+
            ;; Handle the parse result
            (cond
-             ;; Handle a push
+             ;; Handle a push result
              (r/push? result)
              (let [push-parser (r/push->parser result)
                    push-index  (r/push->index result)
@@ -98,7 +108,7 @@
                  (recur stack hit push-state cut-at)
                  (recur (conj stack result) nil nil cut-at)))
 
-             ;; Handle a success
+             ;; Handle a success result
              (r/success? result)
              (let [processed (post-success result)]
                ;; Check if it was a hard-cut success
@@ -110,7 +120,7 @@
 
              ;; Handle a set of errors
              (set? result)
-             (if-not (or (-> result meta :soft-cut) (< index cut-at))
+             (if-not (< index cut-at)
                (recur (pop stack) result state' cut-at)
                result)
 

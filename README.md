@@ -213,9 +213,9 @@ Consider the expansion of the previous example:
 (def example
   (grammar
    {:prefix= (maybe (chain (literal "[")
-                    :soft-cut
-                    (regex #"\d+")
-                    (literal "]")))
+                           :soft-cut
+                           (regex #"\d+")
+                           (literal "]")))
     :expr=   (choice (with-name :foo
                        (chain (ref :prefix)
                               (literal "foo")))

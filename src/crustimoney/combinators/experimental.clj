@@ -1,5 +1,6 @@
 (ns ^:no-doc crustimoney.combinators.experimental
   "Experimental combinators"
+  (:refer-clojure :exclude [range])
   (:require [crustimoney.results :as r]))
 
 (defn streaming
@@ -7,7 +8,7 @@
   instead of returning them as children.
 
   If callback is a symbol, it is resolved using `requiring-resolve`."
-  [parser callback]
+  [callback parser]
   (let [callback (cond-> callback (symbol? callback) requiring-resolve)]
     (fn
       ([_text index]
@@ -21,22 +22,51 @@
          (r/->success index (:end state)))))))
 
 (defn recovering
-  "Experimental: try to turn errors from the wrapped parser into a
-  success, by giving the callback a chance to find a new index.
+  "Experimental: like choice, also handling soft-cut. If second parser
+  succeeds, the result node looks like:
 
-  If callback is a symbol, it is resolved using `requiring-resolve`."
-  [parser callback]
-  (let [callback (cond-> callback (symbol? callback) requiring-resolve)]
+      [:crusti/recovered {:start .., :end .., :errors #{..}}]
+
+  The errors are those of the first parser. The name can be changed of
+  course, by using `with-name`.
+
+  If second parser fails, the errors of first parser are returned.
+
+  Example usage:
+
+      (repeat* (recovering
+                (with-name :content
+                  (chain (literal \"{\")
+                         (regex #\"\\d+\")
+                         (literal \"}\")))
+                (regex \".*?}\"))
+
+  Parsing something like `{42}{nan}{100}` would result in:
+
+      [nil {:start 0, :end 14}
+       [:content {:start 0, :end 4}]
+       [:crusti/recovered {:start 4, :end 9, :errors #{{:key :expected-match, :at 5, ...}}}]
+       [:content {:start 9, :end 14}]]"
+  [parser recover]
+  (with-meta
     (fn
       ([_text index]
        (r/->push parser index))
 
-      ([text index result _state]
-       (if (r/success? result)
-         result
-         (if-let [end (callback text index result)]
-           (r/->success index end)
-           result))))))
+      ([text index result state]
+       (if state
+         (if (r/success? result)
+           (r/with-success-name :crusti/recovered
+             (update result 1 assoc :errors state))
+           state)
+         (or (r/success? result)
+             (r/->push recover index result)))))
+    {:recovering true}))
+
+(defn success->recovered-errors
+  "Returns the recovered errors from a result"
+  [success]
+  (-> success second :errors))
 
 (defn range
   "Experimental: like repeat, but the times the wrapped parser is
