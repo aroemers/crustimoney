@@ -1,13 +1,25 @@
 (ns ^:no-doc crustimoney.combinators.experimental
-  "Experimental combinators"
+  "Experimental combinators. Anything can happen with them.
+
+  These combinators do not have a string- or data-driven syntax (yet).
+  To use them, you can use the `other-parsers` parameter of
+  `create-parser`, like:
+
+      (require '[crustimoney.combinators.experimental :as e])
+
+      (create-parser
+        \"root <- stream
+         expr <- '{' [0-9]+ '}'\"
+        '{:stream [::e/streaming handle-expr
+                   [::e/recovering [:ref :expr] [:regex \".*?}\"]]})"
   (:refer-clojure :exclude [range])
   (:require [crustimoney.results :as r]))
 
 (defn streaming
-  "Experimental: like repeat*, but pushes results to callback function,
+  "Like `repeat*`, but pushes results to `callback` function,
   instead of returning them as children.
 
-  If callback is a symbol, it is resolved using `requiring-resolve`."
+  If `callback` is a symbol, it is resolved using `requiring-resolve`."
   [callback parser]
   (let [callback (cond-> callback (symbol? callback) requiring-resolve)]
     (fn
@@ -22,15 +34,15 @@
          (r/->success index (:end state)))))))
 
 (defn recovering
-  "Experimental: like choice, also handling soft-cut. If second parser
-  succeeds, the result node looks like:
+  "Parse using `parser`. If it fails, try the `recovery` parser. If that
+  succeeds, it results in a success node like this:
 
       [:crusti/recovered {:start .., :end .., :errors #{..}}]
 
-  The errors are those of the first parser. The name can be changed of
-  course, by using `with-name`.
-
-  If second parser fails, the errors of first parser are returned.
+  The errors are those of the first `parser`, and can be extracted
+  using `success->recovered-errors`. If second parser fails, the
+  errors of first parser are returned. As with any parser, the name
+  can be changed using `with-name`.
 
   Example usage:
 
@@ -47,20 +59,20 @@
        [:content {:start 0, :end 4}]
        [:crusti/recovered {:start 4, :end 9, :errors #{{:key :expected-match, :at 5, ...}}}]
        [:content {:start 9, :end 14}]]"
-  [parser recover]
+  [parser recovery]
   (with-meta
     (fn
       ([_text index]
        (r/->push parser index))
 
       ([text index result state]
-       (if state
+       (if-let [errors (:errors state)]
          (if (r/success? result)
            (r/with-success-name :crusti/recovered
-             (update result 1 assoc :errors state))
-           state)
+             (update result 1 assoc :errors errors))
+           errors)
          (or (r/success? result)
-             (r/->push recover index result)))))
+             (r/->push recovery index {:errors result})))))
     {:recovering true}))
 
 (defn success->recovered-errors
@@ -69,9 +81,9 @@
   (-> success second :errors))
 
 (defn range
-  "Experimental: like repeat, but the times the wrapped parser is
-  matched must lie within the given range. It will not try to parse
-  more than max times."
+  "Like repeat, but the times the wrapped parser is matched must lie
+  within the given range. It will not try to parse more than max
+  times."
   [parser min max]
   (assert (<= 0 min max) "min must at least be 0, and max must at least be min")
 
