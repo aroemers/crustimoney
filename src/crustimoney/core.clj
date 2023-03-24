@@ -5,18 +5,25 @@
 
 ;;; Internals
 
+(defn- named-self-or-children
+  "Returns a sequence with `child` if it has a name, otherwise a
+  sequence of its children that have a name."
+  [child]
+  (if (r/success->name child)
+    [child]
+    (filter r/success->name (r/success->children child))))
+
 (defn- keep-named-children
   "Process a success result by keeping only the named children, merged
-  with the named children of nameless children. If that makes sense."
+  with the named children of nameless children."
   [success]
-  (let [children (mapcat (fn [child]
-                           (if (r/success->name child)
-                             [child]
-                             (filter r/success->name (r/success->children child))))
-                         (r/success->children success))]
-    (r/with-success-children success children)))
+  (r/with-success-children success
+    (mapcat named-self-or-children (r/success->children success))))
 
-(defn- infinite-loop? [stack index parser]
+(defn- infinite-loop?
+  "Check if the stack already contains the parser at the index, if so,
+  we have an infinite loop."
+  [stack index parser]
   (loop [i (dec (count stack))]
     (when (<= 0 i)
       (let [stack-item (nth stack i)]
@@ -128,4 +135,6 @@
              :else
              (let [info {:parser parser, :type (type result)}]
                (throw (ex-info "Unexpected result from parser" info)))))
+
+         ;; Nothing on the stack, return result
          result)))))
