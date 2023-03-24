@@ -3,20 +3,21 @@
 
   These combinators do not have a string- or data-driven syntax (yet).
   To use them with those grammar syntaxes, you can use the
-  `other-parsers` parameter of their `create-parser`, like:
+  `other-parsers` parameter of their respective `create-parser`
+  functions, like:
 
       (require '[crustimoney.combinators.experimental :as e])
 
       (create-parser
-        \"root <- stream
-         expr <- '{' [0-9]+ '}'\"
-        '{:stream [::e/streaming handle-expr
-                   [::e/recovering [:ref :expr] [:regex \".*?}\"]]})"
+        \"root= <- stream
+         expr= <- '{' [0-9]+ '}'\"
+        {:stream [::e/streaming handle-expr
+                  [::e/recovering [:ref :expr] [:regex \".*?}\"]]})"
   (:refer-clojure :exclude [range])
   (:require [crustimoney.results :as r]))
 
 (defn streaming
-  "Like `repeat*`, but pushes results to `callback` function,
+  "Like `repeat*`, but pushes results to the `callback` function,
   instead of returning them as children.
 
   If `callback` is a symbol, it is resolved using `requiring-resolve`."
@@ -39,10 +40,10 @@
 
       [:crusti/recovered {:start .., :end .., :errors #{..}}]
 
-  The errors are those of the first `parser`, and can be extracted
-  using `success->recovered-errors`. If second parser fails, the
-  errors of first parser are returned. As with any parser, the name
-  can be changed using `with-name`.
+  The errors are those of the first parser, and can be extracted using
+  `success->recovered-errors`. If second parser fails, the result will
+  be the errors of first parser. As with any parser, the name can be
+  changed using `with-name`.
 
   Example usage:
 
@@ -76,13 +77,14 @@
     {:recovering true}))
 
 (defn success->recovered-errors
-  "Returns the recovered errors from a result"
+  "Returns the recovered errors from a result, as set by the
+  `recovering` combinator parser."
   [success]
   (-> success second :errors))
 
 (defn range
-  "Like repeat, but the times the wrapped parser is matched must lie
-  within the given range. It will not try to parse more than max
+  "Like repeat, but the times the wrapped `parser` is matched must lie
+  within the given range. It will not try to parse more than `max`
   times."
   [parser min max]
   (assert (<= 0 min max) "min must at least be 0, and max must at least be min")
