@@ -390,8 +390,8 @@ Experimental combinators. Anything can happen with them.
       (require '[crustimoney.combinators.experimental :as e])
 
       (create-parser
-        "root <- stream
-         expr <- '{' [0-9]+ '}'"
+        "root= <- stream
+         expr= <- '{' [0-9]+ '}'"
         '{:stream [::e/streaming handle-expr
                    [::e/recovering [:ref :expr] [:regex ".*?}"]]})
 
