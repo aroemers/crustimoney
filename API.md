@@ -21,6 +21,11 @@
     -  [`repeat+`](#crustimoney.combinators/repeat+) - Eagerly try to match the parser as many times as possible, expecting at least one match.
     -  [`with-error`](#crustimoney.combinators/with-error) - Wrap the parser, replacing any errors with a single error with the supplied error key.
     -  [`with-name`](#crustimoney.combinators/with-name) - Wrap the parser, assigning a name to the (success) result of the parser.
+-  [`crustimoney.combinators.experimental`](#crustimoney.combinators.experimental)  - Experimental combinators.
+    -  [`range`](#crustimoney.combinators.experimental/range) - Like repeat, but the times the wrapped parser is matched must lie within the given range.
+    -  [`recovering`](#crustimoney.combinators.experimental/recovering) - Parse using <code>parser</code>.
+    -  [`streaming`](#crustimoney.combinators.experimental/streaming) - Like <code>repeat*</code>, but pushes results to <code>callback</code> function, instead of returning them as children.
+    -  [`success->recovered-errors`](#crustimoney.combinators.experimental/success->recovered-errors) - Returns the recovered errors from a result.
 -  [`crustimoney.core`](#crustimoney.core)  - The main parsing functions.
     -  [`parse`](#crustimoney.core/parse) - Use the given parser to parse the supplied text string.
 -  [`crustimoney.data-grammar`](#crustimoney.data-grammar)  - Create a parser based on a data grammar.
@@ -373,6 +378,92 @@ Wrap the parser, assigning a name to the (success) result of the
 <p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L233-L240">Source</a></sub></p>
 
 -----
+# <a name="crustimoney.combinators.experimental">crustimoney.combinators.experimental</a>
+
+
+Experimental combinators. Anything can happen with them.
+
+  These combinators do not have a string- or data-driven syntax (yet).
+  To use them with those grammar syntaxes, you can use the
+  `other-parsers` parameter of their `create-parser`, like:
+
+      (require '[crustimoney.combinators.experimental :as e])
+
+      (create-parser
+        "root <- stream
+         expr <- '{' [0-9]+ '}'"
+        '{:stream [::e/streaming handle-expr
+                   [::e/recovering [:ref :expr] [:regex ".*?}"]]})
+
+
+
+
+## <a name="crustimoney.combinators.experimental/range">`range`</a><a name="crustimoney.combinators.experimental/range"></a>
+``` clojure
+
+(range parser min max)
+```
+
+Like repeat, but the times the wrapped parser is matched must lie
+  within the given range. It will not try to parse more than max
+  times.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L83-L106">Source</a></sub></p>
+
+## <a name="crustimoney.combinators.experimental/recovering">`recovering`</a><a name="crustimoney.combinators.experimental/recovering"></a>
+``` clojure
+
+(recovering parser recovery)
+```
+
+Parse using `parser`. If it fails, try the `recovery` parser. If that
+  succeeds, it results in a success node like this:
+
+      [:crusti/recovered {:start .., :end .., :errors #{..}}]
+
+  The errors are those of the first `parser`, and can be extracted
+  using [`success->recovered-errors`](#crustimoney.combinators.experimental/success->recovered-errors). If second parser fails, the
+  errors of first parser are returned. As with any parser, the name
+  can be changed using `with-name`.
+
+  Example usage:
+
+      (repeat* (recovering
+                (with-name :content
+                  (chain (literal "{")
+                         (regex #"\d+")
+                         (literal "}")))
+                (regex ".*?}"))
+
+  Parsing something like `{42}{nan}{100}` would result in:
+
+      [nil {:start 0, :end 14}
+       [:content {:start 0, :end 4}]
+       [:crusti/recovered {:start 4, :end 9, :errors #{{:key :expected-match, :at 5, ...}}}]
+       [:content {:start 9, :end 14}]]
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L36-L76">Source</a></sub></p>
+
+## <a name="crustimoney.combinators.experimental/streaming">`streaming`</a><a name="crustimoney.combinators.experimental/streaming"></a>
+``` clojure
+
+(streaming callback parser)
+```
+
+Like `repeat*`, but pushes results to `callback` function,
+  instead of returning them as children.
+
+  If `callback` is a symbol, it is resolved using `requiring-resolve`.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L18-L34">Source</a></sub></p>
+
+## <a name="crustimoney.combinators.experimental/success->recovered-errors">`success->recovered-errors`</a><a name="crustimoney.combinators.experimental/success->recovered-errors"></a>
+``` clojure
+
+(success->recovered-errors success)
+```
+
+Returns the recovered errors from a result
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L78-L81">Source</a></sub></p>
+
+-----
 # <a name="crustimoney.core">crustimoney.core</a>
 
 
@@ -419,7 +510,7 @@ Use the given parser to parse the supplied text string. The result
   - `:keep-nameless?`, set this to true if nameless success nodes
   should be kept in the parse result. This can be useful for
   debugging. Defaults to false.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/core.clj#L30-L121">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/core.clj#L37-L140">Source</a></sub></p>
 
 -----
 # <a name="crustimoney.data-grammar">crustimoney.data-grammar</a>

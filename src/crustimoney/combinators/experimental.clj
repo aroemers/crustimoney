@@ -1,9 +1,9 @@
-(ns ^:no-doc crustimoney.combinators.experimental
+(ns crustimoney.combinators.experimental
   "Experimental combinators. Anything can happen with them.
 
   These combinators do not have a string- or data-driven syntax (yet).
-  To use them, you can use the `other-parsers` parameter of
-  `create-parser`, like:
+  To use them with those grammar syntaxes, you can use the
+  `other-parsers` parameter of their `create-parser`, like:
 
       (require '[crustimoney.combinators.experimental :as e])
 
