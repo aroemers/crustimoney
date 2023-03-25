@@ -12,8 +12,8 @@
       (create-parser
         \"root= <- stream
          expr= <- '{' [0-9]+ '}'\"
-        {:stream [::e/streaming handle-expr
-                  [::e/recovering [:ref :expr] [:regex \".*?}\"]]})
+        {:stream [::e/stream handle-expr
+                  [::e/recover [:ref :expr] [:regex \".*?}\"]]})
 
   Note that the other-parsers here is written in vector-grammar
   format. This is a little power-user trick, and allows you to declare
@@ -21,7 +21,7 @@
   (:refer-clojure :exclude [range])
   (:require [crustimoney.results :as r]))
 
-(defn streaming
+(defn stream
   "Like `repeat*`, but pushes results to the `callback` function,
   instead of returning them as children.
 
@@ -39,7 +39,7 @@
            (r/->push parser end {:end end}))
          (r/->success index (:end state)))))))
 
-(defn recovering
+(defn recover
   "Parse using `parser`. If it fails, try the `recovery` parser. If that
   succeeds, it results in a success node like this:
 
@@ -50,7 +50,7 @@
   be the errors of first parser. As with any parser, the name can be
   changed using `with-name`.
 
-  This combinator also handles soft-cuts.
+  This combinator also handles soft-cuts, within its scope.
 
   Example usage:
 
@@ -85,7 +85,7 @@
 
 (defn success->recovered-errors
   "Returns the recovered errors from a result, as set by the
-  `recovering` combinator parser."
+  `recover` combinator parser."
   [success]
   (-> success second :errors))
 
