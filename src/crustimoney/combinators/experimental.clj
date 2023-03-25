@@ -1,8 +1,9 @@
 (ns crustimoney.combinators.experimental
-  "Experimental combinators. Anything can happen with them.
+  "Experimental combinators. These may get promoted, or changed,
+  or dismissed.
 
-  These combinators do not have a string- or data-driven syntax (yet).
-  To use them with those grammar syntaxes, you can use the
+  These combinators are not available in the string- or data-driven
+  grammar (yet). To use them with those, you can use the
   `other-parsers` parameter of their respective `create-parser`
   functions, like:
 
@@ -12,7 +13,11 @@
         \"root= <- stream
          expr= <- '{' [0-9]+ '}'\"
         {:stream [::e/streaming handle-expr
-                  [::e/recovering [:ref :expr] [:regex \".*?}\"]]})"
+                  [::e/recovering [:ref :expr] [:regex \".*?}\"]]})
+
+  Note that the other-parsers here is written in vector-grammar
+  format. This is a little power-user trick, and allows you to declare
+  `ref`s that do not have to resolve immediatly on their creation."
   (:refer-clojure :exclude [range])
   (:require [crustimoney.results :as r]))
 
@@ -44,6 +49,8 @@
   `success->recovered-errors`. If second parser fails, the result will
   be the errors of first parser. As with any parser, the name can be
   changed using `with-name`.
+
+  This combinator also handles soft-cuts.
 
   Example usage:
 

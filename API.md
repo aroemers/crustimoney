@@ -381,10 +381,11 @@ Wrap the parser, assigning a name to the (success) result of the
 # <a name="crustimoney.combinators.experimental">crustimoney.combinators.experimental</a>
 
 
-Experimental combinators. Anything can happen with them.
+Experimental combinators. These may get promoted, or changed,
+  or dismissed.
 
-  These combinators do not have a string- or data-driven syntax (yet).
-  To use them with those grammar syntaxes, you can use the
+  These combinators are not available in the string- or data-driven
+  grammar (yet). To use them with those, you can use the
   `other-parsers` parameter of their respective `create-parser`
   functions, like:
 
@@ -395,6 +396,10 @@ Experimental combinators. Anything can happen with them.
          expr= <- '{' [0-9]+ '}'"
         {:stream [::e/streaming handle-expr
                   [::e/recovering [:ref :expr] [:regex ".*?}"]]})
+
+  Note that the other-parsers here is written in vector-grammar
+  format. This is a little power-user trick, and allows you to declare
+  `ref`s that do not have to resolve immediatly on their creation.
 
 
 
@@ -408,7 +413,7 @@ Experimental combinators. Anything can happen with them.
 Like repeat, but the times the wrapped `parser` is matched must lie
   within the given range. It will not try to parse more than `max`
   times.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L85-L108">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L92-L115">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators.experimental/recovering">`recovering`</a><a name="crustimoney.combinators.experimental/recovering"></a>
 ``` clojure
@@ -426,6 +431,8 @@ Parse using `parser`. If it fails, try the `recovery` parser. If that
   be the errors of first parser. As with any parser, the name can be
   changed using `with-name`.
 
+  This combinator also handles soft-cuts.
+
   Example usage:
 
       (repeat* (recovering
@@ -441,7 +448,7 @@ Parse using `parser`. If it fails, try the `recovery` parser. If that
        [:content {:start 0, :end 4}]
        [:crusti/recovered {:start 4, :end 9, :errors #{{:key :expected-match, :at 5, ...}}}]
        [:content {:start 9, :end 14}]]
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L37-L77">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L42-L84">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators.experimental/streaming">`streaming`</a><a name="crustimoney.combinators.experimental/streaming"></a>
 ``` clojure
@@ -453,7 +460,7 @@ Like `repeat*`, but pushes results to the `callback` function,
   instead of returning them as children.
 
   If `callback` is a symbol, it is resolved using `requiring-resolve`.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L19-L35">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L24-L40">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators.experimental/success->recovered-errors">`success->recovered-errors`</a><a name="crustimoney.combinators.experimental/success->recovered-errors"></a>
 ``` clojure
@@ -463,7 +470,7 @@ Like `repeat*`, but pushes results to the `callback` function,
 
 Returns the recovered errors from a result, as set by the
   [`recovering`](#crustimoney.combinators.experimental/recovering) combinator parser.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L79-L83">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L86-L90">Source</a></sub></p>
 
 -----
 # <a name="crustimoney.core">crustimoney.core</a>

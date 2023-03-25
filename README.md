@@ -403,31 +403,16 @@ Now it can decide whether to return a success, a set of errors, or again a push.
 
 Before you write your own combinator, do realise that the provided combinators are complete in the sense that they can parse any structured text.
 
-## Experimental
+## Experimental combinators
 
 Lastly, there are a couple of experimental combinators.
-These can be found in the `combinators.experimental` namespace.
+Being experimental, they may get promoted, or changed, or dismissed.
 
 - `range`, like `repeat`, requiring at least a minimum of matches and stops after a maximum of matches
 - `streaming`, like `repeat*`, pushing each match result to a callback
 - `recovering`, like `choice`, but capturing errors, including soft-cuts
 
-These combinators are not available in the string- or data-driven grammars.
-To use them with those, you can use the `other-parsers` parameter of their respective `create-parser` functions.
-For example.
-
-```clj
-(require '[crustimoney.combinators.experimental :as e])
-
-(create-parser
-  "root= <- stream
-   expr= <- '{' [0-9]+ '}'"
-  {:stream [::e/streaming handle-expr
-            [::e/recovering [:ref :expr] [:regex ".*?}"]]})
-```
-
-Being experimental, they may get promoted, or changed, or dismissed.
-Feedback is welcome.
+These can be found in the `combinators.experimental` namespace, including more documentation on them.
 
 _That's it. As always, have fun!_ 🚀
 
