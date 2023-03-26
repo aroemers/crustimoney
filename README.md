@@ -94,7 +94,7 @@ For example:
     (regex #"\d+")))
 
 (core/parse parser "nan")
-:=> #{{:key :number-required, :at 0}}
+=> #{{:key :number-required, :at 0}}
 ```
 
 To work with these successes and errors, the functions in the `results` namespace can be used.
@@ -121,7 +121,7 @@ This grammar can be used as follows:
 
 ```clj
 (core/parse (:root my-grammar) "foobaz")
-:=> [nil {:start 0, :end 6}]
+=> [nil {:start 0, :end 6}]
 ```
 
 ## Auto-named rules
@@ -185,7 +185,7 @@ The following example shows this, and also how to add a hard cut in the `chain` 
                 (literal "}"))))
 
 (core/parse example "{42")
-;=> #{{:key :expected-literal, :at 3, :detail {:literal "}"}}}
+=> #{{:key :expected-literal, :at 3, :detail {:literal "}"}}}
 ```
 
 Without the hard cut, the parse would be successful (because of the `maybe` combinator).
@@ -222,11 +222,11 @@ Consider the expansion of the previous example:
           (literal "bar")))
 
 (core/parse example "{42")
-;=> #{{:key :expected-literal, :at 3, :detail {:literal "}"}}}
+=> #{{:key :expected-literal, :at 3, :detail {:literal "}"}}}
 
 (core/parse example) "{42}baz")
-;=> #{{:key :expected-literal, :at 4, :detail {:literal "foo"}}
-      {:key :expected-literal, :at 0, :detail {:literal "bar"}}}
+=> #{{:key :expected-literal, :at 4, :detail {:literal "foo"}}
+     {:key :expected-literal, :at 0, :detail {:literal "bar"}}}
 ```
 
 The `:hard-cut` has been replaced with a `:soft-cut`.
@@ -241,7 +241,7 @@ We could for instance extend the grammar a bit more:
 ```
 
 This effectively says that after each finished `example`, we won't backtrack, that part is done.
-Many of such consecutive `examples`s can be parsed, without memory requirements growing (except for the growing parse result tree).
+Many of such consecutive `example`s can be parsed, without memory requirements growing (except for the growing parse result tree).
 
 The significance of cuts in PEGs must not be underestimated.
 Try to use them in your grammar on somewhat larger inputs.
