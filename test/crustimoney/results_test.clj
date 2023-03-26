@@ -3,6 +3,12 @@
             [clojure.test :refer [deftest is]]
             [crustimoney.results :as r]))
 
+(deftest error->xxx-test
+  (let [e (r/->error :fail 42 {:details "here"})]
+    (is (= :fail (r/error->key e)))
+    (is (= 42 (r/error->index e)))
+    (is (= {:details "here"} (r/error->detail e)))))
+
 (deftest errors->line-column-test
   (let [text     "foo\n\nbar"
         expected #{{:at 0 :line 1 :column 1}

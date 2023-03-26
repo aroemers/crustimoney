@@ -74,27 +74,22 @@
   advantage of a soft cut over a hard cut, is that they can be used at
   more places without breaking the grammar.
 
-  For example, the following grammar benefits from a soft-cut:
+  For example, the following parser benefits from a soft-cut:
 
-      {:prefix (chain (literal \"[\")
-                      :soft-cut
-                      (maybe (ref :expr))
-                      (literal \"]\"))
+      (choice (chain (maybe (chain (literal \"{\")
+                                   :soft-cut
+                                   (literal \"foo\")
+                                   (literal \"}\")))
+                     (literal \"bar\"))
+              (literal \"baz\")))
 
-       :expr   (choice (with-name :foo
-                         (chain (maybe (ref :prefix))
-                                (literal \"foo\")))
-                       (with-name :bar
-                         (chain (maybe (ref :prefix))
-                                (literal \"bar\"))))}
+  When parsing \"{foo\", it will nicely report that a \"}\" is
+  missing. Without the soft-cut, it would report that \"bar\" or
+  \"baz\" are expected, ignoring the more likely error.
 
-  When parsing \"[foo\", it will nicely report that a \"]\" is
-  missing. Without the soft-cut, it would report that \"foo\" or
-  \"bar\" are expected, ignoring that clearly a prefix was started.
-
-  When parsing \"[foo]bar\", this succeeds nicely. Placing a hard cut
-  at the location of the soft-cut would fail to parse this, as it
-  would never backtrack to try the prefix with \"bar\" after it.
+  When parsing \"{foo}eve\", it will nicely report that \"bar\" or
+  \"baz\" is missing. Placing a hard cut would only report \"bar\"
+  missing, as it would never backtrack to try the \"baz\" choice.
 
   Soft cuts do not influence the packrat caches, so they do not help
   performance wise. A hard cut is implicitly also a soft cut."

@@ -37,32 +37,33 @@
   (testing "chain with soft-cut"
     (is (thrown? AssertionError (c/chain :soft-cut)))
 
-    (let [p (c/grammar {:prefix (c/chain (c/literal "<")
-                                         :soft-cut
-                                         (c/literal ">"))
-                        :root   (c/chain (c/choice (c/chain (c/maybe (c/ref :prefix))
-                                                            (c/literal "foo"))
-                                                   (c/chain (c/maybe (c/ref :prefix))
-                                                            (c/literal "bar"))))})]
-      (is (= #{(r/->error :expected-literal 1 {:literal ">"})}
-             (core/parse (:root p) "<")))
-      (is (= (r/->success 0 5)
-             (core/parse (:root p) "<>bar")))))
+    (let [p (c/choice (c/chain (c/maybe (c/chain (c/literal "{")
+                                                 :soft-cut
+                                                 (c/literal "foo")
+                                                 (c/literal "}")))
+                               (c/literal "bar"))
+                      (c/literal "baz"))]
+      (is (= #{(r/->error :expected-literal 4 {:literal "}"})}
+             (core/parse p "{foo")))
+      (is (= #{(r/->error :expected-literal 5 {:literal "bar"})
+               (r/->error :expected-literal 0 {:literal "baz"})}
+             (core/parse p "{foo}eve")))
+      (is (= (r/->success 0 8) (core/parse p "{foo}bar")))))
 
   (testing "chain with hard-cut"
     (is (thrown? AssertionError (c/chain :hard-cut)))
 
-    (let [p (c/grammar {:prefix (c/chain (c/literal "<")
-                                         :hard-cut
-                                         (c/literal ">"))
-                        :root   (c/chain (c/choice (c/chain (c/maybe (c/ref :prefix))
-                                                            (c/literal "foo"))
-                                                   (c/chain (c/maybe (c/ref :prefix))
-                                                            (c/literal "bar"))))})]
-      (is (= #{(r/->error :expected-literal 1 {:literal ">"})}
-             (core/parse (:root p) "<")))
-      (is (= #{(r/->error :expected-literal 2 {:literal "foo"})}
-             (core/parse (:root p) "<>bar")))))
+    (let [p (c/choice (c/chain (c/maybe (c/chain (c/literal "{")
+                                                 :hard-cut
+                                                 (c/literal "foo")
+                                                 (c/literal "}")))
+                               (c/literal "bar"))
+                      (c/literal "baz"))]
+      (is (= #{(r/->error :expected-literal 4 {:literal "}"})}
+             (core/parse p "{foo")))
+      (is (= #{(r/->error :expected-literal 5 {:literal "bar"})}
+             (core/parse p "{foo}eve")))
+      (is (= (r/->success 0 8) (core/parse p "{foo}bar")))))
 
   (testing "chain with cuts results in correct children"
     (let [p (c/chain (c/literal "foo") :soft-cut (c/literal "bar"))]

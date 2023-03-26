@@ -201,31 +201,26 @@ Chain multiple consecutive parsers.
   advantage of a soft cut over a hard cut, is that they can be used at
   more places without breaking the grammar.
 
-  For example, the following grammar benefits from a soft-cut:
+  For example, the following parser benefits from a soft-cut:
 
-      {:prefix (chain (literal "[")
-                      :soft-cut
-                      (maybe (ref :expr))
-                      (literal "]"))
+      (choice (chain (maybe (chain (literal "{")
+                                   :soft-cut
+                                   (literal "foo")
+                                   (literal "}")))
+                     (literal "bar"))
+              (literal "baz")))
 
-       :expr   (choice (with-name :foo
-                         (chain (maybe (ref :prefix))
-                                (literal "foo")))
-                       (with-name :bar
-                         (chain (maybe (ref :prefix))
-                                (literal "bar"))))}
+  When parsing "{foo", it will nicely report that a "}" is
+  missing. Without the soft-cut, it would report that "bar" or
+  "baz" are expected, ignoring the more likely error.
 
-  When parsing "[foo", it will nicely report that a "]" is
-  missing. Without the soft-cut, it would report that "foo" or
-  "bar" are expected, ignoring that clearly a prefix was started.
-
-  When parsing "[foo]bar", this succeeds nicely. Placing a hard cut
-  at the location of the soft-cut would fail to parse this, as it
-  would never backtrack to try the prefix with "bar" after it.
+  When parsing "{foo}eve", it will nicely report that "bar" or
+  "baz" is missing. Placing a hard cut would only report "bar"
+  missing, as it would never backtrack to try the "baz" choice.
 
   Soft cuts do not influence the packrat caches, so they do not help
   performance wise. A hard cut is implicitly also a soft cut.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L52-L128">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L52-L123">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators/choice">`choice`</a><a name="crustimoney.combinators/choice"></a>
 ``` clojure
@@ -234,7 +229,7 @@ Chain multiple consecutive parsers.
 ```
 
 Match the first of the ordered parsers that is successful.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L130-L145">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L125-L140">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators/eof">`eof`</a><a name="crustimoney.combinators/eof"></a>
 ``` clojure
@@ -243,7 +238,7 @@ Match the first of the ordered parsers that is successful.
 ```
 
 Succeed only if the entire text has been parsed.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L226-L229">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L221-L224">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators/grammar">`grammar`</a><a name="crustimoney.combinators/grammar"></a>
 ``` clojure
@@ -278,7 +273,7 @@ Takes (something that evaluates to) a map, in which the entries can
        [:body {:start 0, :end 3}]
        [:prefixed {:start 4, :end 8}
         [:body {:start 5, :end 8}]]]
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L289-L317">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L284-L312">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators/literal">`literal`</a><a name="crustimoney.combinators/literal"></a>
 ``` clojure
@@ -297,7 +292,7 @@ A parser that matches an exact literal string.
 
 Lookahead for the given parser, i.e. succeed if the parser does,
   without advancing the parsing position.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L202-L213">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L197-L208">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators/maybe">`maybe`</a><a name="crustimoney.combinators/maybe"></a>
 ``` clojure
@@ -306,7 +301,7 @@ Lookahead for the given parser, i.e. succeed if the parser does,
 ```
 
 Try to parse the given parser, but succeed anyway.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L215-L224">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L210-L219">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators/negate">`negate`</a><a name="crustimoney.combinators/negate"></a>
 ``` clojure
@@ -316,7 +311,7 @@ Try to parse the given parser, but succeed anyway.
 
 Negative lookahead for the given parser, i.e. this succeeds if the
   parser does not.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L161-L172">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L156-L167">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators/ref">`ref`</a><a name="crustimoney.combinators/ref"></a>
 ``` clojure
@@ -326,7 +321,7 @@ Negative lookahead for the given parser, i.e. this succeeds if the
 
 Wrap another parser function, which is referred to by the given key.
   Needs to be called within the lexical scope of [`grammar`](#crustimoney.combinators/grammar).
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L256-L269">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L251-L264">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators/regex">`regex`</a><a name="crustimoney.combinators/regex"></a>
 ``` clojure
@@ -335,7 +330,7 @@ Wrap another parser function, which is referred to by the given key.
 ```
 
 A parser that matches the given regular expression.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L176-L185">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L171-L180">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators/repeat*">`repeat*`</a><a name="crustimoney.combinators/repeat*"></a>
 ``` clojure
@@ -344,7 +339,7 @@ A parser that matches the given regular expression.
 ```
 
 Eagerly try to match the given parser as many times as possible.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L147-L159">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L142-L154">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators/repeat+">`repeat+`</a><a name="crustimoney.combinators/repeat+"></a>
 ``` clojure
@@ -354,7 +349,7 @@ Eagerly try to match the given parser as many times as possible.
 
 Eagerly try to match the parser as many times as possible, expecting
   at least one match.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L187-L200">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L182-L195">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators/with-error">`with-error`</a><a name="crustimoney.combinators/with-error"></a>
 ``` clojure
@@ -364,7 +359,7 @@ Eagerly try to match the parser as many times as possible, expecting
 
 Wrap the parser, replacing any errors with a single error with the
   supplied error key.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L242-L250">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L237-L245">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators/with-name">`with-name`</a><a name="crustimoney.combinators/with-name"></a>
 ``` clojure
@@ -375,7 +370,7 @@ Wrap the parser, replacing any errors with a single error with the
 Wrap the parser, assigning a name to the (success) result of the
   parser. Nameless parsers are filtered out by default during
   parsing.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L233-L240">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators.clj#L228-L235">Source</a></sub></p>
 
 -----
 # <a name="crustimoney.combinators.experimental">crustimoney.combinators.experimental</a>

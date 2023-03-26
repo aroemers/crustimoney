@@ -47,7 +47,7 @@
 
 (defn ^:no-doc with-success-recovered-errors
   "Sets the :errors attribute of a success."
-  [success errors]
+  [errors success]
   (update success 1 assoc :errors errors))
 
 (defn recover
@@ -88,8 +88,8 @@
          ;; It was the result of a recoverer
          (if (r/success? result)
            (r/with-success-name :crusti/recovered
-             (with-success-recovered-errors result
-               errors))
+             (with-success-recovered-errors errors
+               result))
            errors)
          ;; It was the result of the first parser
          (or (r/success? result)

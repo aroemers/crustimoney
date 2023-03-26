@@ -179,18 +179,18 @@ The following example shows this, and also how to add a hard cut in the `chain` 
 
 ```clj
 (def example
-  (maybe (chain (literal "[")
+  (maybe (chain (literal "{")
                 :hard-cut
                 (regex #"\d+")
-                (literal "]"))))
+                (literal "}"))))
 
-(core/parse example "[")
-;=> #{{:key :expected-match, :at 1, :detail {:regex #"\d"}}}
+(core/parse example "{42")
+;=> #{{:key :expected-literal, :at 3, :detail {:literal "}"}}}
 ```
 
 Without the hard cut, the parse would be successful (because of the `maybe` combinator).
 But, since the text clearly opens a bracket, it would be better to fail.
-The hard cut enforces this, as the mismatched `regex` error cannot backtrack.
+The hard cut enforces this, as the missing `}` error cannot backtrack beyond it.
 So from a user's standpoint, a cut can already very beneficial.
 
 The second major benefit is that the parser can release everything in its cache before the cut position.
@@ -205,46 +205,43 @@ The preceding parser(s) should consume some input, and that input should only be
 There are situations that localized error messages are desired, but backtracking should still be possible.
 For such situations a soft cut can be used.
 Such a cut also disallows backtracking, but only while inside the `chain`.
-I.e. once the chain is successfully parsed, the soft cut has no effect anymore.
+Once the chain is successfully parsed, the soft cut has no effect anymore.
 
 Consider the expansion of the previous example:
 
 ```clj
 (def example
-  (grammar
-   {:prefix= (maybe (chain (literal "[")
-                           :soft-cut
-                           (regex #"\d+")
-                           (literal "]")))
-    :expr=   (choice (with-name :foo
-                       (chain (ref :prefix)
-                              (literal "foo")))
-                     (with-name :bax
-                       (chain (ref :prefix)
-                              (regex #"ba(r|z)"))))}))
+  (choice (chain
+            ;; --- same as before, but now with soft-cut
+            (maybe (chain (literal "{")
+                          :soft-cut
+                          (regex #"\d+")
+                          (literal "}")))
+            ;; ---
+            (literal "foo"))
+          (literal "bar")))
 
-(core/parse (:expr example) "[")
-;=> #{{:key :expected-match, :at 1, :detail {:regex #"\d"}}}
+(core/parse example "{42")
+;=> #{{:key :expected-literal, :at 3, :detail {:literal "}"}}}
 
-(core/parse (:expr example) "[25]baz")
-;=> [:expr {:start 0, :end 7}
-;    [:bax {:start 0, :end 7}
-;     [:prefix {:start 0, :end 4}]]]
+(core/parse example) "{42}baz")
+;=> #{{:key :expected-literal, :at 4, :detail {:literal "foo"}}
+      {:key :expected-literal, :at 0, :detail {:literal "bar"}}}
 ```
 
 The `:hard-cut` has been replaced with a `:soft-cut`.
-As shown, this still shows a localized error for the unfinished `:prefix`, yet it also allows backtracking to the `:bax` choice.
+As shown, this still shows a localized error for the missing '}', yet it also allows backtracking to try the `"bar"` choice.
 
 Since backtracking before the soft cut is still allowed outside of the chain's scope, the cache is not affected.
 However, soft and hard cuts can be combined in a grammar.
-We could for instance add another rule to our example grammar:
+We could for instance extend the grammar a bit more:
 
 ```clj
-:root (repeat+ (chain (ref :expr) :hard-cut))
+(repeat+ (chain example :hard-cut))
 ```
 
-This effectively says that after each finished `:expr`, we won't backtrack, that part is done.
-Many of such consecutive `:expr`s can be parsed, without memory requirements growing (except for the growing parse result tree of course).
+This effectively says that after each finished `example`, we won't backtrack, that part is done.
+Many of such consecutive `examples`s can be parsed, without memory requirements growing (except for the growing parse result tree).
 
 The significance of cuts in PEGs must not be underestimated.
 Try to use them in your grammar on somewhat larger inputs.
