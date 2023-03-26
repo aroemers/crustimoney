@@ -22,10 +22,10 @@
     -  [`with-error`](#crustimoney.combinators/with-error) - Wrap the parser, replacing any errors with a single error with the supplied error key.
     -  [`with-name`](#crustimoney.combinators/with-name) - Wrap the parser, assigning a name to the (success) result of the parser.
 -  [`crustimoney.combinators.experimental`](#crustimoney.combinators.experimental)  - Experimental combinators.
-    -  [`range`](#crustimoney.combinators.experimental/range) - Like repeat, but the times the wrapped <code>parser</code> is matched must lie within the given range.
-    -  [`recovering`](#crustimoney.combinators.experimental/recovering) - Parse using <code>parser</code>.
-    -  [`streaming`](#crustimoney.combinators.experimental/streaming) - Like <code>repeat*</code>, but pushes results to the <code>callback</code> function, instead of returning them as children.
-    -  [`success->recovered-errors`](#crustimoney.combinators.experimental/success->recovered-errors) - Returns the recovered errors from a result, as set by the <code>recovering</code> combinator parser.
+    -  [`range`](#crustimoney.combinators.experimental/range) - Like a repeat, but the times the wrapped <code>parser</code> is matched must lie within the given range.
+    -  [`recover`](#crustimoney.combinators.experimental/recover) - Like <code>choice</code>, capturing errors of the first choice, including soft-cuts in its scope.
+    -  [`stream`](#crustimoney.combinators.experimental/stream) - Like <code>repeat*</code>, but pushes results to the <code>callback</code> function, instead of returning them as children.
+    -  [`success->recovered-errors`](#crustimoney.combinators.experimental/success->recovered-errors) - Returns the recovered errors from a result, as set by the <code>recover</code> combinator parser.
 -  [`crustimoney.core`](#crustimoney.core)  - The main parsing functions.
     -  [`parse`](#crustimoney.core/parse) - Use the given parser to parse the supplied text string.
 -  [`crustimoney.data-grammar`](#crustimoney.data-grammar)  - Create a parser based on a data grammar.
@@ -394,8 +394,8 @@ Experimental combinators. These may get promoted, or changed,
       (create-parser
         "root= <- stream
          expr= <- '{' [0-9]+ '}'"
-        {:stream [::e/streaming handle-expr
-                  [::e/recovering [:ref :expr] [:regex ".*?}"]]})
+        {:stream [::e/stream handle-expr
+                  [::e/recover [:ref :expr] [:regex ".*?}"]]})
 
   Note that the other-parsers here is written in vector-grammar
   format. This is a little power-user trick, and allows you to declare
@@ -410,37 +410,39 @@ Experimental combinators. These may get promoted, or changed,
 (range parser min max)
 ```
 
-Like repeat, but the times the wrapped `parser` is matched must lie
+Like a repeat, but the times the wrapped `parser` is matched must lie
   within the given range. It will not try to parse more than `max`
   times.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L92-L115">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L106-L129">Source</a></sub></p>
 
-## <a name="crustimoney.combinators.experimental/recovering">`recovering`</a><a name="crustimoney.combinators.experimental/recovering"></a>
+## <a name="crustimoney.combinators.experimental/recover">`recover`</a><a name="crustimoney.combinators.experimental/recover"></a>
 ``` clojure
 
-(recovering parser recovery)
+(recover parser & recoverers)
 ```
 
-Parse using `parser`. If it fails, try the `recovery` parser. If that
-  succeeds, it results in a success node like this:
+Like `choice`, capturing errors of the first choice, including
+  soft-cuts in its scope.
+
+  If the first `parser` fails, the `recoverers` parsers are tried in
+  order. If one of those succeeds, it results in a success node like
+  this:
 
       [:crusti/recovered {:start .., :end .., :errors #{..}}]
 
   The errors are those of the first parser, and can be extracted using
-  [`success->recovered-errors`](#crustimoney.combinators.experimental/success->recovered-errors). If second parser fails, the result will
-  be the errors of first parser. As with any parser, the name can be
-  changed using `with-name`.
+  [`success->recovered-errors`](#crustimoney.combinators.experimental/success->recovered-errors). If all recovery parsers fail, the
+  result will also be the errors of first parser.
 
-  This combinator also handles soft-cuts.
+  As with any parser, the name can be changed using `with-name`.
 
   Example usage:
 
-      (repeat* (recovering
-                (with-name :content
-                  (chain (literal "{")
-                         (regex #"\d+")
-                         (literal "}")))
-                (regex ".*?}"))
+      (repeat* (recover (with-name :content
+                          (chain (literal "{")
+                                 (regex #"\d+")
+                                 (literal "}")))
+                        (regex ".*?}")))
 
   Parsing something like `{42}{nan}{100}` would result in:
 
@@ -448,12 +450,12 @@ Parse using `parser`. If it fails, try the `recovery` parser. If that
        [:content {:start 0, :end 4}]
        [:crusti/recovered {:start 4, :end 9, :errors #{{:key :expected-match, :at 5, ...}}}]
        [:content {:start 9, :end 14}]]
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L42-L84">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L53-L104">Source</a></sub></p>
 
-## <a name="crustimoney.combinators.experimental/streaming">`streaming`</a><a name="crustimoney.combinators.experimental/streaming"></a>
+## <a name="crustimoney.combinators.experimental/stream">`stream`</a><a name="crustimoney.combinators.experimental/stream"></a>
 ``` clojure
 
-(streaming callback parser)
+(stream callback parser)
 ```
 
 Like `repeat*`, but pushes results to the `callback` function,
@@ -469,8 +471,8 @@ Like `repeat*`, but pushes results to the `callback` function,
 ```
 
 Returns the recovered errors from a result, as set by the
-  [`recovering`](#crustimoney.combinators.experimental/recovering) combinator parser.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L86-L90">Source</a></sub></p>
+  [`recover`](#crustimoney.combinators.experimental/recover) combinator parser.
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L42-L46">Source</a></sub></p>
 
 -----
 # <a name="crustimoney.core">crustimoney.core</a>

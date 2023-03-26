@@ -97,7 +97,7 @@ For example:
 :=> #{{:key :number-required, :at 0}}
 ```
 
-To work with these successes and errorss, the functions in the `results` namespace can be used.
+To work with these successes and errors, the functions in the `results` namespace can be used.
 These allow you to get the text of a success node for example, or add `:line` and `:column` keys to the errors.
 
 ## Recursive grammars
@@ -416,7 +416,7 @@ Before you write your own combinator, do realise that the provided combinators a
 Lastly, there are a couple of experimental combinators.
 Being experimental, they may get promoted, or changed, or dismissed.
 
-- `range`, like `repeat`, requiring at least a minimum of matches and stops after a maximum of matches
+- `range`, like a `repeat`, requiring at least a minimum of matches and stops after a maximum of matches
 - `stream`, like `repeat*`, pushing each match result to a callback
 - `recover`, like `choice`, capturing errors of the first choice, including soft-cuts
 

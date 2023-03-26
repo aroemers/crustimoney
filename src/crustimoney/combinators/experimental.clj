@@ -39,27 +39,40 @@
            (r/->push parser end {:end end}))
          (r/->success index (:end state)))))))
 
+(defn success->recovered-errors
+  "Returns the recovered errors from a result, as set by the
+  `recover` combinator parser."
+  [success]
+  (-> success second :errors))
+
+(defn ^:no-doc with-success-recovered-errors
+  "Sets the :errors attribute of a success."
+  [success errors]
+  (update success 1 assoc :errors errors))
+
 (defn recover
-  "Parse using `parser`. If it fails, try the `recovery` parser. If that
-  succeeds, it results in a success node like this:
+  "Like `choice`, capturing errors of the first choice, including
+  soft-cuts in its scope.
+
+  If the first `parser` fails, the `recoverers` parsers are tried in
+  order. If one of those succeeds, it results in a success node like
+  this:
 
       [:crusti/recovered {:start .., :end .., :errors #{..}}]
 
   The errors are those of the first parser, and can be extracted using
-  `success->recovered-errors`. If second parser fails, the result will
-  be the errors of first parser. As with any parser, the name can be
-  changed using `with-name`.
+  `success->recovered-errors`. If all recovery parsers fail, the
+  result will also be the errors of first parser.
 
-  This combinator also handles soft-cuts, within its scope.
+  As with any parser, the name can be changed using `with-name`.
 
   Example usage:
 
-      (repeat* (recovering
-                (with-name :content
-                  (chain (literal \"{\")
-                         (regex #\"\\d+\")
-                         (literal \"}\")))
-                (regex \".*?}\"))
+      (repeat* (recover (with-name :content
+                          (chain (literal \"{\")
+                                 (regex #\"\\d+\")
+                                 (literal \"}\")))
+                        (regex \".*?}\")))
 
   Parsing something like `{42}{nan}{100}` would result in:
 
@@ -67,7 +80,7 @@
        [:content {:start 0, :end 4}]
        [:crusti/recovered {:start 4, :end 9, :errors #{{:key :expected-match, :at 5, ...}}}]
        [:content {:start 9, :end 14}]]"
-  [parser recovery]
+  [parser & recoverers]
   (with-meta
     (fn
       ([_text index]
@@ -75,22 +88,23 @@
 
       ([text index result state]
        (if-let [errors (:errors state)]
+         ;; It was the result of a recoverer
          (if (r/success? result)
            (r/with-success-name :crusti/recovered
-             (update result 1 assoc :errors errors))
-           errors)
+             (with-success-recovered-errors result
+               errors))
+           (if-let [recoverer (nth recoverers (:pindex state) nil)]
+             (r/->push recoverer index (update state :pindex inc))
+             errors))
+         ;; It was the result of the first parser
          (or (r/success? result)
-             (r/->push recovery index {:errors result})))))
+             (when-let [recoverer (first recoverers)]
+               (r/->push recoverer index {:errors result, :pindex 0}))
+             result))))
     {:recovering true}))
 
-(defn success->recovered-errors
-  "Returns the recovered errors from a result, as set by the
-  `recover` combinator parser."
-  [success]
-  (-> success second :errors))
-
 (defn range
-  "Like repeat, but the times the wrapped `parser` is matched must lie
+  "Like a repeat, but the times the wrapped `parser` is matched must lie
   within the given range. It will not try to parse more than `max`
   times."
   [parser min max]
