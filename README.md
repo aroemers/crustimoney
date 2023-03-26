@@ -190,7 +190,7 @@ The following example shows this, and also how to add a hard cut in the `chain` 
 
 Without the hard cut, the parse would be successful (because of the `maybe` combinator).
 But, since the text clearly opens a bracket, it would be better to fail.
-The hard cut enforces this, as the missing `}` error cannot backtrack beyond it.
+The hard cut enforces this, as the missing `"}"` error cannot backtrack beyond it.
 So from a user's standpoint, a cut can already very beneficial.
 
 The second major benefit is that the parser can release everything in its cache before the cut position.
@@ -230,7 +230,7 @@ Consider the expansion of the previous example:
 ```
 
 The `:hard-cut` has been replaced with a `:soft-cut`.
-As shown, this still shows a localized error for the missing '}', yet it also allows backtracking to try the `"bar"` choice.
+As shown, this still shows a localized error for the missing `"}"`, yet it also allows backtracking to try the `"bar"` choice.
 
 Since backtracking before the soft cut is still allowed outside of the chain's scope, the cache is not affected.
 However, soft and hard cuts can be combined in a grammar.
