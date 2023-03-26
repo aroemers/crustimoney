@@ -23,7 +23,7 @@
     -  [`with-name`](#crustimoney.combinators/with-name) - Wrap the parser, assigning a name to the (success) result of the parser.
 -  [`crustimoney.combinators.experimental`](#crustimoney.combinators.experimental)  - Experimental combinators.
     -  [`range`](#crustimoney.combinators.experimental/range) - Like a repeat, but the times the wrapped <code>parser</code> is matched must lie within the given range.
-    -  [`recover`](#crustimoney.combinators.experimental/recover) - Like <code>choice</code>, capturing errors of the first choice, including soft-cuts in its scope.
+    -  [`recover`](#crustimoney.combinators.experimental/recover) - Like a <code>choice</code>, capturing errors of the first choice, including soft-cuts in its scope.
     -  [`stream`](#crustimoney.combinators.experimental/stream) - Like <code>repeat*</code>, but pushes results to the <code>callback</code> function, instead of returning them as children.
     -  [`success->recovered-errors`](#crustimoney.combinators.experimental/success->recovered-errors) - Returns the recovered errors from a result, as set by the <code>recover</code> combinator parser.
 -  [`crustimoney.core`](#crustimoney.core)  - The main parsing functions.
@@ -413,28 +413,25 @@ Experimental combinators. These may get promoted, or changed,
 Like a repeat, but the times the wrapped `parser` is matched must lie
   within the given range. It will not try to parse more than `max`
   times.
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L106-L129">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L99-L122">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators.experimental/recover">`recover`</a><a name="crustimoney.combinators.experimental/recover"></a>
 ``` clojure
 
-(recover parser & recoverers)
+(recover parser recovery)
 ```
 
-Like `choice`, capturing errors of the first choice, including
+Like a `choice`, capturing errors of the first choice, including
   soft-cuts in its scope.
 
-  If the first `parser` fails, the `recoverers` parsers are tried in
-  order. If one of those succeeds, it results in a success node like
-  this:
+  If the first `parser` fails, the `recovery` parser is tried. If it
+  succeeds, it results in a success node like this:
 
       [:crusti/recovered {:start .., :end .., :errors #{..}}]
 
   The errors are those of the first parser, and can be extracted using
-  [`success->recovered-errors`](#crustimoney.combinators.experimental/success->recovered-errors). If all recovery parsers fail, the
-  result will also be the errors of first parser.
-
-  As with any parser, the name can be changed using `with-name`.
+  [`success->recovered-errors`](#crustimoney.combinators.experimental/success->recovered-errors). If recovery parser fails, the result
+  will also be the errors of first parser.
 
   Example usage:
 
@@ -450,7 +447,7 @@ Like `choice`, capturing errors of the first choice, including
        [:content {:start 0, :end 4}]
        [:crusti/recovered {:start 4, :end 9, :errors #{{:key :expected-match, :at 5, ...}}}]
        [:content {:start 9, :end 14}]]
-<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L53-L104">Source</a></sub></p>
+<p><sub><a href="https://github.com/aroemers/crustimoney/blob/v2/src/crustimoney/combinators/experimental.clj#L53-L97">Source</a></sub></p>
 
 ## <a name="crustimoney.combinators.experimental/stream">`stream`</a><a name="crustimoney.combinators.experimental/stream"></a>
 ``` clojure

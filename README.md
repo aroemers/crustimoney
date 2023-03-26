@@ -418,7 +418,7 @@ Being experimental, they may get promoted, or changed, or dismissed.
 
 - `range`, like a `repeat`, requiring at least a minimum of matches and stops after a maximum of matches
 - `stream`, like `repeat*`, pushing each match result to a callback
-- `recover`, like `choice`, capturing errors of the first choice, including soft-cuts
+- `recover`, like a `choice`, capturing errors of the first choice, including soft-cuts
 
 These can be found in the `combinators.experimental` namespace, including more documentation on them.
 
