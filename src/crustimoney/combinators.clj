@@ -169,7 +169,8 @@
 ;;; Extra combinators
 
 (defn regex
-  "A parser that matches the given regular expression."
+  "A parser that matches the given regular expression (string or 
+  pattern)."
   [re]
   (let [pattern (re-pattern re)]
     (fn [text index]
