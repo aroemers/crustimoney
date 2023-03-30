@@ -8,7 +8,7 @@
 
 A Clojure library for PEG parsing, supporting various grammars, packrat caching and cuts.
 
-![Banner](banner.png)
+![Banner](images/banner.png)
 
 ## Motivation
 
@@ -16,6 +16,17 @@ The first version of crustimoney was my first library in Clojure, a long time ag
 Simply put, this version is the mental excercise of making it better.
 I like to think it turned out well.
 Maybe you like it too.
+
+<img src="images/pooh.gif" align="right" height="150"/>
+
+> "What does Crustimoney Proseedcake mean?" said Pooh. "For I am a Bear of Very Little
+> Brain, and long words Bother me."
+> 
+> "It means the Thing to Do."
+> 
+> "As long as it means that, I don't mind," said Pooh humbly.
+
+Let's parse those long words from Owl.
 
 ## Features
 
