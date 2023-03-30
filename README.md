@@ -2,7 +2,7 @@
 [![cljdoc badge](https://cljdoc.org/badge/functionalbytes/crustimoney)](https://cljdoc.org/d/functionalbytes/crustimoney/CURRENT)
 [![Clojure CI](https://github.com/aroemers/crustimoney/actions/workflows/clojure.yml/badge.svg)](https://github.com/aroemers/crustimoney/actions/workflows/clojure.yml)
 [![Clojars Project](https://img.shields.io/clojars/dt/functionalbytes/crustimoney?color=blue)](https://clojars.org/functionalbytes/crustimoney)
-[![Blogpost](https://img.shields.io/badge/blog-Crustimoney%202.0-blue)](https://functionalbytes.nl/clojure/crustimoney/2023/03/03/crustimoney20.html)
+<!-- [![Blogpost](https://img.shields.io/badge/blog-Crustimoney%202.0-blue)](https://functionalbytes.nl/clojure/crustimoney/2023/03/03/crustimoney20.html) -->
 
 # 📙 crustimoney
 
@@ -12,7 +12,7 @@ A Clojure library for PEG parsing, supporting various grammars, packrat caching 
 
 ## Motivation
 
-Version 1 of crustimoney was my first library in Clojure, a long time ago.
+The first version of crustimoney was my first library in Clojure, a long time ago.
 Simply put, this version is the mental excercise of making it better.
 I like to think it turned out well.
 Maybe you like it too.
@@ -157,7 +157,7 @@ For example, using the following grammar would _only_ yield a `:wrapped` node if
                            (ref :expr)
                            (literal ")")))
                   (ref :expr))
- :expr=   (literal "e")}
+ :expr=   ...}
 ```
 
 This approach results in shallower result trees and thus less post-processing.
@@ -179,18 +179,18 @@ The following example shows this, and also how to add a hard cut in the `chain` 
 
 ```clj
 (def example
-  (maybe (chain (literal "{")
+  (maybe (chain (literal "(")
                 :hard-cut
                 (regex #"\d+")
-                (literal "}"))))
+                (literal ")"))))
 
-(core/parse example "{42")
-=> #{{:key :expected-literal, :at 3, :detail {:literal "}"}}}
+(core/parse example "(42")
+=> #{{:key :expected-literal, :at 3, :detail {:literal ")"}}}
 ```
 
 Without the hard cut, the parse would be successful (because of the `maybe` combinator).
 But, since the text clearly opens a bracket, it would be better to fail.
-The hard cut enforces this, as the missing `"}"` error cannot backtrack beyond it.
+The hard cut enforces this, as the missing `")"` error cannot backtrack beyond it.
 So from a user's standpoint, a cut can already very beneficial.
 
 The second major benefit is that the parser can release everything in its cache before the cut position.
@@ -213,24 +213,24 @@ Consider the expansion of the previous example:
 (def example
   (choice (chain
             ;; --- same as before, but now with soft-cut
-            (maybe (chain (literal "{")
+            (maybe (chain (literal "(")
                           :soft-cut
                           (regex #"\d+")
-                          (literal "}")))
+                          (literal ")")))
             ;; ---
             (literal "foo"))
           (literal "bar")))
 
-(core/parse example "{42")
-=> #{{:key :expected-literal, :at 3, :detail {:literal "}"}}}
+(core/parse example "(42")
+=> #{{:key :expected-literal, :at 3, :detail {:literal ")"}}}
 
-(core/parse example) "{42}baz")
+(core/parse example) "(42)baz")
 => #{{:key :expected-literal, :at 4, :detail {:literal "foo"}}
      {:key :expected-literal, :at 0, :detail {:literal "bar"}}}
 ```
 
 The `:hard-cut` has been replaced with a `:soft-cut`.
-As shown, this still shows a localized error for the missing `"}"`, yet it also allows backtracking to try the `"bar"` choice.
+As shown, this still shows a localized error for the missing `")"`, yet it also allows backtracking to try the `"bar"` choice.
 
 Since backtracking before the soft cut is still allowed outside of the chain's scope, the cache is not affected.
 However, soft and hard cuts can be combined in a grammar.
@@ -274,8 +274,8 @@ ref       <- literal
 group     <- ('foo' 'bar' / 'alice')
 named     <- (:bax regex)
 
-soft-cut  <- ('(' > expr? ')')
-hard-cut  <- ('(' > expr? ')' >>)
+soft-cut  <- >
+hard-cut  <- >>
 ```
 
 The function `string-grammar/create-parser` is used to create a parser out of such a string.
@@ -329,8 +329,8 @@ It is very similar to the string-based grammar.
   group      ("foo" "bar" / "alice")
   named      (:bax regex)
 
-  soft-cut   ("(" > expr? ")")
-  hard-cut   ("(" > expr? ")" >>)
+  soft-cut   >
+  hard-cut   >>
 
   combinator-call   [:with-error :fail #crusti/parser ("fooba" #"r|z")]
   custom-combinator [:my.app/my-combinator ...]}

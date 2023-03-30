@@ -85,7 +85,7 @@
 
       ([text index result state]
        (if-let [errors (:errors state)]
-         ;; It was the result of a recoverer
+         ;; It was the result of the recovery parser
          (if (r/success? result)
            (r/with-success-name :crusti/recovered
              (with-success-recovered-errors errors
