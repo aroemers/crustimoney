@@ -8,6 +8,7 @@ on:
       - "test/**"
       - "project.clj"
       - ".github/**"
+
   pull_request:
     branches: [ "v2" ]
 
