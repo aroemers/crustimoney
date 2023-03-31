@@ -17,15 +17,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Print version
-        id: version
-        run: echo "version=$(lein pprint --no-pretty -- :version)" >> $GITHUB_OUTPUT
-
       - name: Install dependencies
         run: lein with-profile +test deps
 
       - name: Run tests
         run: lein cloverage
+
+      - name: Print version
+        id: version
+        run: echo "version=$(lein pprint --no-pretty -- :version)" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: actions/create-release@v1

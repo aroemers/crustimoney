@@ -8,7 +8,8 @@
 
   :repl-options {:init-ns crustimoney.core}
 
-  :plugins [[lein-cloverage "1.2.4"]
+  :plugins [[lein-pprint "1.3.2"]
+            [lein-cloverage "1.2.4"]
             [lein-eftest "0.6.0"]
             [com.roomkey/lein-v "7.2.0"]]
 
