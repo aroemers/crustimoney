@@ -1,5 +1,5 @@
-[![Clojars Project](https://img.shields.io/clojars/v/functionalbytes/crustimoney.svg)](https://clojars.org/functionalbytes/crustimoney)
-[![cljdoc badge](https://cljdoc.org/badge/functionalbytes/crustimoney)](https://cljdoc.org/d/functionalbytes/crustimoney/CURRENT)
+[![Clojars Project](https://img.shields.io/clojars/v/nl.functionalbytes/crustimoney.svg)](https://clojars.org/functionalbytes/crustimoney)
+[![cljdoc badge](https://cljdoc.org/badge/nl.functionalbytes/crustimoney)](https://cljdoc.org/d/functionalbytes/crustimoney/CURRENT)
 [![Clojure CI](https://github.com/aroemers/crustimoney/actions/workflows/clojure.yml/badge.svg)](https://github.com/aroemers/crustimoney/actions/workflows/build.yml)
 [![Clojars Project](https://img.shields.io/clojars/dt/functionalbytes/crustimoney?color=blue)](https://clojars.org/functionalbytes/crustimoney)
 <!-- [![Blogpost](https://img.shields.io/badge/blog-Crustimoney%202.0-blue)](https://functionalbytes.nl/clojure/crustimoney/2023/03/03/crustimoney20.html) -->
@@ -44,7 +44,7 @@ Let's parse those long words from Owl.
 ## Add to project
 
 First, add this library to your dependencies.
-The instructions for the latest version can be found here: [![Clojars Project](https://img.shields.io/clojars/v/functionalbytes/crustimoney.svg)](https://clojars.org/functionalbytes/crustimoney)
+The instructions for the latest version can be found here: [![Clojars Project](https://img.shields.io/clojars/v/nl.functionalbytes/crustimoney.svg)](https://clojars.org/nl.functionalbytes/crustimoney)
 
 ## The combinators
 

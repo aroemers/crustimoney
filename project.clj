@@ -1,4 +1,4 @@
-(defproject functionalbytes/crustimoney :lein-v
+(defproject nl.functionalbytes/crustimoney :lein-v
   :description "A Clojure PEG parser, with packrat and cut"
   :url "https://github.com/aroemers/crustimoney"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
