@@ -3,19 +3,35 @@ name: unit + coverage
 on:
   push:
     branches: [ "v2" ]
+    paths:
+      - "src/**"
+      - "test/**"
+      - "project.clj"
+      - ".github/**"
   pull_request:
     branches: [ "v2" ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Install dependencies
-      run: lein with-profile +test deps
+      - name: Print version
+        id: version
+        run: echo "version=$(lein pprint --no-pretty -- :version)" >> $GITHUB_OUTPUT
 
-    - name: Run tests
-      run: lein cloverage
+      - name: Install dependencies
+        run: lein with-profile +test deps
+
+      - name: Run tests
+        run: lein cloverage
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          release_name: Release ${{ steps.version.outputs.version }}
+          draft: true

@@ -1,4 +1,4 @@
-(defproject functionalbytes/crustimoney "2.0.0"
+(defproject functionalbytes/crustimoney :lein-v
   :description "A Clojure PEG parser, with packrat and cut"
   :url "https://github.com/aroemers/crustimoney"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
@@ -9,7 +9,12 @@
   :repl-options {:init-ns crustimoney.core}
 
   :plugins [[lein-cloverage "1.2.4"]
-            [lein-eftest "0.6.0"]]
+            [lein-eftest "0.6.0"]
+            [com.roomkey/lein-v "7.2.0"]]
+
+  :deploy-repositories [["clojars" {:username      :env/CLOJARS_USERNAME
+                                    :password      :env/CLOJARS_TOKEN
+                                    :sign-releases false}]]
 
   :profiles
   {:dev {:dependencies [[instaparse/instaparse "1.4.12"]
@@ -20,7 +25,4 @@
 
    :test {:dependencies [[cloverage/cloverage "1.2.4"]]
 
-          :cloverage {:fail-threshold 90
-
-                      :ns-exclude-regex [#"crustimoney.reader"
-                                         #"crustimoney.combinators.experimental"]}}})
+          :cloverage {:fail-threshold 90}}})
