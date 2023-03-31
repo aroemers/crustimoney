@@ -111,7 +111,7 @@
 
     ([_text index result state]
      (if (r/success? result)
-       (let [children (update state conj result)]
+       (let [children (conj state result)]
          (if (= (count children) max)
            (r/->success index (-> children last r/success->end) children)
            (r/->push parser (r/success->end result) children)))
