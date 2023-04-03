@@ -1,5 +1,5 @@
 (ns crustimoney.combinators.experimental-test
-  (:require [clojure.test :refer [deftest testing is]]
+  (:require [clojure.test :refer [deftest is]]
             [crustimoney.combinators :as c]
             [crustimoney.combinators.experimental :as e]
             [crustimoney.core :as core]))

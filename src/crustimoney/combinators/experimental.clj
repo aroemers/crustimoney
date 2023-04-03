@@ -83,7 +83,7 @@
       ([_text index]
        (r/->push parser index))
 
-      ([text index result state]
+      ([_text index result state]
        (if-let [errors (:errors state)]
          ;; It was the result of the recovery parser
          (if (r/success? result)

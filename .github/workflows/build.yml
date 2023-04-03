@@ -26,6 +26,9 @@ jobs:
       - name: Run tests
         run: lein cloverage
 
+      - name: Lint source
+        run: lein clj-kondo
+
       - name: Print version
         id: version
         run: echo "version=$(lein pprint --no-pretty -- :version)" >> $GITHUB_OUTPUT
