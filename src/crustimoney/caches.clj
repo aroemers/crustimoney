@@ -5,7 +5,8 @@
   texts. Create a new cache for each new text.
 
   Caches are implemented using the Cache protocol. This way you can
-  implement your own, if desired.")
+  implement your own, if desired."
+  (:import [java.util HashMap TreeMap WeakHashMap]))
 
 (defprotocol Cache
   "Protocol for packrat cache implementations."
@@ -38,8 +39,8 @@
 
       (store [_ parser index result]
         (if-let [parsers (get cache index)]
-          (.put parsers parser result)
-          (let [parsers (java.util.HashMap.)]
+          (.put ^HashMap parsers parser result)
+          (let [parsers (HashMap.)]
             (.put parsers parser result)
             (.put cache index parsers))))
 
@@ -51,15 +52,15 @@
   weak references, such that entries are evicted on cuts or on memory
   pressure."
   []
-  (let [cache (java.util.TreeMap.)]
+  (let [cache (TreeMap.)]
     (reify Cache
       (fetch [_ parser index]
         (get-in cache [index parser]))
 
       (store [_ parser index result]
         (if-let [parsers (get cache index)]
-          (.put parsers parser result)
-          (let [parsers (java.util.WeakHashMap.)]
+          (.put ^WeakHashMap parsers parser result)
+          (let [parsers (WeakHashMap.)]
             (.put parsers parser result)
             (.put cache index parsers))))
 
