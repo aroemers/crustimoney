@@ -40,8 +40,8 @@
 
 (defn success->text
   "Returns the matched text of a success, given the full text."
-  [text success]
-  (subs text (success->start success) (success->end success)))
+  [^CharSequence text success]
+  (.subSequence text (success->start success) (success->end success)))
 
 (defn ^:no-doc with-success-children
   "Set the children of a success."

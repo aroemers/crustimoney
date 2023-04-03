@@ -21,8 +21,10 @@
   (testing "simple character-class"
     (let [p (create-parser "[a-zA-Z]+")]
       (is (= (r/->success 0 3) (core/parse p "Foo")))
-      (is (= #{{:key :expected-match :at 0 :detail {:regex "[a-zA-Z]+"}}}
-             (core/parse p "123")))))
+      (let [result (core/parse p "123")
+            error  (first result)]
+        (is (= :expected-match (r/error->key error)))
+        (is (= 0 (r/error->index error))))))
 
   (testing "escapes in character-class"
     (let [p (create-parser "[a-zA-Z\\]]+")]
@@ -31,8 +33,10 @@
   (testing "regular expression"
     (let [p (create-parser "#'\\d+'")]
       (is (= (r/->success 0 2) (core/parse p "42")))
-      (is (= #{(r/->error :expected-match 0 {:regex "\\d+"})}
-             (core/parse p "nan")))))
+      (let [result (core/parse p "nan")
+            error  (first result)]
+        (is (= :expected-match (r/error->key error)))
+        (is (= 0 (r/error->index error))))))
 
   (testing "end-of-line $"
     (let [p (create-parser "'foo' $")]
@@ -127,9 +131,11 @@
   (testing "report grammar errors"
     (let [thrown (try (create-parser "(foo") (catch Exception e e))]
       (is (= "Failed to parse grammar" (.getMessage thrown)))
-      (is (= {:errors #{{:key :expected-literal :at 4
+      (is (= {:errors #{{:key    :expected-literal
+                         :at     4
                          :detail {:literal ")"}
-                         :line 1 :column 5}}}
+                         :line   1
+                         :column 5}}}
              (ex-data thrown))))))
 
 (deftest vector-tree-test

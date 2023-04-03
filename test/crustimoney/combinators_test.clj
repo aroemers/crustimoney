@@ -111,8 +111,12 @@
     (let [p (c/regex "foobar+")]
       (is (= (r/->success 0 6) (parse p "foobar")))
       (is (= (r/->success 0 8) (parse p "foobarrr")))
-      (is (= #{(r/->error :expected-match 0 {:regex "foobar+"})}
-             (parse p "contains-foobar")))))
+      (let [result (parse p "contains-foobar")
+            error  (first result)]
+        (is (some? error))
+        (is (= :expected-match (r/error->key error)))
+        (is (= 0 (r/error->index error)))
+        (is (instance? java.util.regex.Pattern (:regex (r/error->detail error)))))))
 
   (testing "empty regex"
     (let [p (c/regex "")]

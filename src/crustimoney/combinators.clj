@@ -36,18 +36,17 @@
   Before you write your own combinator, do realise that the provided
   combinators are complete in the sense that they can parse any text."
   (:refer-clojure :exclude [ref])
-  (:require [crustimoney.results :as r]))
+  (:require [crustimoney.experimental.reader :as reader]
+            [crustimoney.results :as r]))
 
 ;;; Primitives
 
 (defn literal
   "A parser that matches an exact literal string."
-  [^String s]
-  (let [size (count s)]
-    (fn [^String text index]
-      (if (.startsWith text s index)
-        (r/->success index (+ index size))
-        #{(r/->error :expected-literal index {:literal s})}))))
+  [s]
+  (fn [text index]
+    (or (reader/match-literal text index s)
+        #{(r/->error :expected-literal index {:literal s})})))
 
 (defn chain
   "Chain multiple consecutive parsers.
@@ -174,11 +173,8 @@
   [re]
   (let [pattern (re-pattern re)]
     (fn [text index]
-      (let [matcher (re-matcher pattern text)]
-        (.region matcher index (count text))
-        (if (.lookingAt matcher)
-          (r/->success index (long (.end matcher)))
-          #{(r/->error :expected-match index {:regex re})})))))
+      (or (reader/match-pattern text index pattern)
+          #{(r/->error :expected-match index {:regex pattern})}))))
 
 (defn repeat+
   "Eagerly try to match the parser as many times as possible, expecting

@@ -1,4 +1,4 @@
-(ns crustimoney.combinators.experimental
+(ns crustimoney.experimental.combinators
   "Experimental combinators. These may get promoted, or changed,
   or dismissed.
 
@@ -6,45 +6,61 @@
   grammar (yet). To use them with those, combine them in a larger
   grammar like so:
 
-      (require '[crustimoney.combinators.experimental :as e])
+      (require '[crustimoney.experimental.combinators :as e])
 
       (grammar
        (create-parser
          \"root= <- stream
           expr= <- '{' [0-9]+ '}'\")
-       {:stream (e/stream handle-expr
-                 (e/recover (ref :expr) (regex \".*?}\")))})"
+       {:stream (e/stream*
+                 (e/with-callback handle-expr
+                   (e/recover (ref :expr) (regex \".*?}\")))})"
   (:refer-clojure :exclude [range])
-  (:require [crustimoney.results :as r]))
+  (:require [crustimoney.experimental.results :as er]
+            [crustimoney.results :as r]))
 
-(defn stream
-  "Like `repeat*`, but pushes results to the `callback` function,
-  instead of returning them as children.
+(defn with-callback
+  "Pushes (success) result of `parser` to the 2-arity `callback`
+  function. The callback receives the text and the success result.
 
   If `callback` is a symbol, it is resolved using `requiring-resolve`."
   [callback parser]
   (let [callback (cond-> callback (symbol? callback) requiring-resolve)]
-    (fn
-      ([_text index]
-       (r/->push parser index {:end index}))
+    (fn [text & args]
+      (let [result (apply parser text args)]
+        (when (r/success? result)
+          (callback text result))
+        result))))
 
-      ([_text index result state]
-       (if (r/success? result)
-         (let [end (r/success->end result)]
-           (callback result)
-           (r/->push parser end {:end end}))
-         (r/->success index (:end state)))))))
+(defn stream*
+  "Like `repeat*`, but does does not keep its children. Can be used in
+  combination with `with-callback` combinator, for example."
+  [parser]
+  (fn
+    ([_text index]
+     (r/->push parser index {:end index}))
 
-(defn success->recovered-errors
-  "Returns the recovered errors from a result, as set by the
-  `recover` combinator parser."
-  [success]
-  (-> success second :errors))
+    ([_text index result state]
+     (if (r/success? result)
+       (let [end (r/success->end result)]
+         (r/->push parser end {:end end}))
+       (r/->success index (:end state))))))
 
-(defn ^:no-doc with-success-recovered-errors
-  "Sets the :errors attribute of a success."
-  [errors success]
-  (update success 1 assoc :errors errors))
+(defn stream+
+  "Like `repeat+`, but does does not keep its children. Can be used in
+  combination with `with-callback` combinator, for example."
+  [parser]
+  (fn
+    ([_text index]
+     (r/->push parser index {:end nil}))
+
+    ([_text index result state]
+     (if (r/success? result)
+       (let [end (r/success->end result)]
+         (r/->push parser end {:end end}))
+       (if-let [end (:end state)]
+         (r/->success index end)
+         result)))))
 
 (defn recover
   "Like a `choice`, capturing errors of the first choice, including
@@ -84,7 +100,7 @@
          ;; It was the result of the recovery parser
          (if (r/success? result)
            (r/with-success-name :crusti/recovered
-             (with-success-recovered-errors errors
+             (er/with-success-recovered-errors errors
                result))
            errors)
          ;; It was the result of the first parser

@@ -36,11 +36,12 @@ Let's parse those long words from Owl.
 - .. or from **data-driven** definitions
 - Packrat **caching**, optimizing cpu usage
 - Concept of **cuts**, optimizing memory usage - and error messages
-- Focus on capture groups, resulting in **lean parse trees**, less coupled to grammar structure
-- **Minimal parse tree** data, fetch only whats needed at post-processing
+- Focus on capture groups, resulting in **shallow parse trees**
+- **Minimal parse tree** data, fetch only what's needed on post-processing
 - Virtual stack, preventing overflows
 - Infinite **loop detection** (runtime)
 - Missing rule references detection (compile time)
+- **Streaming** support (experimental)
 
 ## Add to project
 
@@ -436,11 +437,13 @@ Before you write your own combinator, do realise that the provided combinators a
 Lastly, there are a couple of experimental combinators.
 Being experimental, they may get promoted, or changed, or dismissed.
 
-- `range`, like a `repeat`, requiring at least a minimum of matches and stops after a maximum of matches
-- `stream`, like `repeat*`, pushing each match result to a callback
+- `range`, like a `repeat`, requiring a minimum of matches and stops after a maximum of matches
+- `stream*`, like `repeat*`, but does not keep its children
+- `stream+`, like `repeat+`, but does not keep its children
+- `with-callback`, fires (success) result of a parser to a callback function
 - `recover`, like a `choice`, capturing errors of the first choice, including soft-cuts
 
-These can be found in the `combinators.experimental` namespace, including more documentation on them.
+These can be found in the `experimental.combinators` namespace, including more documentation on them.
 
 _That's it. As always, have fun!_ 🚀
 
