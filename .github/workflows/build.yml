@@ -10,6 +10,7 @@ on:
       - ".github/**"
 
   pull_request:
+    types: [ opened, synchronize ]
     branches: [ "v2" ]
 
 jobs:
@@ -34,6 +35,7 @@ jobs:
         run: echo "version=$(lein pprint --no-pretty -- :version)" >> $GITHUB_OUTPUT
 
       - name: Create Release
+        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
