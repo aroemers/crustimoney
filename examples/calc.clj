@@ -1,6 +1,6 @@
-{sum ((:sum product sum-op >> sum) / product)
+{sum ((:sum product sum-op > sum) / product)
 
- product ((:product value product-op >> product) / value)
+ product ((:product value product-op > product) / value)
 
  value (number / "(" > sum ? ")")
 
