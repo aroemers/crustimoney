@@ -22,6 +22,13 @@
   (is (= (r/->success 0 2) (core/parse b/blank? " \t")))
   (is (= (r/->success 0 0) (core/parse b/blank? "\n"))))
 
+(deftest newline-test
+  (is (= (r/->success 0 2) (core/parse b/newline "\r\n")))
+  (is (= (r/->success 0 1) (core/parse b/newline "\n")))
+  (is (= (r/->success 0 1) (core/parse b/newline "\n\n")))
+  (is (= #{(r/->error :expected-newline 0)}
+         (core/parse b/newline "not-newline"))))
+
 (deftest integer-test
   (is (= (r/->success 0 3) (core/parse b/integer "123")))
   (is (= (r/->success 0 3) (core/parse b/integer "-23")))

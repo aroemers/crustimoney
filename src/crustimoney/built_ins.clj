@@ -28,7 +28,8 @@
 
 (def newline
   "Parse a single newline (either \\r\\n or \\n)."
-  (c/regex #"\r?\n"))
+  (c/with-error :expected-newline
+    (c/regex #"\r?\n")))
 
 (def integer
   "Parse a number, possibly negative."
