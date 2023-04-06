@@ -38,6 +38,16 @@
   (:refer-clojure :exclude [ref])
   (:require [crustimoney.results :as r]))
 
+;;; Helper functions
+
+(declare ref)
+
+(defn- ref-keyword [parser]
+  (cond-> parser (keyword? parser) (ref)))
+
+(defn- ref-keywords [parsers]
+  (mapv ref-keyword parsers))
+
 ;;; Cut support
 
 (defn ^:no-doc soft-cut
@@ -116,67 +126,71 @@
   (assert (not (#{soft-cut hard-cut} (first parsers)))
     "Cannot place a cut in first posision of a chain")
 
-  (fn
-    ([_text index]
-     (if-let [parser (first parsers)]
-       (r/->push parser index {:pindex 0 :children []})
-       (r/->success index index)))
+  (let [parsers (ref-keywords parsers)]
+    (fn
+      ([_text index]
+       (if-let [parser (first parsers)]
+         (r/->push parser index {:pindex 0 :children []})
+         (r/->success index index)))
 
-    ([_text _index result state]
-     (if (r/success? result)
-       (loop [state (-> state (update :pindex inc) (update :children conj result))]
-         (if-let [parser (nth parsers (:pindex state) nil)]
-           (r/->push parser (r/success->end result) state)
-           (r/->success (-> state :children first r/success->start)
-                        (-> state :children last r/success->end)
-                        (:children state))))
+      ([_text _index result state]
+       (if (r/success? result)
+         (loop [state (-> state (update :pindex inc) (update :children conj result))]
+           (if-let [parser (nth parsers (:pindex state) nil)]
+             (r/->push parser (r/success->end result) state)
+             (r/->success (-> state :children first r/success->start)
+                          (-> state :children last r/success->end)
+                          (:children state))))
 
-       (let [soft-cut? (some (comp :soft-cut meta) (:children state))]
-         (with-meta result {:soft-cut (boolean soft-cut?)}))))))
+         (let [soft-cut? (some (comp :soft-cut meta) (:children state))]
+           (with-meta result {:soft-cut (boolean soft-cut?)})))))))
 
 (defn choice
   "Match the first of the ordered parsers that is successful."
   [& parsers]
-  (fn
-    ([_text index]
-     (if-let [parser (first parsers)]
-       (r/->push parser index {:pindex 0 :children [] :errors #{}})
-       (r/->success index index)))
+  (let [parsers (ref-keywords parsers)]
+    (fn
+      ([_text index]
+       (if-let [parser (first parsers)]
+         (r/->push parser index {:pindex 0 :children [] :errors #{}})
+         (r/->success index index)))
 
-    ([_text index result state]
-     (if (r/success? result)
-       (r/->success (r/success->start result) (r/success->end result) [result])
-       (let [state (-> state (update :pindex inc) (update :errors into result))]
-         (if-let [parser (nth parsers (:pindex state) nil)]
-           (r/->push parser index state)
-           (:errors state)))))))
+      ([_text index result state]
+       (if (r/success? result)
+         (r/->success (r/success->start result) (r/success->end result) [result])
+         (let [state (-> state (update :pindex inc) (update :errors into result))]
+           (if-let [parser (nth parsers (:pindex state) nil)]
+             (r/->push parser index state)
+             (:errors state))))))))
 
 (defn repeat*
   "Eagerly try to match the given parser as many times as possible."
   [parser]
-  (fn
-    ([_text index]
-     (r/->push parser index {:children []}))
+  (let [parser (ref-keyword parser)]
+    (fn
+      ([_text index]
+       (r/->push parser index {:children []}))
 
-    ([_text index result state]
-     (if (r/success? result)
-       (let [state (update state :children conj result)]
-         (r/->push parser (r/success->end result) state))
-       (let [end (or (some-> state :children last r/success->end) index)]
-         (r/->success index end (:children state)))))))
+      ([_text index result state]
+       (if (r/success? result)
+         (let [state (update state :children conj result)]
+           (r/->push parser (r/success->end result) state))
+         (let [end (or (some-> state :children last r/success->end) index)]
+           (r/->success index end (:children state))))))))
 
 (defn negate
   "Negative lookahead for the given parser, i.e. this succeeds if the
   parser does not."
   [parser]
-  (fn
-    ([_text index]
-     (r/->push parser index))
+  (let [parser (ref-keyword parser)]
+    (fn
+      ([_text index]
+       (r/->push parser index))
 
-    ([text index result _state]
-     (if (r/success? result)
-       #{(r/->error :unexpected-match index {:text (r/success->text text result)})}
-       (r/->success index index)))))
+      ([text index result _state]
+       (if (r/success? result)
+         #{(r/->error :unexpected-match index {:text (r/success->text text result)})}
+         (r/->success index index))))))
 
 ;;; Extra combinators
 
@@ -196,40 +210,43 @@
   "Eagerly try to match the parser as many times as possible, expecting
   at least one match."
   [parser]
-  (fn
-    ([_text index]
-     (r/->push parser index {:children []}))
+  (let [parser (ref-keyword parser)]
+    (fn
+      ([_text index]
+       (r/->push parser index {:children []}))
 
-    ([_text index result state]
-     (if (r/success? result)
-       (r/->push parser (r/success->end result) (update state :children conj result))
-       (if-let [children (seq (:children state))]
-         (r/->success index (-> children last r/success->end) children)
-         result)))))
+      ([_text index result state]
+       (if (r/success? result)
+         (r/->push parser (r/success->end result) (update state :children conj result))
+         (if-let [children (seq (:children state))]
+           (r/->success index (-> children last r/success->end) children)
+           result))))))
 
 (defn lookahead
   "Lookahead for the given parser, i.e. succeed if the parser does,
   without advancing the parsing position."
   [parser]
-  (fn
-    ([_text index]
-     (r/->push parser index))
+  (let [parser (ref-keyword parser)]
+    (fn
+      ([_text index]
+       (r/->push parser index))
 
-    ([_text index result _state]
-     (if (r/success? result)
-       (r/->success index index)
-       result))))
+      ([_text index result _state]
+       (if (r/success? result)
+         (r/->success index index)
+         result)))))
 
 (defn maybe
   "Try to parse the given parser, but succeed anyway."
   [parser]
-  (fn
-    ([_text index]
-     (r/->push parser index))
+  (let [parser (ref-keyword parser)]
+    (fn
+      ([_text index]
+       (r/->push parser index))
 
-    ([_text index result _state]
-     (or (r/success? result)
-         (r/->success index index)))))
+      ([_text index result _state]
+       (or (r/success? result)
+           (r/->success index index))))))
 
 (defn eof
   "Succeed only if the entire text has been parsed."

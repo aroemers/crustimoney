@@ -32,15 +32,13 @@
                                (c/literal "]")
                                (c/regex #"[?*+]?"))
 
-    :regex= (c/chain (c/literal "#")
-                     c/soft-cut
-                     (c/ref :literal))
+    :regex= (c/chain (c/literal "#") c/soft-cut :literal)
 
     :end-of-file= (c/literal "$")
 
-    :ref (c/chain (c/ref :non-terminal)
+    :ref (c/chain :non-terminal
                   (c/negate (c/literal "="))
-                  (c/ref :space)
+                  :space
                   (c/negate (c/literal "<-")))
 
     :cut= (c/choice (c/literal ">>") (c/literal ">"))
@@ -52,65 +50,44 @@
 
     :group= (c/chain (c/literal "(")
                      c/soft-cut
-                     (c/maybe (c/ref :group-name))
-                     (c/ref :space)
-                     (c/ref :choice)
-                     (c/ref :space)
+                     (c/maybe :group-name)
+                     :space
+                     :choice
+                     :space
                      (c/literal ")"))
 
-    :expr (c/choice (c/ref :ref)
-                    (c/ref :group)
-                    (c/ref :literal)
-                    (c/ref :character-class)
-                    (c/ref :end-of-file)
-                    (c/ref :regex))
+    :expr (c/choice :ref :group :literal :character-class :end-of-file :regex)
 
     :quantified (c/choice (c/with-name :quantified
-                            (c/chain (c/ref :expr)
-                                     (c/with-name :operand
-                                       (c/regex "[?+*]"))))
-                          (c/ref :expr))
+                            (c/chain :expr (c/with-name :operand
+                                             (c/regex "[?+*]"))))
+                          :expr)
 
     :lookahead (c/choice (c/with-name :lookahead
                            (c/chain (c/with-name :operand
                                       (c/regex "[&!]"))
                                     c/soft-cut
-                                    (c/ref :quantified)))
-                         (c/ref :quantified))
+                                    :quantified))
+                         :quantified)
 
     :chain (c/choice (c/with-name :chain
-                       (c/chain (c/ref :lookahead)
-                                (c/repeat+ (c/chain (c/ref :space)
-                                                    (c/choice (c/ref :cut)
-                                                              (c/ref :lookahead))))))
-                     (c/ref :lookahead))
+                       (c/chain :lookahead
+                                (c/repeat+ (c/chain :space (c/choice :cut :lookahead)))))
+                     :lookahead)
 
     :choice (c/choice (c/with-name :choice
-                        (c/chain (c/ref :chain)
-                                 (c/repeat+ (c/chain (c/ref :space)
-                                                     (c/literal "/")
-                                                     (c/ref :space)
-                                                     (c/ref :chain)))))
-                      (c/ref :chain))
+                        (c/chain :chain (c/repeat+ (c/chain :space (c/literal "/") :space :chain))))
+                      :chain)
 
-    :rule= (c/chain (c/with-name :rule-name
-                      (c/chain (c/ref :non-terminal)
-                               (c/maybe (c/literal "="))))
-                    (c/ref :space)
-                    (c/literal "<-")
-                    c/hard-cut
-                    (c/ref :space)
-                    (c/ref :choice))
+    :rule-name= (c/chain :non-terminal (c/maybe (c/literal "=")))
 
-    :root= (c/chain (c/choice (c/with-name :rules
-                                (c/repeat+ (c/chain (c/ref :space)
-                                                    (c/ref :rule)
-                                                    (c/ref :space))))
-                              (c/with-name :no-rules
-                                (c/chain (c/ref :space)
-                                         (c/ref :choice)
-                                         (c/ref :space))))
-                    (c/eof))}))
+    :rule= (c/chain :space (c/literal "<-") c/hard-cut :space :choice)
+
+    :rules= (c/repeat+ (c/chain :space :rule :space))
+
+    :no-rules= (c/chain :space :choice :space)
+
+    :root= (c/chain (c/choice :rules :no-rules) (c/eof))}))
 
 ;;; Parse result processing
 
