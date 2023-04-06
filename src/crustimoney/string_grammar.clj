@@ -243,14 +243,12 @@
   captured using the rule's name (without the postfix). Please read up
   on this at `crustimoney.combinators/grammar`.
 
-  A map of existing parsers can be supplied, which can be used by the
-  string grammar. For example:
+  Keep in mind that `grammar` takes multiple maps, all of which can be
+  referred to by the string grammar. For example:
 
-      (create-parser \"root <- 'Hello ' email\"
-                     {:email (regex \"...\")})"
-  ([text]
-   (create-parser text nil))
-  ([text other-parsers]
-   (-> (vector-tree text)
-       (vector-grammar/merge-other other-parsers)
-       (vector-grammar/create-parser))))
+      (grammar
+       (create-parser \"root <- 'Hello ' email\")
+       {:email (regex #\"...\")})"
+  [text]
+  (-> (vector-tree text)
+      (vector-grammar/create-parser)))

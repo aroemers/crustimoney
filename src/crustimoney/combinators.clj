@@ -257,10 +257,11 @@
     "Cannot use ref function outside grammar macro")
 
   (swap! *parsers* assoc key nil)
-  (let [parsers *parsers*]
+  (let [parsers *parsers*
+        parser  (delay (get @parsers key))]
     (fn
       ([_ index]
-       (r/->push (get @parsers key) index))
+       (r/->push @parser index))
       ([_ _ result _]
        result))))
 
@@ -274,13 +275,13 @@
              {} m))
 
 (defn ^:no-doc grammar* [f]
-  (assert (not (bound? #'*parsers*)) "Cannot nest grammar macro")
-
-  (binding [*parsers* (atom nil)]
-    (let [result (swap! *parsers* merge (auto-capture (f)))]
-      (if-let [unknown-refs (seq (remove result (keys result)))]
-        (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unknown-refs}))
-        result))))
+  (if (bound? #'*parsers*)
+    (f)
+    (binding [*parsers* (atom nil)]
+      (let [result (swap! *parsers* merge (auto-capture (f)))]
+        (if-let [unknown-refs (seq (remove result (keys result)))]
+          (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unknown-refs}))
+          result)))))
 
 (defmacro grammar
   "Takes one or more maps, in which the entries can refer to each other

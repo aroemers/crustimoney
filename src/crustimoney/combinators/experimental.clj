@@ -3,21 +3,17 @@
   or dismissed.
 
   These combinators are not available in the string- or data-driven
-  grammar (yet). To use them with those, you can use the
-  `other-parsers` parameter of their respective `create-parser`
-  functions, like:
+  grammar (yet). To use them with those, combine them in a larger
+  grammar like so:
 
       (require '[crustimoney.combinators.experimental :as e])
 
-      (create-parser
-        \"root= <- stream
-         expr= <- '{' [0-9]+ '}'\"
-        {:stream [::e/stream handle-expr
-                  [::e/recover [:ref :expr] [:regex \".*?}\"]]})
-
-  Note that the other-parsers here is written in vector-grammar
-  format. This is a little power-user trick, and allows you to declare
-  `ref`s that do not have to resolve immediatly on their creation."
+      (grammar
+       (create-parser
+         \"root= <- stream
+          expr= <- '{' [0-9]+ '}'\")
+       {:stream (e/stream handle-expr
+                 (e/recover (ref :expr) (regex \".*?}\")))})"
   (:refer-clojure :exclude [range])
   (:require [crustimoney.results :as r]))
 
