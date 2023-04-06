@@ -391,14 +391,14 @@ The implementation simply returns a vector, possibly pointing to your own combin
 
 ## Built-in parsers
 
-The library provides a couple of predefined parsers in the `built-in` namespace, for parsing things like spaces, numbers, words and strings.
+The library provides a couple of predefined parsers in the `built-ins` namespace, for parsing things like spaces, numbers, words and strings.
 It also contains a map called `all`, containing all of the built-in parsers.
 This map can be used as a basis for your own grammar, by passing it along to `grammar` or the `create-parser` functions.
 
 ```clj
 (string-grammar/create-parser
  "root <- (space? (:name word) blank (:id natural) space?)* $"
- built-in/all))
+ built-ins/all))
 ```
 
 ## Writing your own combinator

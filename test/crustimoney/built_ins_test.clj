@@ -1,6 +1,6 @@
-(ns crustimoney.built-in-test
+(ns crustimoney.built-ins-test
   (:require [clojure.test :refer [deftest is]]
-            [crustimoney.built-in :as b]
+            [crustimoney.built-ins :as b]
             [crustimoney.core :as core]
             [crustimoney.results :as r]))
 

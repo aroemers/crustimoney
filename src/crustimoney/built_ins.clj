@@ -1,10 +1,11 @@
-(ns crustimoney.built-in
+(ns crustimoney.built-ins
   "A collection of common parsers.
 
   A map called `all` is also defined, which contain all the parsers in
   this namespace. This can be used as an extra parameter to the
   `grammar` macro or the `create-parser` functions in the
   string-grammar or data-grammar namespaces."
+  (:refer-clojure :exclude [newline])
   (:require [crustimoney.combinators :as c]))
 
 (def space
@@ -24,6 +25,10 @@
 (def blank?
   "Parse zero or more space or tab characters, not newlines."
   (c/regex #"[ \t]*"))
+
+(def newline
+  "Parse a single newline (either \\r\\n or \\n)."
+  (c/regex #"\r?\n"))
 
 (def integer
   "Parse a number, possibly negative."
