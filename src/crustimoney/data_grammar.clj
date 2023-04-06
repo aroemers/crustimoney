@@ -1,7 +1,8 @@
 (ns crustimoney.data-grammar
   "Create a parser based on a data grammar. The data is translated into
   combinators."
-  (:require [crustimoney.vector-grammar :as vector-grammar]))
+  (:require [crustimoney.combinators :as c]
+            [crustimoney.vector-grammar :as vector-grammar]))
 
 ;;; Utility functions
 
@@ -80,8 +81,8 @@
     (let [ref-name (str data)]
       (case ref-name
         "$"  [:eof]
-        ">>" :hard-cut
-        ">"  :soft-cut
+        ">>" c/hard-cut
+        ">"  c/soft-cut
         [:ref (keyword ref-name)]))))
 
 (extend-type String

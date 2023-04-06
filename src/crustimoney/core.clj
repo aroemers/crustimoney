@@ -91,7 +91,7 @@
                (cond
                  ;; Backtrack further on a soft-cut error result, when the parser is
                  ;; not tagged as recovering
-                 (and (some-> result meta :soft-cut) (not (-> parser meta :recovering)))
+                 (and (set? result) (some-> result meta :soft-cut) (not (-> parser meta :recovering)))
                  result
                  ;; Handle backtracking a result
                  result

@@ -35,10 +35,10 @@
       (is (= (r/->success 0 0) (parse p "anything")))))
 
   (testing "chain with soft-cut"
-    (is (thrown? AssertionError (c/chain :soft-cut)))
+    (is (thrown? AssertionError (c/chain c/soft-cut)))
 
     (let [p (c/choice (c/chain (c/maybe (c/chain (c/literal "{")
-                                                 :soft-cut
+                                                 c/soft-cut
                                                  (c/literal "foo")
                                                  (c/literal "}")))
                                (c/literal "bar"))
@@ -51,10 +51,10 @@
       (is (= (r/->success 0 8) (core/parse p "{foo}bar")))))
 
   (testing "chain with hard-cut"
-    (is (thrown? AssertionError (c/chain :hard-cut)))
+    (is (thrown? AssertionError (c/chain c/hard-cut)))
 
     (let [p (c/choice (c/chain (c/maybe (c/chain (c/literal "{")
-                                                 :hard-cut
+                                                 c/hard-cut
                                                  (c/literal "foo")
                                                  (c/literal "}")))
                                (c/literal "bar"))
@@ -66,12 +66,9 @@
       (is (= (r/->success 0 8) (core/parse p "{foo}bar")))))
 
   (testing "chain with cuts results in correct children"
-    (let [p (c/chain (c/literal "foo") :soft-cut (c/literal "bar"))]
-      (is (= (r/->success 0 6 [(r/->success 0 3) (r/->success 3 6)])
-             (parse p "foobar")))))
-
-  (testing "chain with unknown keyword"
-    (is (thrown? AssertionError (c/chain (c/literal "foo") :unknown)))))
+    (let [p (c/chain (c/literal "foo") c/soft-cut (c/literal "bar"))]
+      (is (= (r/->success 0 6 [(r/->success 0 3) (r/->success 3 3) (r/->success 3 6)])
+             (parse p "foobar"))))))
 
 (deftest choice-test
   (testing "choice with two parsers"

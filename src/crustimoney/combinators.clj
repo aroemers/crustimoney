@@ -38,6 +38,20 @@
   (:refer-clojure :exclude [ref])
   (:require [crustimoney.results :as r]))
 
+;;; Cut support
+
+(defn ^:no-doc soft-cut
+  "Soft-cut, for use inside `chain`."
+  [_text index]
+  (with-meta (r/->success index index)
+    {:soft-cut true}))
+
+(defn ^:no-doc hard-cut
+  "Hard-cut, for use inside `chain`."
+  [_text index]
+  (with-meta (r/->success index index)
+    {:hard-cut true}))
+
 ;;; Primitives
 
 (defn literal
@@ -58,7 +72,7 @@
   at that point.
 
   Two kinds of cuts are supported. A \"hard\" cut and a \"soft\" cut,
-  which can be inserted in the chain using `:hard-cut` or `:soft-cut`.
+  which can be inserted in the chain using `hard-cut` or `soft-cut`.
   Both types of cuts improve error messages, as they limit
   backtracking.
 
@@ -69,6 +83,11 @@
   the cut. This can turn memory requirements from O(n) to O(1). Since
   PEG parsers are memory hungry, this can be a big deal.
 
+  A simple example using a hard-cut:
+
+      {:root   (repeat* (chain (ref :record) (ref :newline) hard-cut))
+       :record (chain (ref :username) (ref :blank) (ref :number))}
+
   With a soft cut, backtracking can still happen outside the chain,
   but errors will not escape inside the chain after a soft cut. The
   advantage of a soft cut over a hard cut, is that they can be used at
@@ -77,7 +96,7 @@
   For example, the following parser benefits from a soft-cut:
 
       (choice (chain (maybe (chain (literal \"{\")
-                                   :soft-cut
+                                   soft-cut
                                    (literal \"foo\")
                                    (literal \"}\")))
                      (literal \"bar\"))
@@ -92,12 +111,10 @@
   missing, as it would never backtrack to try the \"baz\" choice.
 
   Soft cuts do not influence the packrat caches, so they do not help
-  performance wise. A hard cut is implicitly also a soft cut."
+  performance wise."
   [& parsers]
-  (assert (not (#{:soft-cut :hard-cut} (first parsers)))
+  (assert (not (#{soft-cut hard-cut} (first parsers)))
     "Cannot place a cut in first posision of a chain")
-  (assert (empty? (remove #{:soft-cut :hard-cut} (filter keyword? parsers)))
-    "Only :soft-cut and :hard-cut keywords are supported")
 
   (fn
     ([_text index]
@@ -109,18 +126,13 @@
      (if (r/success? result)
        (loop [state (-> state (update :pindex inc) (update :children conj result))]
          (if-let [parser (nth parsers (:pindex state) nil)]
-           (condp = parser
-             :soft-cut (recur (-> state (update :pindex inc) (assoc :soft-cut true)))
-             :hard-cut (recur (-> state (update :pindex inc) (assoc :soft-cut true, :hard-cut true)))
-             (r/->push parser (r/success->end result) state))
-           (cond-> (r/->success (-> state :children first r/success->start)
-                                (-> state :children last r/success->end)
-                                (:children state))
-             (:hard-cut state) (with-meta {:hard-cut true}))))
+           (r/->push parser (r/success->end result) state)
+           (r/->success (-> state :children first r/success->start)
+                        (-> state :children last r/success->end)
+                        (:children state))))
 
-       (if (:soft-cut state)
-         (with-meta result {:soft-cut true})
-         result)))))
+       (let [soft-cut? (some (comp :soft-cut meta) (:children state))]
+         (with-meta result {:soft-cut (boolean soft-cut?)}))))))
 
 (defn choice
   "Match the first of the ordered parsers that is successful."

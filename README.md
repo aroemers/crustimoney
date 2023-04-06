@@ -192,7 +192,7 @@ The following example shows this, and also how to add a hard cut in the `chain` 
 ```clj
 (def example
   (maybe (chain (literal "(")
-                :hard-cut
+                hard-cut
                 (regex #"\d+")
                 (literal ")"))))
 
@@ -226,7 +226,7 @@ Consider the expansion of the previous example:
   (choice (chain
             ;; --- same as before, but now with soft-cut
             (maybe (chain (literal "(")
-                          :soft-cut
+                          soft-cut
                           (regex #"\d+")
                           (literal ")")))
             ;; ---
@@ -241,7 +241,7 @@ Consider the expansion of the previous example:
      {:key :expected-literal, :at 0, :detail {:literal "bar"}}}
 ```
 
-The `:hard-cut` has been replaced with a `:soft-cut`.
+The `hard-cut` has been replaced with a `soft-cut`.
 As shown, this still shows a localized error for the missing `")"`, yet it also allows backtracking to try the `"bar"` choice.
 
 Since backtracking before the soft cut is still allowed outside of the chain's scope, the cache is not affected.
@@ -249,7 +249,7 @@ However, soft and hard cuts can be combined in a grammar.
 We could for instance extend the grammar a bit more:
 
 ```clj
-(repeat+ (chain example :hard-cut))
+(repeat+ (chain example hard-cut))
 ```
 
 This effectively says that after each finished `example`, we won't backtrack, that part is done.
