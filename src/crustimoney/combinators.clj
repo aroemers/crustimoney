@@ -169,7 +169,7 @@
 ;;; Extra combinators
 
 (defn regex
-  "A parser that matches the given regular expression (string or 
+  "A parser that matches the given regular expression (string or
   pattern)."
   [re]
   (let [pattern (re-pattern re)]
@@ -283,9 +283,9 @@
         result))))
 
 (defmacro grammar
-  "Takes (something that evaluates to) a map, in which the entries can
-  refer to each other using the `ref` function. In other words, a
-  recursive map. For example:
+  "Takes one or more maps, in which the entries can refer to each other
+  using the `ref` function. In other words, a recursive map. For
+  example:
 
       (grammar {:foo  (literal \"foo\")
                 :root (chain (ref :foo) \"bar\")})
@@ -309,5 +309,5 @@
        [:body {:start 0, :end 3}]
        [:prefixed {:start 4, :end 8}
         [:body {:start 5, :end 8}]]]"
-  [m]
-  `(grammar* (fn [] ~m)))
+  [& maps]
+  `(grammar* (fn [] (merge ~@maps))))
