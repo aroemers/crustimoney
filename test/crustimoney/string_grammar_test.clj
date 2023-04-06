@@ -125,6 +125,9 @@
     (let [p (create-parser "root <- foo" {:foo [:literal "foo"]})]
       (is (r/success? (core/parse (:root p) "foo"))))
 
+    (let [p (create-parser "foo <- 'foo'" {:foo (create-parser "'bar'")})]
+      (is (r/success? (core/parse (:foo p) "foo"))))
+
     (is (thrown-with-msg? Exception #"Supplying other parsers needs named rules in input grammar"
                           (create-parser "foo" {:foo (create-parser "'foo'")}))))
 
