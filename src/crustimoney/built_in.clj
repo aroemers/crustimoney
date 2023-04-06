@@ -1,9 +1,9 @@
 (ns crustimoney.built-in
   "A collection of common parsers.
 
-  A map called `all` is also defined, which contain most of the
-  parsers in this namespace. This can be used as an extra parameter to
-  the `grammar` macro or the `create-parser` functions in the
+  A map called `all` is also defined, which contain all the parsers in
+  this namespace. This can be used as an extra parameter to the
+  `grammar` macro or the `create-parser` functions in the
   string-grammar or data-grammar namespaces."
   (:require [crustimoney.combinators :as c]))
 
@@ -56,10 +56,6 @@
 
 (def all
   "A map with the built-in parsers."
-  {:space   space
-   :blank   blank
-   :integer integer
-   :natural natural
-   :word    word
-   :dquote  dquote
-   :squote  squote})
+  (reduce-kv (fn [m k v]
+               (cond-> m (fn? @v) (assoc (keyword k) @v)))
+             {} (ns-publics *ns*)))
