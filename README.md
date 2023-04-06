@@ -387,7 +387,19 @@ This will show the entire combinator tree in vector format.
 Another benefit is that the data-grammar can easily be extended.
 The function `data-grammar/vector-tree` is actually a protocol function.
 This makes it possible to add support for other data types, using Clojure's `extend-type`.
-The implementation simply returns a vector, possibly pointing to your own combinator.
+The implementation simply returns a vector, possibly pointing to your own combinator (see further down below).
+
+## Built-in parsers
+
+The library provides a couple of predefined parsers in the `built-in` namespace, for parsing things like spaces, numbers, words and strings.
+It also contains a map called `all`, containing most of these parsers.
+This map can be used as a basis for your own grammar, by passing it along to `grammar` or the `create-parser` functions.
+
+```clj
+(string-grammar/create-parser
+ "root <- (space? (:name word) blank (:id natural) space?)* $"
+ built-in/all))
+```
 
 ## Writing your own combinator
 
