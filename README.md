@@ -136,6 +136,9 @@ This grammar can be used as follows:
 => [nil {:start 0, :end 6}]
 ```
 
+The `grammar` macro can take multiple maps, which are merged.
+The macro can also be nested, where it is the most outer one that does the actual resolving.
+
 ## Auto-named rules
 
 The example above shows that all success nodes are filtered out, except the root node, as they are nameless.
@@ -299,12 +302,12 @@ However, it is perfectly valid to define a single parser, such as:
 'alice and ' !'eve' [a-z]+
 ```
 
-A second argument can be passed to `create-parser`, which is a map of other parsers that can be used by the grammar.
-For example:
+Keep in mind that `grammar` takes multiple maps, which is utilised in the following example:
 
 ```clj
-(create-parser "root <- 'Hello ' email"
-               {:email (regex "...")})
+(grammar
+ (create-parser "root <- 'Hello ' email")
+ {:email (regex #"...")})
 ```
 
 The names of the rules can have an `=` sign appended, for the auto-named feature discussed earlier.
@@ -351,7 +354,7 @@ It is very similar to the string-based grammar.
 The function `data-grammar/create-parser` is used to create a parser out of such a definition.
 
 The data-based definition shares many properties with the string-based one.
-It works the same way in supporting both recursive and non-recursive parsers, it also has auto-naming (the `=` postfix), and it can take an extra map of predefined parsers as well.
+It works the same way in supporting both recursive and non-recursive parsers, it also has auto-naming (the `=` postfix), and can be used as part of a bigger grammar.
 
 It does have an extra feature: direct combinator calls, using vectors.
 The first keyword in the vector determines the combinator.

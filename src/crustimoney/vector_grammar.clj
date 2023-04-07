@@ -2,22 +2,6 @@
   "A basic vector-driven parser generator."
   (:require [crustimoney.combinators :as c]))
 
-;;; Utility functions
-
-(defn- map-kv [kf vf m]
-  (reduce-kv (fn [a k v] (assoc a (kf k) (vf v))) {} m))
-
-(defn ^:no-doc merge-other [tree other-parsers]
-  (cond (and (map? tree) other-parsers)
-        (merge other-parsers tree)
-
-        other-parsers
-        (throw (IllegalArgumentException.
-                "Supplying other parsers needs named rules in input grammar"))
-
-        :else
-        tree))
-
 ;;; Parser creation
 
 (defn- key-to-combinator [key]
@@ -46,7 +30,7 @@
   formats, such as the string-based and data-based grammars."
   [tree]
   (cond (map? tree)
-        (c/grammar (map-kv identity create-parser tree))
+        (c/grammar (update-vals tree create-parser))
 
         (vector? tree)
         (if-let [combinator (key-to-combinator (first tree))]

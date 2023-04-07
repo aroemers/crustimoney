@@ -143,20 +143,18 @@
   captured using the rule's name (without the postfix). Please read up
   on this at `crustimoney.combinators/grammar`.
 
-  Optionally an existing map of parsers can be supplied, which can
-  refered to by the data grammar. For example:
+  Keep in mind that `grammar` takes multiple maps, all of which can be
+  referred to by the string grammar. For example:
 
-      (create-parser '{root (\"Hello \" email)}
-                     {:email (regex \"...\")})
+      (grammar
+       (create-parser '{root (\"Hello \" email)})
+       {:email (regex #\"...\")})
 
   If you want to use an EDN grammar file or string, you can use
   `#crusti/regex` tagged literal for regular expressions. To read
   this, use the following:
 
       (clojure.edn/read-string {:readers *data-readers*} ...)"
-  ([data]
-   (create-parser data nil))
-  ([data other-parsers]
-   (-> (vector-tree data)
-       (vector-grammar/merge-other other-parsers)
-       (vector-grammar/create-parser))))
+  [data]
+  (-> (vector-tree data)
+      (vector-grammar/create-parser)))
