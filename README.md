@@ -438,10 +438,9 @@ Lastly, there are a couple of experimental combinators.
 Being experimental, they may get promoted, or changed, or dismissed.
 
 - `range`, like a `repeat`, requiring a minimum of matches and stops after a maximum of matches
-- `stream*`, like `repeat*`, but does not keep its children
-- `stream+`, like `repeat+`, but does not keep its children
-- `with-callback`, fires (success) result of a parser to a callback function
+- `stream*` and `stream+`, like `repeat*`/`repeat+`, but does not keep its children
 - `recover`, like a `choice`, capturing errors of the first choice, including soft-cuts
+- `with-callback`, fires (success) result of a parser to a callback function
 
 These can be found in the `experimental.combinators` namespace, including more documentation on them.
 
