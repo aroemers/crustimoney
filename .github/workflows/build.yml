@@ -21,7 +21,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Cache project dependencies
+        id: cache-deps
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-clojure-${{ hashFiles('**/project.clj') }}
+          restore-keys: |
+            ${{ runner.os }}-clojure
+
       - name: Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         run: lein with-profile +test deps
 
       - name: Run tests and check coverage
