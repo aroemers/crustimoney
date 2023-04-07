@@ -354,7 +354,7 @@ It is very similar to the string-based grammar.
 The function `data-grammar/create-parser` is used to create a parser out of such a definition.
 
 The data-based definition shares many properties with the string-based one.
-It works the same way in supporting both recursive and non-recursive parsers, it also has auto-naming (the `=` postfix), and can be used as part fo a bigger grammar.
+It works the same way in supporting both recursive and non-recursive parsers, it also has auto-naming (the `=` postfix), and can be used as part of a bigger grammar.
 
 It does have an extra feature: direct combinator calls, using vectors.
 The first keyword in the vector determines the combinator.
