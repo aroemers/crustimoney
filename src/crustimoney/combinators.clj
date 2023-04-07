@@ -38,6 +38,28 @@
   (:refer-clojure :exclude [ref])
   (:require [crustimoney.results :as r]))
 
+;;; Cut support
+
+(defn ^:no-doc soft-cut
+  "Soft-cut, for use inside `chain`."
+  [_text index]
+  (with-meta (r/->success index index)
+    {:soft-cut true}))
+
+(defn ^:no-doc hard-cut
+  "Hard-cut, for use inside `chain`."
+  [_text index]
+  (with-meta (r/->success index index)
+    {:hard-cut true}))
+
+(defn- check-for-cut [parser]
+  (assert (not (#{soft-cut hard-cut} parser))
+    "Cuts are not allowed in this combinator"))
+
+(defn- check-for-cuts [parsers]
+  (doseq [parser parsers]
+    (check-for-cut parser)))
+
 ;;; Primitives
 
 (defn literal
@@ -58,7 +80,7 @@
   at that point.
 
   Two kinds of cuts are supported. A \"hard\" cut and a \"soft\" cut,
-  which can be inserted in the chain using `:hard-cut` or `:soft-cut`.
+  which can be inserted in the chain using `hard-cut` or `soft-cut`.
   Both types of cuts improve error messages, as they limit
   backtracking.
 
@@ -69,6 +91,11 @@
   the cut. This can turn memory requirements from O(n) to O(1). Since
   PEG parsers are memory hungry, this can be a big deal.
 
+  A simple example using a hard-cut:
+
+      {:root   (repeat* (chain (ref :record) (ref :newline) hard-cut))
+       :record (chain (ref :username) (ref :blank) (ref :number))}
+
   With a soft cut, backtracking can still happen outside the chain,
   but errors will not escape inside the chain after a soft cut. The
   advantage of a soft cut over a hard cut, is that they can be used at
@@ -77,7 +104,7 @@
   For example, the following parser benefits from a soft-cut:
 
       (choice (chain (maybe (chain (literal \"{\")
-                                   :soft-cut
+                                   soft-cut
                                    (literal \"foo\")
                                    (literal \"}\")))
                      (literal \"bar\"))
@@ -92,12 +119,10 @@
   missing, as it would never backtrack to try the \"baz\" choice.
 
   Soft cuts do not influence the packrat caches, so they do not help
-  performance wise. A hard cut is implicitly also a soft cut."
+  performance wise."
   [& parsers]
-  (assert (not (#{:soft-cut :hard-cut} (first parsers)))
+  (assert (not (#{soft-cut hard-cut} (first parsers)))
     "Cannot place a cut in first posision of a chain")
-  (assert (empty? (remove #{:soft-cut :hard-cut} (filter keyword? parsers)))
-    "Only :soft-cut and :hard-cut keywords are supported")
 
   (fn
     ([_text index]
@@ -107,24 +132,18 @@
 
     ([_text _index result state]
      (if (r/success? result)
-       (loop [state (-> state (update :pindex inc) (update :children conj result))]
+       (let [state (-> state (update :pindex inc) (update :children conj result))]
          (if-let [parser (nth parsers (:pindex state) nil)]
-           (condp = parser
-             :soft-cut (recur (-> state (update :pindex inc) (assoc :soft-cut true)))
-             :hard-cut (recur (-> state (update :pindex inc) (assoc :soft-cut true, :hard-cut true)))
-             (r/->push parser (r/success->end result) state))
-           (cond-> (r/->success (-> state :children first r/success->start)
-                                (-> state :children last r/success->end)
-                                (:children state))
-             (:hard-cut state) (with-meta {:hard-cut true}))))
-
-       (if (:soft-cut state)
-         (with-meta result {:soft-cut true})
-         result)))))
+           (r/->push parser (r/success->end result) state)
+           (r/->success (-> state :children first r/success->start)
+                        (-> state :children last r/success->end)
+                        (:children state))))
+       result))))
 
 (defn choice
   "Match the first of the ordered parsers that is successful."
   [& parsers]
+  (check-for-cuts parsers)
   (fn
     ([_text index]
      (if-let [parser (first parsers)]
@@ -142,6 +161,7 @@
 (defn repeat*
   "Eagerly try to match the given parser as many times as possible."
   [parser]
+  (check-for-cut parser)
   (fn
     ([_text index]
      (r/->push parser index {:children []}))
@@ -157,6 +177,7 @@
   "Negative lookahead for the given parser, i.e. this succeeds if the
   parser does not."
   [parser]
+  (check-for-cut parser)
   (fn
     ([_text index]
      (r/->push parser index))
@@ -184,6 +205,7 @@
   "Eagerly try to match the parser as many times as possible, expecting
   at least one match."
   [parser]
+  (check-for-cut parser)
   (fn
     ([_text index]
      (r/->push parser index {:children []}))
@@ -199,6 +221,7 @@
   "Lookahead for the given parser, i.e. succeed if the parser does,
   without advancing the parsing position."
   [parser]
+  (check-for-cut parser)
   (fn
     ([_text index]
      (r/->push parser index))
@@ -211,6 +234,7 @@
 (defn maybe
   "Try to parse the given parser, but succeed anyway."
   [parser]
+  (check-for-cut parser)
   (fn
     ([_text index]
      (r/->push parser index))

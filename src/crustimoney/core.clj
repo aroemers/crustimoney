@@ -32,6 +32,12 @@
             true
             (recur (dec i))))))))
 
+(defn- soft-cut-catcher
+  [_text _index result _state]
+  (if (r/success? result)
+    result
+    (with-meta result {:soft-cut true})))
+
 ;;; Parsing virtual machine
 
 (defn parse
@@ -91,7 +97,7 @@
                (cond
                  ;; Backtrack further on a soft-cut error result, when the parser is
                  ;; not tagged as recovering
-                 (and (some-> result meta :soft-cut) (not (-> parser meta :recovering)))
+                 (and (set? result) (some-> result meta :soft-cut) (not (-> parser meta :recovering)))
                  result
                  ;; Handle backtracking a result
                  result
@@ -118,10 +124,20 @@
              ;; Handle a success result
              (r/success? result)
              (let [processed (post-success result)]
-               ;; Check if it was a hard-cut success
-               (if (-> result meta :hard-cut)
-                 (do (caches/cut cache (r/success->end result))
-                     (recur (pop stack) processed state' (r/success->end result)))
+               (cond
+                 ;; Handle a hard-cut
+                 (-> result meta :hard-cut)
+                 (do (caches/cut cache index)
+                     (recur (pop stack) processed state' index))
+
+                 ;; Handle a soft-cut
+                 (-> result meta :soft-cut)
+                 (let [popped  (pop stack)
+                       chain   (peek popped)
+                       catcher (r/->push soft-cut-catcher (r/push->index chain) (r/push->state chain))]
+                   (recur (conj (pop popped) catcher chain) processed state' cut-at))
+
+                 :else
                  (do (caches/store cache parser index processed)
                      (recur (pop stack) processed state' cut-at))))
 

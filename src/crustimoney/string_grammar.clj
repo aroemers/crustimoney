@@ -21,19 +21,19 @@
     :non-terminal= (c/regex "[a-zA-Z_-]+")
 
     :literal (c/chain (c/literal "'")
-                      :soft-cut
+                      c/soft-cut
                       (c/with-name :literal
                         (c/regex #"(\\'|[^'])*"))
                       (c/literal "'"))
 
     :character-class= (c/chain (c/literal "[")
-                               :soft-cut
+                               c/soft-cut
                                (c/regex #"(\\]|[^]])*")
                                (c/literal "]")
                                (c/regex #"[?*+]?"))
 
     :regex= (c/chain (c/literal "#")
-                     :soft-cut
+                     c/soft-cut
                      (c/ref :literal))
 
     :end-of-file= (c/literal "$")
@@ -46,12 +46,12 @@
     :cut= (c/choice (c/literal ">>") (c/literal ">"))
 
     :group-name (c/chain (c/literal ":")
-                         :soft-cut
+                         c/soft-cut
                          (c/with-name :group-name
                            (c/regex "[a-zA-Z_-]+")))
 
     :group= (c/chain (c/literal "(")
-                     :soft-cut
+                     c/soft-cut
                      (c/maybe (c/ref :group-name))
                      (c/ref :space)
                      (c/ref :choice)
@@ -74,7 +74,7 @@
     :lookahead (c/choice (c/with-name :lookahead
                            (c/chain (c/with-name :operand
                                       (c/regex "[&!]"))
-                                    :soft-cut
+                                    c/soft-cut
                                     (c/ref :quantified)))
                          (c/ref :quantified))
 
@@ -98,7 +98,7 @@
                                (c/maybe (c/literal "="))))
                     (c/ref :space)
                     (c/literal "<-")
-                    :hard-cut
+                    c/hard-cut
                     (c/ref :space)
                     (c/ref :choice))
 
@@ -192,7 +192,7 @@
 
 (defmethod vector-tree-for :cut
   [text node]
-  ({">>" :hard-cut, ">" :soft-cut} (r/success->text text node)))
+  ({">>" c/hard-cut, ">" c/soft-cut} (r/success->text text node)))
 
 ;;; Public namespace API
 
