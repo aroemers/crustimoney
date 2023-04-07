@@ -52,6 +52,14 @@
   (with-meta (r/->success index index)
     {:hard-cut true}))
 
+(defn- check-for-cut [parser]
+  (assert (not (#{soft-cut hard-cut} parser))
+    "Cuts are not allowed in this combinator"))
+
+(defn- check-for-cuts [parsers]
+  (doseq [parser parsers]
+    (check-for-cut parser)))
+
 ;;; Primitives
 
 (defn literal
@@ -124,19 +132,18 @@
 
     ([_text _index result state]
      (if (r/success? result)
-       (loop [state (-> state (update :pindex inc) (update :children conj result))]
+       (let [state (-> state (update :pindex inc) (update :children conj result))]
          (if-let [parser (nth parsers (:pindex state) nil)]
            (r/->push parser (r/success->end result) state)
            (r/->success (-> state :children first r/success->start)
                         (-> state :children last r/success->end)
                         (:children state))))
-
-       (let [soft-cut? (some (comp :soft-cut meta) (:children state))]
-         (with-meta result {:soft-cut (boolean soft-cut?)}))))))
+       result))))
 
 (defn choice
   "Match the first of the ordered parsers that is successful."
   [& parsers]
+  (check-for-cuts parsers)
   (fn
     ([_text index]
      (if-let [parser (first parsers)]
@@ -154,6 +161,7 @@
 (defn repeat*
   "Eagerly try to match the given parser as many times as possible."
   [parser]
+  (check-for-cut parser)
   (fn
     ([_text index]
      (r/->push parser index {:children []}))
@@ -169,6 +177,7 @@
   "Negative lookahead for the given parser, i.e. this succeeds if the
   parser does not."
   [parser]
+  (check-for-cut parser)
   (fn
     ([_text index]
      (r/->push parser index))
@@ -196,6 +205,7 @@
   "Eagerly try to match the parser as many times as possible, expecting
   at least one match."
   [parser]
+  (check-for-cut parser)
   (fn
     ([_text index]
      (r/->push parser index {:children []}))
@@ -211,6 +221,7 @@
   "Lookahead for the given parser, i.e. succeed if the parser does,
   without advancing the parsing position."
   [parser]
+  (check-for-cut parser)
   (fn
     ([_text index]
      (r/->push parser index))
@@ -223,6 +234,7 @@
 (defn maybe
   "Try to parse the given parser, but succeed anyway."
   [parser]
+  (check-for-cut parser)
   (fn
     ([_text index]
      (r/->push parser index))
