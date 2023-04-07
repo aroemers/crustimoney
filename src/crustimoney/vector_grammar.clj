@@ -12,6 +12,13 @@
                                  "crustimoney.combinators")
                              (name key))))
 
+(defn- create-parser* [tree]
+  (if (vector? tree)
+    (if-let [combinator (key-to-combinator (first tree))]
+      (apply combinator (map create-parser* (rest tree)))
+      (throw (ex-info "combinator-key does not resolve" {:key (first tree)})))
+    tree))
+
 (defn create-parser
   "Create a parser based on a vector-driven combinator tree. For
   example:
@@ -28,13 +35,6 @@
   wrapped in `crustimoney.combinators/grammar`. Other data is left
   as-is."
   [tree]
-  (cond (map? tree)
-        (c/grammar (update-vals tree create-parser))
-
-        (vector? tree)
-        (if-let [combinator (key-to-combinator (first tree))]
-          (apply combinator (map create-parser (rest tree)))
-          (throw (ex-info "combinator-key does not resolve" {:key (first tree)})))
-
-        :else
-        tree))
+  (if (map? tree)
+    (c/grammar (update-vals tree create-parser*))
+    (create-parser* tree)))
