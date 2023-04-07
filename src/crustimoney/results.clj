@@ -43,6 +43,15 @@
   [text success]
   (subs text (success->start success) (success->end success)))
 
+(defn ^:no-doc success->texts
+  "Replaces all `{:start .., :end ..}` attribute maps with the matched
+  text, recursively."
+  [text success]
+  ((fn inner [success]
+     (into [(success->name success) (success->text text success)]
+           (map inner (success->children success))))
+   success))
+
 (defn ^:no-doc with-success-children
   "Set the children of a success."
   [success children]
