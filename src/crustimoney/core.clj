@@ -35,8 +35,8 @@
 ;;; Parsing virtual machine
 
 (defn parse
-  "Use the given parser to parse the supplied text string. The result
-  will either be a success (a hiccup-style vector) or a set of
+  "Use the given `parser` to parse the supplied `text` string. The
+  result will either be a success (a hiccup-style vector) or a set of
   errors. By default only named nodes are kept in a success
   result (the root node is allowed to be nameless).
 
@@ -51,7 +51,7 @@
       ({:key :expected-literal, :at 0, :detail {:literal \"foo\"}}
        {:key :unexpected-match, :at 8, :detail {:text \"eve\"}})
 
-  The parse function can take an options map, with the following
+  The parse function can take an `opts` map, with the following
   options:
 
   - `:index`, the index at which to start parsing in the text, default 0.

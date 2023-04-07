@@ -1,5 +1,8 @@
 (ns crustimoney.vector-grammar
-  "A basic vector-driven parser generator."
+  "A basic vector-driven parser generator. This type of parser generator
+  is not intended to be used directly, though you can. It is used as
+  an intermediary format for other formats, such as the string-based
+  and data-based grammars."
   (:require [crustimoney.combinators :as c]))
 
 ;;; Parser creation
@@ -23,11 +26,7 @@
   by the first keyword. If the keyword does not have a namespace,
   `crustimoney.combinators` is assumed. Maps are walked as well,
   wrapped in `crustimoney.combinators/grammar`. Other data is left
-  as-is.
-
-  This type of parser generator is not intended to be used directly,
-  though you can. It is used as an intermediary format for other
-  formats, such as the string-based and data-based grammars."
+  as-is."
   [tree]
   (cond (map? tree)
         (c/grammar (update-vals tree create-parser))

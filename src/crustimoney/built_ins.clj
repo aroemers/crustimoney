@@ -3,7 +3,11 @@
 
   A map called `all` is also defined, which contain all the parsers in
   this namespace. This can be used as an extra parameter to the
-  `grammar` macro for example."
+  `grammar` macro for example:
+
+      (grammar built-ins/all (create-parser \"
+        root <- (space? (:name word) blank (:id natural) space?)* $
+      \"))"
   (:refer-clojure :exclude [newline])
   (:require [crustimoney.combinators :as c]))
 

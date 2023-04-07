@@ -1,6 +1,56 @@
 (ns crustimoney.data-grammar
   "Create a parser based on a data grammar. The data is translated into
-  combinators."
+  a parser (or map of parsers). The following example shows what a
+  data grammar looks like:
+
+      {;; terminals
+       literal            \"foo\"
+       character          \\c
+       regex              #\"[a-z]\"
+       regex-tag          #crusti/regex \"[a-z]\" ; EDN support
+       eof                $
+
+       ;; refs, chains, choices and grouping
+       reference          literal
+       chain              (literal regex)
+       choices            (literal / regex / \"alice\" \"bob\")
+       named-group        (:my-name literal / \"the end\" $)
+       auto-named-group=  (literal / \"the end\" $)
+
+       ;; quantifiers
+       zero-to-many       (literal *)
+       one-to-many        (\"bar\"+)
+       zero-to-one        (\"foo\" \"bar\"?) ; bar is optional here
+
+       ;; lookaheads
+       lookahead          (& regex)
+       negative-lookahead (!\"alice\")
+
+       ;; cuts
+       soft-cut           ('[' > expr? ']') ; note the >
+       hard-cut           ((class-open class class-close >>)*) ; note the >>
+
+       ;; direct combinator calls
+       combinator-call    [:with-error :fail #crusti/parser (\"fooba\" #\"r|z\")]
+       custom-combinator  [:my.app/my-combinator ...]}
+
+  To capture nodes in the parse result, you need to use named groups.
+  If you postfix a rule name with `=`, the expression is automatically
+  captured using the rule's name (without the postfix). Please read up
+  on this at `crustimoney.combinators/grammar`.
+
+  Keep in mind that `grammar` takes multiple maps, all of which can be
+  referred to by the string grammar. For example:
+
+      (grammar
+       (create-parser '{root (\"Hello \" email)})
+       {:email (regex #\"...\")})
+
+  If you want to use an EDN format, you can use `#crusti/regex` tagged
+  literal for regular expressions. To be able to read this, use the
+  following:
+
+      (clojure.edn/read-string {:readers *data-readers*} ...)"
   (:require [crustimoney.vector-grammar :as vector-grammar]))
 
 ;;; Utility functions
@@ -102,59 +152,11 @@
 ;;; Parser creation
 
 (defn create-parser
-  "Create a parser based on a data grammar definition. If a map with
+  "Create a parser based on a datagrammar definition. If a map with
   rules is supplied, a map of parsers is returned. Otherwise a single
-  parser is returned. The following example shows what a data grammar
-  looks like:
+  parser is returned.
 
-      {;; terminals
-       literal            \"foo\"
-       character          \\c
-       regex              #\"[a-z]\"
-       regex-tag          #crusti/regex \"[a-z]\" ; EDN support
-       eof                $
-
-       ;; refs, chains, choices and grouping
-       reference          literal
-       chain              (literal regex)
-       choices            (literal / regex / \"alice\" \"bob\")
-       named-group        (:my-name literal / \"the end\" $)
-       auto-named-group=  (literal / \"the end\" $)
-
-       ;; quantifiers
-       zero-to-many       (literal *)
-       one-to-many        (\"bar\"+)
-       zero-to-one        (\"foo\" \"bar\"?) ; bar is optional here
-
-       ;; lookaheads
-       lookahead          (& regex)
-       negative-lookahead (!\"alice\")
-
-       ;; cuts
-       soft-cut           ('[' > expr? ']') ; note the >
-       hard-cut           ((class-open class class-close >>)*) ; note the >>
-
-       ;; direct combinator calls
-       combinator-call    [:with-error :fail #crusti/parser (\"fooba\" #\"r|z\")]
-       custom-combinator  [:my.app/my-combinator ...]}
-
-  To capture nodes in the parse result, you need to use named groups.
-  If you postfix a rule name with `=`, the expression is automatically
-  captured using the rule's name (without the postfix). Please read up
-  on this at `crustimoney.combinators/grammar`.
-
-  Keep in mind that `grammar` takes multiple maps, all of which can be
-  referred to by the string grammar. For example:
-
-      (grammar
-       (create-parser '{root (\"Hello \" email)})
-       {:email (regex #\"...\")})
-
-  If you want to use an EDN grammar file or string, you can use
-  `#crusti/regex` tagged literal for regular expressions. To read
-  this, use the following:
-
-      (clojure.edn/read-string {:readers *data-readers*} ...)"
+  See namespace documentation for the data-grammar format."
   [data]
   (-> (vector-tree data)
       (vector-grammar/create-parser)))

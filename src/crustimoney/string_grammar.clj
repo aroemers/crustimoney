@@ -1,6 +1,44 @@
 (ns crustimoney.string-grammar
   "Create a parser based on a string grammar. The grammar is translated
-  into combinators."
+  into a parser (or map of parsers). The following definition
+  describes the string grammar syntax in itself:
+
+      space            <- [\\s]*
+
+      non-terminal=    <- [a-zA-Z_-]+
+      literal          <- '\\'' > (:literal #'(\\\\\\'|[^\\'])*') '\\''
+      character-class= <- '[' > #'(\\\\]|[^]])*' ']' [?*+]?
+      regex=           <- '#' > literal
+      ref              <- (non-terminal !'=' space !'<-')
+      end-of-file=     <- '$'
+
+      group-name       <- ':' > (:group-name [a-zA-Z_-]+)
+      group=           <- '(' > group-name? space choice space ')'
+
+      expr             <- ref / group / literal / character-class / end-of-file / regex
+
+      quantified       <- (:quantified expr (:operand [?+*])) / expr
+      lookahead        <- (:lookahead (:operand [&!]) > quantified) / quantified
+
+      cut=             <- '>>' / '>'
+
+      chain            <- (:chain lookahead (space (cut / lookahead))+) / lookahead
+      choice           <- (:choice chain (space '/' space chain)+) / chain
+
+      rule=            <- (:rule-name non-terminal '='?) space '<-' >> space choice
+      root=            <- (:rules (space rule space)+) / (:no-rules space choice space) $
+
+  To capture nodes in the parse result, you need to use named groups.
+  If you postfix a rule name with `=`, the expression is automatically
+  captured using the rule's name (without the postfix). Please read up
+  on this at `crustimoney.combinators/grammar`.
+
+  Keep in mind that `grammar` takes multiple maps, all of which can be
+  referred to by the string grammar. For example:
+
+      (grammar
+       (create-parser \"root <- 'Hello ' email\")
+       {:email (regex #\"...\")})"
   (:require [clojure.string :as str]
             [crustimoney.combinators :as c]
             [crustimoney.core :as core]
@@ -210,45 +248,8 @@
 (defn create-parser
   "Create a parser based on a string-based grammar definition. If the
   definition contains multiple rules, a map of parsers is returned.
-  The following definition describes the string grammar syntax in
-  itself:
 
-      space            <- [\\s]*
-
-      non-terminal=    <- [a-zA-Z_-]+
-      literal          <- '\\'' > (:literal #'(\\\\\\'|[^\\'])*') '\\''
-      character-class= <- '[' > #'(\\\\]|[^]])*' ']' [?*+]?
-      regex=           <- '#' > literal
-      ref              <- (non-terminal !'=' space !'<-')
-      end-of-file=     <- '$'
-
-      group-name       <- ':' > (:group-name [a-zA-Z_-]+)
-      group=           <- '(' > group-name? space choice space ')'
-
-      expr             <- ref / group / literal / character-class / end-of-file / regex
-
-      quantified       <- (:quantified expr (:operand [?+*])) / expr
-      lookahead        <- (:lookahead (:operand [&!]) > quantified) / quantified
-
-      cut=             <- '>>' / '>'
-
-      chain            <- (:chain lookahead (space (cut / lookahead))+) / lookahead
-      choice           <- (:choice chain (space '/' space chain)+) / chain
-
-      rule=            <- (:rule-name non-terminal '='?) space '<-' >> space choice
-      root=            <- (:rules (space rule space)+) / (:no-rules space choice space) $
-
-  To capture nodes in the parse result, you need to use named groups.
-  If you postfix a rule name with `=`, the expression is automatically
-  captured using the rule's name (without the postfix). Please read up
-  on this at `crustimoney.combinators/grammar`.
-
-  Keep in mind that `grammar` takes multiple maps, all of which can be
-  referred to by the string grammar. For example:
-
-      (grammar
-       (create-parser \"root <- 'Hello ' email\")
-       {:email (regex #\"...\")})"
+  See the namespace documentation for the string format."
   [text]
   (-> (vector-tree text)
       (vector-grammar/create-parser)))

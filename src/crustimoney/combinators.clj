@@ -291,6 +291,10 @@
       (grammar {:foo  (literal \"foo\")
                 :root (chain (ref :foo) \"bar\")})
 
+  The `grammar` macro can be nested, where the most-outer one will
+  perform the final `ref` resolving. This way, multiple (partial)
+  grammars can be combined.
+
   A rule's name key can be postfixed with `=`. The rule's parser is
   then wrapped with `with-name` (without the postfix). A `ref` to such
   rule is also without the postfix.
