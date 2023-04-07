@@ -27,7 +27,8 @@
 
 (defprotocol CutSupport
   (cut [this index]
-    "Clear the internal buffer before the given `index`."))
+    "Indicate that no data before `index` will be requested anymore, 
+    so those resources can be released."))
 
 ;;; String implementation
 
