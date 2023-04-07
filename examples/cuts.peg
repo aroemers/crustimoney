@@ -1,3 +1,0 @@
-root=     <- (scope? separator >>)+ $
-scope=    <- '{' > [^}]* '}'
-separator <- '--'

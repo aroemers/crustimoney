@@ -1,7 +1,7 @@
 {root=    (space value space $)
  value    (string / number / boolean / array / null / object)
  string   ("\"" > (:string #"(\\\"|[^\"])*") "\"")
- number=  #"\d+"
+ number=  #"-?\d+(\.\d+)?"
  boolean= ("true" / "false")
  array=   ("[" > space (value (space "," space value)*)? space "]")
  null=    "null"

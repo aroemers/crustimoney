@@ -26,4 +26,7 @@
 
    :test {:dependencies [[cloverage/cloverage "1.2.4"]]
 
+          :test-selectors {:default  (complement :examples)
+                           :examples :examples}
+
           :cloverage {:fail-threshold 90}}})

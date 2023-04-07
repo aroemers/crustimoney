@@ -24,8 +24,11 @@ jobs:
       - name: Install dependencies
         run: lein with-profile +test deps
 
-      - name: Run tests
+      - name: Run tests and check coverage
         run: lein cloverage
+
+      - name: Run examples tests
+        run: lein test :examples
 
       - name: Lint source
         run: lein clj-kondo
