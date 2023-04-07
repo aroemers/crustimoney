@@ -8,7 +8,7 @@
       (grammar built-ins/all (create-parser \"
         root <- (space? (:name word) blank (:id natural) space?)* $
       \"))"
-  (:refer-clojure :exclude [newline])
+  (:refer-clojure :exclude [newline float])
   (:require [crustimoney.combinators :as c]))
 
 (def space
@@ -44,20 +44,25 @@
   (c/with-error :expected-natural-number
     (c/regex #"\d+")))
 
+(def float
+  "Parse a floating point number."
+  (c/with-error :expected-float
+    (c/regex #"-?\d+(\.\d+)?")))
+
 (def word
   "Parse an alphabetical word."
   (c/with-error :expected-word
     (c/regex #"[A-Za-z]+")))
 
 (def dquote
-  "Parse an double quoted string, allowing \\\" escapes."
+  "Parse an double quoted string, including \\\" escapes."
   (c/with-error :expected-double-qoute-string
     (c/chain (c/literal "\"")
              (c/regex #"(\\\"|[^\"])*")
              (c/literal "\""))))
 
 (def squote
-  "Parse an single quoted string, allowing \\' escapes."
+  "Parse an single quoted string, including \\' escapes."
   (c/with-error :expected-single-qoute-string
     (c/chain (c/literal "'")
              (c/regex #"(\\'|[^'])*")

@@ -44,6 +44,15 @@
   (is (= #{(r/->error :expected-natural-number 0)}
          (core/parse b/natural "-10"))))
 
+(deftest float-test
+  (is (= (r/->success 0 3) (core/parse b/float "123")))
+  (is (= (r/->success 0 3) (core/parse b/float "-23")))
+  (is (= (r/->success 0 1) (core/parse b/float "0")))
+  (is (= (r/->success 0 4) (core/parse b/float "1.23")))
+  (is (= (r/->success 0 5) (core/parse b/float "-12.3")))
+  (is (= #{(r/->error :expected-float 0)}
+         (core/parse b/float "nan"))))
+
 (deftest word-test
   (is (= (r/->success 0 3) (core/parse b/word "Foo")))
   (is (= #{(r/->error :expected-word 0)}
