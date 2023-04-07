@@ -109,8 +109,8 @@
   [reader chunk-size]
   (map->ReaderBuffer
    {:reader     reader
-    :buffer     (StringBuilder.)
     :chunk-size chunk-size
+    :buffer     (StringBuilder.)
     :hit-end?   (atom false)
     :cut-at     (atom 0)}))
 
