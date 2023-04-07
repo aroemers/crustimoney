@@ -3,8 +3,7 @@
 
   A map called `all` is also defined, which contain all the parsers in
   this namespace. This can be used as an extra parameter to the
-  `grammar` macro or the `create-parser` functions in the
-  string-grammar or data-grammar namespaces."
+  `grammar` macro for example."
   (:refer-clojure :exclude [newline])
   (:require [crustimoney.combinators :as c]))
 
