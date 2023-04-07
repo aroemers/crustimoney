@@ -1,4 +1,4 @@
-(ns ^:examples examples-test
+(ns examples-test
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.test :refer [deftest testing is]]
