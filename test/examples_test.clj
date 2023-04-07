@@ -1,6 +1,5 @@
 (ns examples-test
   (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
             [clojure.test :refer [deftest testing is]]
             [crustimoney.core :as core]
             [crustimoney.data-grammar :as data-grammar]
@@ -11,7 +10,7 @@
 ;;; Read input
 
 (defn- from [filename]
-  (slurp (io/reader (str "examples/" filename))))
+  (slurp (str "examples/" filename)))
 
 (defn- from-peg [filename]
   (-> (from filename)
