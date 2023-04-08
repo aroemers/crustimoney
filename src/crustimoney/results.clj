@@ -52,7 +52,7 @@
 
 (defn ^:no-doc success->texts
   "Replaces the `{:start .., :end ..}` attribute map with the matched
-  `text`, if the `success`'s name passes the `names`
+  part from `text`, if the `success`'s name passes the `names`
   predicate (remember, sets are predicates), recursively."
   [text success names]
   ((fn inner [success]
