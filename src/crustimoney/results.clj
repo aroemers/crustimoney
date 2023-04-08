@@ -50,19 +50,6 @@
     (-> (into [name attrs] children)
         (with-meta (meta success)))))
 
-(defn ^:no-doc success->texts
-  "Replaces the `{:start .., :end ..}` attribute map with the matched
-  part from `text`, if the `success`'s name passes the `names`
-  predicate (remember, sets are predicates), recursively."
-  [text success names]
-  ((fn inner [success]
-     (let [name     (success->name success)
-           children (map inner (success->children success))]
-       (if (names name)
-         (into [name (success->text text success)] children)
-         (with-success-children success children))))
-   success))
-
 (defn ^:no-doc with-success-name
   "Set the name of the success value."
   [key success]

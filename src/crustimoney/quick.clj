@@ -8,6 +8,12 @@
             [crustimoney.results :as r]
             [crustimoney.string-grammar :as string-grammar]))
 
+(defn- success->texts [text success]
+  ((fn inner [success]
+     (into [(r/success->name success) (r/success->text text success)]
+           (map inner (r/success->children success))))
+   success))
+
 (defn parse
   "Quickly parse `text` using the string- or data parser `definition`.
   The definition cannot be recursive. The predefined parsers in the
@@ -26,9 +32,9 @@
   When the result is an error, nil is returned."
   [definition text]
   (let [rules (c/grammar built-ins/all
-               {:root (if (string? definition)
-                        (string-grammar/create-parser definition)
-                        (data-grammar/create-parser definition))})
+                         {:root (if (string? definition)
+                                  (string-grammar/create-parser definition)
+                                  (data-grammar/create-parser definition))})
         result (core/parse (:root rules) text)]
     (when (r/success? result)
-      (r/success->texts text result (constantly true)))))
+      (success->texts text result))))
