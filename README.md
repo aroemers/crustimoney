@@ -47,6 +47,25 @@ Let's parse those long words from Owl.
 First, add this library to your dependencies.
 The instructions for the latest version can be found here: [![Clojars Project](https://img.shields.io/clojars/v/nl.functionalbytes/crustimoney.svg)](https://clojars.org/nl.functionalbytes/crustimoney)
 
+## Quick!
+
+While the library is suitable for complex grammars, you may only want a simple parser where a regular expression just doesn't cut it.
+For this there is the `crustimoney.quick/parse` function.
+It takes a string- or data-driven parser definition and a string, creates a parser internally, tries to parse the string, and returns the result if it matched.
+For example:
+
+```clj
+(quick/parse '("alice" (" and " (:who word))+)
+             "alice and bob and eve")
+=> [nil "alice and bob and eve"
+    [:who "bob"]
+    [:who "eve"]]
+```
+
+If that's what you need - _right now!_ - you could skip directly to [string-based grammar](#string-based-grammar) or [data-based grammar](#data-based-grammar).
+However, this is only suitable for basic non-recursive grammars.
+For all other usecases, read on!
+
 ## The combinators
 
 The combinators are at the heart of the library.
