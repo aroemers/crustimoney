@@ -16,10 +16,10 @@
   A success result is transformed such that the matched texts are
   directly available. For example:
 
-      (crusti \"'alice' (' and ' (:who word))+\"
+      (crusti \"'alice' (' and ' (:who word))+ $\"
               \"alice and bob and eve\")
 
-      => [nil \"alice and bob and eve\"
+      => [nil {:start 0, :end 21}
           [:who \"bob\"]
           [:who \"eve\"]]
 
@@ -31,4 +31,4 @@
                         (data-grammar/create-parser definition))})
         result (core/parse (:root rules) text)]
     (when (r/success? result)
-      (r/success->texts text result))))
+      (r/success->texts text result identity))))
