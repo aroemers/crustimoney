@@ -1,5 +1,5 @@
 (ns crustimoney.quick
-  "A namespace for those quick \"I'd rather use something better than a
+  "A namespace for those quick \"I need something better than a
   regex\"-moments."
   (:require [crustimoney.built-ins :as built-ins]
             [crustimoney.combinators :as c]
@@ -16,10 +16,10 @@
   A success result is transformed such that the matched texts are
   directly available. For example:
 
-      (crusti \"'alice' (' and ' (:who word))+ $\"
-              \"alice and bob and eve\")
+      (parse \"'alice' (' and ' (:who word))+\"
+             \"alice and bob and eve\")
 
-      => [nil {:start 0, :end 21}
+      => [nil \"alice and bob and eve\"
           [:who \"bob\"]
           [:who \"eve\"]]
 
@@ -31,4 +31,4 @@
                         (data-grammar/create-parser definition))})
         result (core/parse (:root rules) text)]
     (when (r/success? result)
-      (r/success->texts text result identity))))
+      (r/success->texts text result (constantly true)))))

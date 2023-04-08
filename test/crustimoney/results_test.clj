@@ -18,3 +18,8 @@
                    {:at 5 :line 3 :column 1}
                    {:at 8 :line 3 :column 4}}]
     (is (= expected (r/errors->line-column text (set/project expected [:at]))))))
+
+(deftest success->texts
+  (let [result   [nil {:start 0, :end 3} [:foo {:start 0, :end 3}]]
+        expected [nil {:start 0, :end 3} [:foo "foo"]]]
+    (is (= expected (r/success->texts "foo" result #{:foo})))))
