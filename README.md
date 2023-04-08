@@ -112,6 +112,13 @@ For example:
 To work with these successes and errors, the functions in the `results` namespace can be used.
 These allow you to get the text of a success node for example, or add `:line` and `:column` keys to the errors.
 
+> ℹ️ As you can see, only the indices of the matches are in the result tree, not the matched string themselves.
+> This is on purpose.
+> Having lots of substrings, while most of them are never used and could be quiet big - think about the root node for example - would already be a big waste of memory.
+> Moreover, it would make the internal caches a lot bigger.
+> Especially if you consider that these caches also contain nodes that are not part of the final result, as those were backtracked away from.
+> For this reason, crustimoney has a function of fetching the matched text when processing the result tree, called `results/success->text`.
+
 ## Recursive grammars
 
 Composing a single parser can be enough in some cases.
@@ -312,9 +319,9 @@ Keep in mind that `grammar` takes multiple maps, which is utilised in the follow
 
 The names of the rules can have an `=` sign appended, for the auto-named feature discussed earlier.
 
-Note (for the purists) that the `.` (dot, match any non-newline char) and `ε` (epsilon, match the empty string) from the original PEG paper are missing.
-This is on purpose.
-The other available constructs, such as regular expression support, have far better performance characteristics and nicer result trees.
+> ℹ️ Note (for the purists) that the `.` (dot, match any non-newline char) and `ε` (epsilon, match the empty string) from the original PEG paper are missing.
+> This is on purpose.
+> The other available constructs, such as regular expression support, have far better performance characteristics and nicer result trees.
 
 ## Data-based grammar
 
