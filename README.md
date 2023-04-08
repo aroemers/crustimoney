@@ -91,6 +91,12 @@ But more combinators are provided, for ease of use, nicer result trees and bette
 
 Each combinator returns a parser.
 Some combinators take one or more parsers, making them composable.
+For example:
+
+```clj
+(chain (literal "foo") (regex "ba(r|z)"))
+```
+
 Such a parser can be supplied to `core/parse`, together with the string to parse.
 
 ## Parse results
