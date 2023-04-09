@@ -35,17 +35,17 @@
   (let [cache (java.util.TreeMap.)]
     (reify Cache
       (fetch [_ parser index]
-        (get-in cache [index parser]))
+        (get-in cache [(int index) parser]))
 
       (store [_ parser index result]
-        (if-let [parsers (get cache index)]
+        (if-let [parsers (get cache (int index))]
           (.put ^HashMap parsers parser result)
           (let [parsers (HashMap.)]
             (.put parsers parser result)
-            (.put cache index parsers))))
+            (.put cache (int index) parsers))))
 
       (cut [_ index]
-        (.. cache (headMap index) clear)))))
+        (.. cache (headMap (int index)) clear)))))
 
 (defn weak-treemap-cache
   "Create a cache that supports clearing below a certain index and has
@@ -55,14 +55,14 @@
   (let [cache (TreeMap.)]
     (reify Cache
       (fetch [_ parser index]
-        (get-in cache [index parser]))
+        (get-in cache [(int index) parser]))
 
       (store [_ parser index result]
-        (if-let [parsers (get cache index)]
+        (if-let [parsers (get cache (int index))]
           (.put ^WeakHashMap parsers parser result)
           (let [parsers (WeakHashMap.)]
             (.put parsers parser result)
-            (.put cache index parsers))))
+            (.put cache (int index) parsers))))
 
       (cut [_ index]
-        (.. cache (headMap index) clear)))))
+        (.. cache (headMap (int index)) clear)))))

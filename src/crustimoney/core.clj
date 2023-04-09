@@ -1,6 +1,7 @@
 (ns crustimoney.core
   "The main parsing functions."
   (:require [crustimoney.caches :as caches]
+            [crustimoney.experimental.reader :as reader]
             [crustimoney.results :as r]))
 
 ;;; Internals
@@ -121,6 +122,8 @@
                ;; Check if it was a hard-cut success
                (if (-> result meta :hard-cut)
                  (do (caches/cut cache (r/success->end result))
+                     (when (satisfies? reader/CutSupport text)
+                       (reader/cut text (r/success->end result)))
                      (recur (pop stack) processed state' (r/success->end result)))
                  (do (caches/store cache parser index processed)
                      (recur (pop stack) processed state' cut-at))))
