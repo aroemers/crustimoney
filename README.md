@@ -167,8 +167,8 @@ The macro can also be nested, where it is the most outer one that does the actua
 ## Auto-named rules
 
 The example above shows that all success nodes are filtered out, except the root node, as they are nameless.
-The parsers could be wrapped with `with-name`, but the names can be the same as the grammar rule names in this case.
-Appending an `=` to the rule name will automatically wrap the parser as such.
+The parsers could be wrapped with `with-name`, but the names would probably be the same as the rule names in this case.
+Appending an `=` to the rule name will automatically wrap the parser with `with-name`.
 This would update the grammar to:
 
 ```clj
@@ -192,12 +192,11 @@ It is encouraged to be very intentional about which nodes should be captured and
 For example, using the following grammar would _only_ yield a `:wrapped` node if the `:expr` is really wrapped in parentheses:
 
 ```clj
-{:wrapped (choice (with-name :wrapped
-                    (chain (literal "(")
-                           (ref :expr)
-                           (literal ")")))
-                  (ref :expr))
- :expr=   ...}
+(choice (with-name :wrapped
+          (chain (literal "(")
+                 (ref :expr)
+                 (literal ")")))
+        (ref :expr))
 ```
 
 This approach results in shallower result trees and thus less post-processing.
@@ -229,13 +228,13 @@ The following example shows this, and also how to add a hard cut in the `chain` 
 ```
 
 Without the hard cut, the parse would be successful (because of the `maybe` combinator).
-But, since the text clearly opens a bracket, it would be better to fail.
+But, since the text clearly opens a parenthesis, it would be better to fail.
 The hard cut enforces this, as the missing `")"` error cannot backtrack beyond it.
-So from a user's standpoint, a cut can already very beneficial.
+So from a user's standpoint, a cut can already be very beneficial.
 
 The second major benefit is that the parser can release everything in its cache before the cut position.
 It will never need this again.
-This behaviour makes that well placed hard cuts - especially when parsing repeating structures - can alleviate the memory requirements to be constant.
+This behaviour makes that well placed hard cuts can - especially when parsing repeating structures - alleviate the memory requirements to be constant.
 
 Note that a cut can only be used within a `chain`, and never as the first element.
 The preceding parser(s) should consume some input, and that input should only be valid for that chain of parser(s) at that point.
@@ -327,7 +326,7 @@ However, it is perfectly valid to define a single parser, such as:
 'alice and ' !'eve' [a-z]+
 ```
 
-Keep in mind that `grammar` takes multiple maps, which is utilised in the following example:
+Keep in mind that `grammar` takes multiple maps, which can be used like so:
 
 ```clj
 (grammar
