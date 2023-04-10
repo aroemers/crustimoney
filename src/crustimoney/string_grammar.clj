@@ -152,85 +152,45 @@
 
 ;;; Parse result processing
 
-(defmulti ^:no-doc vector-tree-for
-  (fn [_text node]
-    (r/success->name node)))
+(def ^:private transformations
+  {:root (r/unite identity)
 
-(defmethod vector-tree-for :root
-  [text node]
-  (->> node r/success->children first (vector-tree-for text)))
+   :rules (r/unite [rules] (into {} rules))
 
-(defmethod vector-tree-for :rules
-  [text node]
-  (into {} (map (partial vector-tree-for text) (r/success->children node))))
+   :no-rules (r/unite identity)
 
-(defmethod vector-tree-for :no-rules
-  [text node]
-  (vector-tree-for text (first (r/success->children node))))
+   :rule (r/unite vector)
 
-(defmethod vector-tree-for :rule
-  [text node]
-  (let [[name choice] (r/success->children node)
-        rule-name     (keyword (r/success->text text name))]
-    [rule-name (vector-tree-for text choice)]))
+   :rule-name (r/coerce keyword)
 
-(defmethod vector-tree-for :non-terminal
-  [text node]
-  [:ref (keyword (r/success->text text node))])
+   :non-terminal (r/coerce [s] [:ref (keyword s)])
 
-(defmethod vector-tree-for :literal
-  [text node]
-  [:literal (unescape-quotes (r/success->text text node))])
+   :literal (r/coerce [s] [:literal (unescape-quotes s)])
 
-(defmethod vector-tree-for :group
-  [text node]
-  (let [[child1 child2] (r/success->children node)]
-    (if (= (r/success->name child1) :group-name)
-      [:with-name (keyword (r/success->text text child1))
-       (vector-tree-for text child2)]
-      (vector-tree-for text child1))))
+   :group (r/unite [[child1 child2]] (if child2 [:with-name child1 child2] child1))
 
-(defmethod vector-tree-for :character-class
-  [text node]
-  [:regex (r/success->text text node)])
+   :group-name (r/coerce keyword)
 
-(defmethod vector-tree-for :regex
-  [text node]
-  (let [literal (first (r/success->children node))]
-    [:regex (unescape-quotes (r/success->text text literal))]))
+   :character-class (r/coerce [s] [:regex s])
 
-(defmethod vector-tree-for :chain
-  [text node]
-  (into [:chain] (map (partial vector-tree-for text) (r/success->children node))))
+   :regex (r/unite [[literal]] [:regex (second literal)])
 
-(defmethod vector-tree-for :choice
-  [text node]
-  (into [:choice] (map (partial vector-tree-for text) (r/success->children node))))
+   :chain (r/unite [children] (into [:chain] children))
 
-(defmethod vector-tree-for :lookahead
-  [text node]
-  (let [[operand expr] (r/success->children node)
-        parser         (vector-tree-for text expr)]
-    (case (r/success->text text operand)
-      "!" [:negate parser]
-      "&" [:lookahead parser])))
+   :choice (r/unite [children] (into [:choice] children))
 
-(defmethod vector-tree-for :quantified
-  [text node]
-  (let [[expr operand] (r/success->children node)
-        parser         (vector-tree-for text expr)]
-    (case (r/success->text text operand)
-      "?" [:maybe parser]
-      "+" [:repeat+ parser]
-      "*" [:repeat* parser])))
+   :lookahead (r/unite [[operand expr]] [operand expr])
 
-(defmethod vector-tree-for :end-of-file
-  [_text _node]
-  [:eof])
+   :quantified (r/unite [[expr operand]] [operand expr])
 
-(defmethod vector-tree-for :cut
-  [text node]
-  ({">>" :hard-cut, ">" :soft-cut} (r/success->text text node)))
+   :operand (r/coerce {"!" :negate "&" :lookahead "?" :maybe "+" :repeat+ "*" :repeat*})
+
+   :end-of-file (r/coerce [s] [:eof])
+
+   :cut (r/coerce {">>" :hard-cut, ">" :soft-cut})})
+
+(defn ^:no-doc vector-tree-for [text success]
+  (r/transform success text transformations))
 
 ;;; Public namespace API
 

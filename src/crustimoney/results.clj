@@ -137,3 +137,61 @@
         line-cols (indices->line-columns text (keys grouped))]
     (->> (map #(merge %1 (line-cols (error->index %1))) errors)
          (set))))
+
+;;; Transformation helper
+
+(defn transform
+  "If `result` is a success, it applies the map of `transformations`
+  functions in postwalk order based on the node's name. A
+  transformation function receives the full `text` and the node. See
+  also `coerce` and `unite` for helpers, for example:
+
+      (-> (parse ... text)
+          (transform text
+            {:number    (coerce parse-long)
+             :operand   (coerce {\"+\" + \"-\" - \"*\" * \"/\" /})
+             :operation (unite [[v1 op v2]] (op v1 v2))
+             nil        (unite identity)}
+
+  If `result` is not a success, it is returned as is."
+  [result text transformations]
+  (let [inner (fn inner [success]
+                (let [children (map inner (success->children success))]
+                  (if-let [f (get transformations (success->name success))]
+                    (f text (with-success-children success children))
+                    (with-success-children success children))))]
+    (cond-> result (success? result) inner)))
+
+(defmacro coerce
+  "Creates a transformation function. It applies function `f` to the
+  matched text of the success node, or takes a `binding` vector, where
+  the matched text is bound to, available for use in the `body`. For
+  example:
+
+      (coerce parse-long)
+
+      (coerce [s] (-> s upper-case reverse str))"
+  ([f]
+   `(fn [text# success#]
+      (~f (success->text text# success#))))
+  ([binding & body]
+   `(fn [text# success#]
+      (let [~(first binding) (success->text text# success#)]
+        ~@body))))
+
+(defmacro unite
+  "Creates a transformation function. It applies function `f` to the
+  children of the success node, or takes a `binding` vector, where
+  each of the children are bound to, for use in the `body`. For
+  example:
+
+      (unite +)
+
+      (unite [[val1 op val2]] (op val1 val2))"
+  ([f]
+   `(fn [_# success#]
+      (apply ~f (success->children success#))))
+  ([binding & body]
+   `(fn [_# success#]
+      (let [~(first binding) (success->children success#)]
+        ~@body))))
