@@ -437,6 +437,37 @@ This map can be used as a basis for your own grammar, by passing it along to `gr
 "))
 ```
 
+## Built-in transformer
+
+The `results` namespace contains mostly basic functions for dealing with the parse results.
+These include functions as `success->text` to get the matched text of a node, and `success->children` to get its children.
+While not necessary (as the results tree is made of plain vectors), it does increase readability.
+
+Writing your own parse tree processor is easy, it's just vectors.
+That said, the `results` namespace has a `transform` function.
+This performs a postwalk, transforming the nodes based on their name.
+Two accompanying macros are available, called `coerce` and `unite`.
+Here is an example:
+
+```clj
+(-> (parse ... text)
+    (transform text
+      {:number    (coerce parse-long)
+       :operand   (coerce {\"+\" + \"-\" - \"*\" * \"/\" /})
+       :operation (unite [[v1 op v2]] (op v1 v2))
+       nil        (unite identity)}))
+```
+
+If the parse result is not a success, the `transform` returns it as is.
+Otherwise it applies the transformation functions, which are functions that receives the full text and a node.
+
+The `coerce` macro creates such a transformer, by applying a function to the node's matched text.
+Instead of a function, `coerce` can take a binding vector and a body.
+So the `:number` transformation could also be written as `(coerce [s] (parse-long s))`
+
+The `unite` macro creates a transformation function, by applying a function to the node's children, as seen with the `nil` (root node) transformer.
+Instead of a function, `unite` can take a binding vector and a body, as seen with the `:operation` transformer.
+
 ## Writing your own combinator
 
 A parser combinator returns a function that takes a text input and a position.

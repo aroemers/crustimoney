@@ -151,7 +151,7 @@
             {:number    (coerce parse-long)
              :operand   (coerce {\"+\" + \"-\" - \"*\" * \"/\" /})
              :operation (unite [[v1 op v2]] (op v1 v2))
-             nil        (unite identity)}
+             nil        (unite identity)}))
 
   If `result` is not a success, it is returned as is."
   [result text transformations]
