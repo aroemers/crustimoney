@@ -444,7 +444,7 @@ The `results` namespace contains mostly basic functions for dealing with the par
 These include functions as `success->text` to get the matched text of a node, and `success->children` to get its children.
 While not necessary (as the results tree is made of plain vectors), it does increase readability.
 
-Writing your own parse tree processor is easy, it's just vectors.
+Writing your own parse tree processor is easy.
 That said, the `results` namespace has a `transform` function.
 This performs a postwalk, transforming the nodes based on their name.
 Two accompanying macros are available, called `coerce` and `unite`.
@@ -464,9 +464,9 @@ Otherwise it applies the transformation functions, which are functions that rece
 
 The `coerce` macro creates such a transformer, by applying a function to the node's matched text.
 Instead of a function, `coerce` can take a binding vector and a body.
-So the `:number` transformation could also be written as `(coerce [s] (parse-long s))`
+So the `:number` transformation above could also be written as `(coerce [s] (parse-long s))`
 
-The `unite` macro creates a transformation function, by applying a function to the node's children, as seen with the `nil` (root node) transformer.
+The `unite` macro creates a transformation function, by applying a function to the node's children, as seen with the `nil` (root node) transformer above.
 Instead of a function, `unite` can take a binding vector and a body, as seen with the `:operation` transformer.
 
 ## Writing your own combinator

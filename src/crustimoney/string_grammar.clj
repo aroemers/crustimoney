@@ -189,7 +189,7 @@
 
    :cut (r/coerce {">>" :hard-cut, ">" :soft-cut})})
 
-(defn ^:no-doc vector-tree-for [text success]
+(defn ^:no-doc vector-tree-for [success text]
   (r/transform success text transformations))
 
 ;;; Public namespace API
@@ -200,10 +200,11 @@
   `crustimoney.vector-grammar` for more on this format. This can be
   useful for debugging."
   [text]
-  (let [result (core/parse (:root grammar) text)]
+  (let [result (-> (core/parse (:root grammar) text)
+                   (r/errors->line-column text))]
     (if (set? result)
-      (throw (ex-info "Failed to parse grammar" {:errors (r/errors->line-column text result)}))
-      (vector-tree-for text result))))
+      (throw (ex-info "Failed to parse grammar" {:errors result}))
+      (vector-tree-for result text))))
 
 (defn create-parser
   "Create a parser based on a string-based grammar definition. If the

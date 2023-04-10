@@ -11,4 +11,4 @@
                    {:at 4 :line 2 :column 1}
                    {:at 5 :line 3 :column 1}
                    {:at 8 :line 3 :column 4}}]
-    (is (= expected (r/errors->line-column text (set/project expected [:at]))))))
+    (is (= expected (r/errors->line-column (set/project expected [:at]) text)))))

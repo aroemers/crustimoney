@@ -40,7 +40,7 @@
 
 (defn success->text
   "Returns the matched text of a success, given the full text."
-  [^CharSequence text success]
+  [success ^CharSequence text]
   (.subSequence text (success->start success) (success->end success)))
 
 (defn ^:no-doc with-success-children
@@ -114,7 +114,7 @@
 
 ;;; Line and columns for errors
 
-(defn- indices->line-columns [text indices]
+(defn- indices->line-columns [indices text]
   (loop [indices   (sort (distinct indices))
          line-cols {}
          cursor    0
@@ -131,12 +131,15 @@
       line-cols)))
 
 (defn errors->line-column
-  "Returns the errors with `:line` and `:column` entries added."
-  [text errors]
-  (let [grouped   (group-by error->index errors)
-        line-cols (indices->line-columns text (keys grouped))]
-    (->> (map #(merge %1 (line-cols (error->index %1))) errors)
-         (set))))
+  "If `result` is a set of errors, each error gets a `:line` and
+  `:column` entry added. Otherwise, the `result` is returned as is."
+  [result text]
+  (if (set? result)
+    (let [grouped   (group-by error->index result)
+          line-cols (indices->line-columns (keys grouped) text)]
+      (->> (map #(merge %1 (line-cols (error->index %1))) result)
+           (set)))
+    result))
 
 ;;; Transformation helper
 
@@ -173,10 +176,10 @@
       (coerce [s] (-> s upper-case reverse str))"
   ([f]
    `(fn [text# success#]
-      (~f (success->text text# success#))))
+      (~f (success->text success# text#))))
   ([binding & body]
    `(fn [text# success#]
-      (let [~(first binding) (success->text text# success#)]
+      (let [~(first binding) (success->text success# text#)]
         ~@body))))
 
 (defmacro unite
