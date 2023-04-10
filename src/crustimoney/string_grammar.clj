@@ -3,7 +3,7 @@
   into a parser (or map of parsers). The following definition
   describes the string grammar syntax in itself:
 
-      space            <- [\\s]*
+      space            <- [\\s,]*
 
       non-terminal=    <- [a-zA-Z_-]+
       literal          <- '\\'' > (:literal #'(\\\\\\'|[^\\'])*') '\\''
@@ -54,7 +54,7 @@
 
 (def ^:private grammar
   (c/grammar
-   {:space (c/regex #"\s*")
+   {:space (c/regex #"[\s,]*")
 
     :non-terminal= (c/regex "[a-zA-Z_-]+")
 

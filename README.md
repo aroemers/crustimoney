@@ -327,7 +327,10 @@ However, it is perfectly valid to define a single parser, such as:
 'alice and ' !'eve' [a-z]+
 ```
 
-Keep in mind that `grammar` takes multiple maps, which can be used like so:
+The syntax is flexible regarding whitespace.
+Multiple lines can be on the same line, and a `,` is also seen as whitespace.
+
+Also remember that `grammar` takes multiple maps, which can be used like so:
 
 ```clj
 (grammar
@@ -335,7 +338,16 @@ Keep in mind that `grammar` takes multiple maps, which can be used like so:
  {:email (regex #"...")})
 ```
 
-The names of the rules can have an `=` sign appended, for the auto-named feature discussed earlier.
+And lastly, the names of the rules can have an `=` sign appended, for the auto-named feature discussed earlier.
+
+To give an impression on how a string-based grammar looks, below is the same `example` parser that was used to explain soft-cuts.
+
+```
+( '(' > [0-9]+ ')' )? 'foo' / 'bar'
+```
+
+As you can see, it is far denser, and likely more readable.
+For more examples, see the `examples` directory in the library's source.
 
 ## Data-based grammar
 

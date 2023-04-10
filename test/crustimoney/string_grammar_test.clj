@@ -70,7 +70,7 @@
              (core/parse p "foobarfoobar")))))
 
   (testing "recursive grammars"
-    (let [p (create-parser "expr <- foo bar foo <- 'foo'\nbar <- 'bar'")]
+    (let [p (create-parser "expr <- foo bar, foo <- 'foo'\nbar <- 'bar'")]
       (is (r/success? (core/parse (:expr p) "foobar")))))
 
   (testing "auto-named rule"
