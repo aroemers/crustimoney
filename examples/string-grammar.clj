@@ -2,7 +2,7 @@
 
  non-terminal=    #"[a-zA-Z_-]+"
  literal          ("'" > (:literal #"(\\'|[^'])*") "'")
- character-class= ("[" > #"(\\]|[^]])*" "]")
+ character-class= ("[" > #"(\\]|[^]])*" "]" #"[?*+]?")
  regex=           ("#" > literal)
  end-of-file=     "$"
  ref              (non-terminal !"=" space !"<-")
