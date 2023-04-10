@@ -141,7 +141,16 @@
            (set)))
     result))
 
-;;; Transformation helper
+;;; Transformation helpers
+
+(defn postwalk
+  "If `result` is a success, function `f` is called on each tree node,
+  in postwalk order."
+  [result f]
+  (let [inner (fn inner [success]
+                (let [children (map inner (success->children success))]
+                  (f (with-success-children success children))))]
+    (cond-> result (success? result) inner)))
 
 (defn transform
   "If `result` is a success, it applies the map of `transformations`
@@ -158,12 +167,11 @@
 
   If `result` is not a success, it is returned as is."
   [result text transformations]
-  (let [inner (fn inner [success]
-                (let [children (map inner (success->children success))]
-                  (if-let [f (get transformations (success->name success))]
-                    (f text (with-success-children success children))
-                    (with-success-children success children))))]
-    (cond-> result (success? result) inner)))
+  (postwalk result
+    (fn [success]
+      (if-let [f (get transformations (success->name success))]
+        (f success text)
+        success))))
 
 (defmacro coerce
   "Evaluates to a transformation function. It applies function `f` to
@@ -176,10 +184,10 @@
       (coerce [s] (-> s upper-case reverse str))"
   {:clj-kondo/lint-as 'clojure.core/fn}
   ([f]
-   `(fn [text# success#]
+   `(fn [success# text#]
       (~f (success->text success# text#))))
   ([binding & body]
-   `(fn [text# success#]
+   `(fn [success# text#]
       (let [~(first binding) (success->text success# text#)]
         ~@body))))
 
@@ -193,9 +201,9 @@
       (unite [[val1 op val2]] (op val1 val2))"
   {:clj-kondo/lint-as 'clojure.core/fn}
   ([f]
-   `(fn [_# success#]
+   `(fn [success# _#]
       (~f (success->children success#))))
   ([binding & body]
-   `(fn [_# success#]
+   `(fn [success# _#]
       (let [~(first binding) (success->children success#)]
         ~@body))))
