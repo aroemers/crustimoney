@@ -1,4 +1,4 @@
-{space #"\s*"
+{space #"[\s,]*"
 
  non-terminal=    #"[a-zA-Z_-]+"
  literal          ("'" > (:literal #"(\\'|[^'])*") "'")
