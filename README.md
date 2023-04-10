@@ -454,7 +454,7 @@ Here is an example:
 (-> (parse ... text)
     (transform text
       {:number    (coerce parse-long)
-       :operand   (coerce {\"+\" + \"-\" - \"*\" * \"/\" /})
+       :operand   (coerce {"+" + "-" - "*" * "/" /})
        :operation (unite [[v1 op v2]] (op v1 v2))
        nil        (unite identity)}))
 ```
