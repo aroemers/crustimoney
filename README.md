@@ -137,6 +137,7 @@ For example:
 
 To work with these successes and errors, the functions in the `results` namespace can be used.
 These allow you to get the text of a success node for example, or add `:line` and `:column` keys to the errors.
+It also contains tools to walk and transform the tree (see [built-in transformer](#built-in-transformer)).
 
 ## Recursive grammars
 
