@@ -40,8 +40,8 @@
        (create-parser \"root <- 'Hello ' email\")
        {:email (regex #\"...\")})"
   (:require [clojure.string :as str]
-            [crustimoney.combinators :as c]
             [crustimoney.core :as core]
+            [crustimoney.data-grammar :as data-grammar]
             [crustimoney.results :as r]
             [crustimoney.vector-grammar :as vector-grammar]))
 
@@ -53,141 +53,60 @@
 ;;; Grammar definition
 
 (def ^:private grammar
-  (c/grammar
-   {:space (c/regex #"[\s,]*")
+  (data-grammar/create-parser
+   '{space #"[\s,]*"
 
-    :non-terminal= (c/regex "[a-zA-Z_-]+")
+     non-terminal=    #"[a-zA-Z_-]+"
+     literal          ("'" > (:literal #"(\\'|[^'])*") "'")
+     character-class= ("[" > #"(\\]|[^]])*" "]")
+     regex=           ("#" > literal)
+     end-of-file=     "$"
 
-    :literal (c/chain (c/literal "'")
-                      :soft-cut
-                      (c/with-name :literal
-                        (c/regex #"(\\'|[^'])*"))
-                      (c/literal "'"))
+     ref (non-terminal !"=" space !"<-")
 
-    :character-class= (c/chain (c/literal "[")
-                               :soft-cut
-                               (c/regex #"(\\]|[^]])*")
-                               (c/literal "]")
-                               (c/regex #"[?*+]?"))
+     group-name (":" > (:group-name #"[a-zA-Z_-]+"))
+     group=     ("(" > group-name ? space choice space ")")
 
-    :regex= (c/chain (c/literal "#")
-                     :soft-cut
-                     (c/ref :literal))
+     expr (ref / group / literal / character-class / end-of-file / regex)
 
-    :end-of-file= (c/literal "$")
+     quantified ((:quantified expr (:operand #"[?+*]")) / expr)
+     lookahead  ((:lookahead (:operand #"[&!]") > quantified) / quantified)
 
-    :ref (c/chain (c/ref :non-terminal)
-                  (c/negate (c/literal "="))
-                  (c/ref :space)
-                  (c/negate (c/literal "<-")))
+     cut= (">>" / ">")
 
-    :cut= (c/choice (c/literal ">>") (c/literal ">"))
+     chain  ((:chain lookahead (space (cut / lookahead))+) / lookahead)
+     choice ((:choice chain (space "/" space chain)+) / chain)
 
-    :group-name (c/chain (c/literal ":")
-                         :soft-cut
-                         (c/with-name :group-name
-                           (c/regex "[a-zA-Z_-]+")))
-
-    :group= (c/chain (c/literal "(")
-                     :soft-cut
-                     (c/maybe (c/ref :group-name))
-                     (c/ref :space)
-                     (c/ref :choice)
-                     (c/ref :space)
-                     (c/literal ")"))
-
-    :expr (c/choice (c/ref :ref)
-                    (c/ref :group)
-                    (c/ref :literal)
-                    (c/ref :character-class)
-                    (c/ref :end-of-file)
-                    (c/ref :regex))
-
-    :quantified (c/choice (c/with-name :quantified
-                            (c/chain (c/ref :expr)
-                                     (c/with-name :operand
-                                       (c/regex "[?+*]"))))
-                          (c/ref :expr))
-
-    :lookahead (c/choice (c/with-name :lookahead
-                           (c/chain (c/with-name :operand
-                                      (c/regex "[&!]"))
-                                    :soft-cut
-                                    (c/ref :quantified)))
-                         (c/ref :quantified))
-
-    :chain (c/choice (c/with-name :chain
-                       (c/chain (c/ref :lookahead)
-                                (c/repeat+ (c/chain (c/ref :space)
-                                                    (c/choice (c/ref :cut)
-                                                              (c/ref :lookahead))))))
-                     (c/ref :lookahead))
-
-    :choice (c/choice (c/with-name :choice
-                        (c/chain (c/ref :chain)
-                                 (c/repeat+ (c/chain (c/ref :space)
-                                                     (c/literal "/")
-                                                     (c/ref :space)
-                                                     (c/ref :chain)))))
-                      (c/ref :chain))
-
-    :rule= (c/chain (c/with-name :rule-name
-                      (c/chain (c/ref :non-terminal)
-                               (c/maybe (c/literal "="))))
-                    (c/ref :space)
-                    (c/literal "<-")
-                    :hard-cut
-                    (c/ref :space)
-                    (c/ref :choice))
-
-    :root= (c/chain (c/choice (c/with-name :rules
-                                (c/repeat+ (c/chain (c/ref :space)
-                                                    (c/ref :rule)
-                                                    (c/ref :space))))
-                              (c/with-name :no-rules
-                                (c/chain (c/ref :space)
-                                         (c/ref :choice)
-                                         (c/ref :space))))
-                    (c/eof))}))
+     rule= ((:rule-name non-terminal "="?) space "<-" >> space choice)
+     root= ((:rules (space rule space)+) / (:no-rules space choice space) $)}))
 
 ;;; Parse result processing
 
 (def ^:private transformations
-  {:root (r/unite identity)
-
-   :rules (r/unite [rules] (into {} rules))
-
-   :no-rules (r/unite identity)
-
-   :rule (r/unite vector)
-
-   :rule-name (r/coerce keyword)
-
-   :non-terminal (r/coerce [s] [:ref (keyword s)])
-
-   :literal (r/coerce [s] [:literal (unescape-quotes s)])
-
-   :group (r/unite [[child1 child2]] (if child2 [:with-name child1 child2] child1))
+  {:non-terminal    (r/coerce [s] [:ref (keyword s)])
+   :literal         (r/coerce [s] [:literal (unescape-quotes s)])
+   :character-class (r/coerce [s] [:regex s])
+   :regex           (r/unite [[literal]] [:regex (second literal)])
+   :end-of-file     (r/coerce [_] [:eof])
 
    :group-name (r/coerce keyword)
+   :group      (r/unite [[child1 child2]] (if child2 [:with-name child1 child2] child1))
 
-   :character-class (r/coerce [s] [:regex s])
+   :operand    (r/coerce {"!" :negate "&" :lookahead "?" :maybe "+" :repeat+ "*" :repeat*})
+   :quantified (r/unite [[expr operand]] [operand expr])
+   :lookahead  (r/unite [[operand expr]] [operand expr])
 
-   :regex (r/unite [[literal]] [:regex (second literal)])
+   :cut (r/coerce {">>" :hard-cut, ">" :soft-cut})
 
-   :chain (r/unite [children] (into [:chain] children))
-
+   :chain  (r/unite [children] (into [:chain] children))
    :choice (r/unite [children] (into [:choice] children))
 
-   :lookahead (r/unite [[operand expr]] [operand expr])
+   :rule-name (r/coerce keyword)
+   :rule      (r/unite vector)
+   :rules     (r/unite [rules] (into {} rules))
 
-   :quantified (r/unite [[expr operand]] [operand expr])
-
-   :operand (r/coerce {"!" :negate "&" :lookahead "?" :maybe "+" :repeat+ "*" :repeat*})
-
-   :end-of-file (r/coerce [_] [:eof])
-
-   :cut (r/coerce {">>" :hard-cut, ">" :soft-cut})})
+   :no-rules (r/unite identity)
+   :root     (r/unite identity)})
 
 (defn ^:no-doc vector-tree-for [success text]
   (r/transform success text transformations))
