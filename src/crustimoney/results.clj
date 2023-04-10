@@ -174,6 +174,7 @@
       (coerce parse-long)
 
       (coerce [s] (-> s upper-case reverse str))"
+  {:clj-kondo/lint-as 'clojure.core/fn}
   ([f]
    `(fn [text# success#]
       (~f (success->text success# text#))))
@@ -191,6 +192,7 @@
       (unite +)
 
       (unite [[val1 op val2]] (op val1 val2))"
+  {:clj-kondo/lint-as 'clojure.core/fn}
   ([f]
    `(fn [_# success#]
       (apply ~f (success->children success#))))

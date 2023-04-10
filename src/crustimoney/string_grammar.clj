@@ -185,7 +185,7 @@
 
    :operand (r/coerce {"!" :negate "&" :lookahead "?" :maybe "+" :repeat+ "*" :repeat*})
 
-   :end-of-file (r/coerce [s] [:eof])
+   :end-of-file (r/coerce [_] [:eof])
 
    :cut (r/coerce {">>" :hard-cut, ">" :soft-cut})})
 
