@@ -154,7 +154,7 @@
             {:number    (coerce parse-long)
              :operand   (coerce {\"+\" + \"-\" - \"*\" * \"/\" /})
              :operation (unite [[v1 op v2]] (op v1 v2))
-             nil        (unite identity)}))
+             nil        (unite first)}))
 
   If `result` is not a success, it is returned as is."
   [result text transformations]
@@ -166,10 +166,10 @@
     (cond-> result (success? result) inner)))
 
 (defmacro coerce
-  "Creates a transformation function. It applies function `f` to the
-  matched text of the success node, or takes a `binding` vector, where
-  the matched text is bound to, available for use in the `body`. For
-  example:
+  "Evaluates to a transformation function. It applies function `f` to
+  the matched text of the success node, or takes a `binding` vector,
+  where the matched text is bound to, available for use in the `body`.
+  For example:
 
       (coerce parse-long)
 
@@ -184,18 +184,17 @@
         ~@body))))
 
 (defmacro unite
-  "Creates a transformation function. It applies function `f` to the
-  children of the success node, or takes a `binding` vector, where
-  each of the children are bound to, for use in the `body`. For
-  example:
+  "Evaluates to a transformation function. It applies function `f` to
+  the children of the success node, or takes a `binding` vector, where
+  the children are bound to, for use in the `body`. For example:
 
-      (unite +)
+      (unite first)
 
       (unite [[val1 op val2]] (op val1 val2))"
   {:clj-kondo/lint-as 'clojure.core/fn}
   ([f]
    `(fn [_# success#]
-      (apply ~f (success->children success#))))
+      (~f (success->children success#))))
   ([binding & body]
    `(fn [_# success#]
       (let [~(first binding) (success->children success#)]

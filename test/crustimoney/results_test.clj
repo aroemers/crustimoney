@@ -32,5 +32,5 @@
                 [:number {:start 0, :end 2}]
                 [:number {:start 3, :end 5}]]]
       (is (= 42 (r/transform node "20 22"
-                  {:plus   (r/unite +)
+                  {:plus   (r/unite [ns] (reduce + ns))
                    :number (r/coerce parse-long)}))))))

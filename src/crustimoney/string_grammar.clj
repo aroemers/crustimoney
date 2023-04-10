@@ -102,11 +102,11 @@
    :choice (r/unite [children] (into [:choice] children))
 
    :rule-name (r/coerce keyword)
-   :rule      (r/unite vector)
+   :rule      (r/unite vec)
    :rules     (r/unite [rules] (into {} rules))
 
-   :no-rules (r/unite identity)
-   :root     (r/unite identity)})
+   :no-rules (r/unite first)
+   :root     (r/unite first)})
 
 (defn ^:no-doc vector-tree-for [success text]
   (r/transform success text transformations))

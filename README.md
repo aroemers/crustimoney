@@ -456,18 +456,18 @@ Here is an example:
       {:number    (coerce parse-long)
        :operand   (coerce {"+" + "-" - "*" * "/" /})
        :operation (unite [[v1 op v2]] (op v1 v2))
-       nil        (unite identity)}))
+       nil        (unite first)}))
 ```
 
 If the parse result is not a success, the `transform` returns it as is.
 Otherwise it applies the transformation functions, which are functions that receives the full text and a node.
 
 The `coerce` macro creates such a transformer, by applying a function to the node's matched text.
-Instead of a function, `coerce` can take a binding vector and a body.
+Instead of a function, `coerce` can also take a binding vector and a body.
 So the `:number` transformation above could also be written as `(coerce [s] (parse-long s))`. It could also be written without the macro as `(fn [text node] (parse-long (success->text node text)))`.
 
 The `unite` macro creates a transformation function, by applying a function to the node's children, as seen with the `nil` (root node) transformer above.
-Instead of a function, `unite` can take a binding vector and a body, as seen with the `:operation` transformer.
+Instead of a function, `unite` can also take a binding vector and a body, as seen with the `:operation` transformer.
 
 ## Writing your own combinator
 
