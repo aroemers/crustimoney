@@ -143,10 +143,7 @@
 
 ;;; Transformation helpers
 
-(defn postwalk
-  "If `result` is a success, function `f` is called on each tree node,
-  in postwalk order."
-  [result f]
+(defn- postwalk [result f]
   (let [inner (fn inner [success]
                 (let [children (map inner (success->children success))]
                   (f (with-success-children success children))))]
