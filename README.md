@@ -447,7 +447,7 @@ While not necessary (as the results tree is made of plain vectors), it does incr
 Writing your own parse tree processor is easy, as again, it's just data.
 That said, the `results` namespace has a `transform` function.
 This performs a postwalk, transforming the nodes based on their name, using a function that receives the node and the full text.
-Two accompanying helper macros are available, called `coerce` and `unite`.
+Two accompanying helper macros are available, called `coerce` and `collect`.
 Here is an example:
 
 ```clj
@@ -455,8 +455,8 @@ Here is an example:
     (transform text
       {:number    (coerce parse-long)
        :operand   (coerce {"+" + "-" - "*" * "/" /})
-       :operation (unite [[v1 op v2]] (op v1 v2))
-       nil        (unite first)}))
+       :operation (collect [[v1 op v2]] (op v1 v2))
+       nil        (collect first)}))
 ```
 
 If the parse result is not a success, the `transform` returns it as is.
@@ -467,8 +467,8 @@ Instead of a function, `coerce` can also take a binding vector and a body.
 So the `:number` transformation above could be written as `(coerce [s] (parse-long s))`.
 It could also be written without the macro as `(fn [node text] (parse-long (success->text node text)))`.
 
-The `unite` macro creates a transformation function, by applying a function to the node's children, as seen with the `nil` (root node) transformer above.
-Instead of a function, `unite` can also take a binding vector and a body, as seen with the `:operation` transformer.
+The `collect` macro creates a transformation function, by applying a function to the node's children, as seen with the `nil` (root node) transformer above.
+Instead of a function, `collect` can also take a binding vector and a body, as seen with the `:operation` transformer.
 
 ## Writing your own combinator
 

@@ -156,14 +156,14 @@
   "If `result` is a success, it applies the map of `transformations`
   functions in postwalk order based on the node's name. A
   transformation function receives the node and the full `text`. See
-  also `coerce` and `unite` for helpers, for example:
+  also `coerce` and `collect` for helpers, for example:
 
       (-> (parse ... text)
           (transform text
             {:number    (coerce parse-long)
              :operand   (coerce {\"+\" + \"-\" - \"*\" * \"/\" /})
-             :operation (unite [[v1 op v2]] (op v1 v2))
-             nil        (unite first)}))
+             :operation (collect [[v1 op v2]] (op v1 v2))
+             nil        (collect first)}))
 
   If `result` is not a success, it is returned as is."
   [result text transformations]
@@ -191,14 +191,14 @@
       (let [~(first binding) (success->text success# text#)]
         ~@body))))
 
-(defmacro unite
+(defmacro collect
   "Evaluates to a transformation function. It applies function `f` to
   the children of the success node, or takes a `binding` vector, where
   the children are bound to, for use in the `body`. For example:
 
-      (unite first)
+      (collect first)
 
-      (unite [[val1 op val2]] (op val1 val2))"
+      (collect [[val1 op val2]] (op val1 val2))"
   {:clj-kondo/lint-as 'clojure.core/fn}
   ([f]
    `(fn [success# _#]

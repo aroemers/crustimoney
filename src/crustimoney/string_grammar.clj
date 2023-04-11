@@ -86,27 +86,27 @@
   {:non-terminal    (r/coerce [s] [:ref (keyword s)])
    :literal         (r/coerce [s] [:literal (unescape-quotes s)])
    :character-class (r/coerce [s] [:regex s])
-   :regex           (r/unite [[literal]] [:regex (second literal)])
+   :regex           (r/collect [[literal]] [:regex (second literal)])
    :end-of-file     (r/coerce [_] [:eof])
 
    :group-name (r/coerce keyword)
-   :group      (r/unite [[child1 child2]] (if child2 [:with-name child1 child2] child1))
+   :group      (r/collect [[child1 child2]] (if child2 [:with-name child1 child2] child1))
 
    :operand    (r/coerce {"!" :negate "&" :lookahead "?" :maybe "+" :repeat+ "*" :repeat*})
-   :quantified (r/unite [[expr operand]] [operand expr])
-   :lookahead  (r/unite [[operand expr]] [operand expr])
+   :quantified (r/collect [[expr operand]] [operand expr])
+   :lookahead  (r/collect [[operand expr]] [operand expr])
 
    :cut (r/coerce {">>" :hard-cut, ">" :soft-cut})
 
-   :chain  (r/unite [children] (into [:chain] children))
-   :choice (r/unite [children] (into [:choice] children))
+   :chain  (r/collect [children] (into [:chain] children))
+   :choice (r/collect [children] (into [:choice] children))
 
    :rule-name (r/coerce keyword)
-   :rule      (r/unite vec)
-   :rules     (r/unite [rules] (into {} rules))
+   :rule      (r/collect vec)
+   :rules     (r/collect [rules] (into {} rules))
 
-   :no-rules (r/unite first)
-   :root     (r/unite first)})
+   :no-rules (r/collect first)
+   :root     (r/collect first)})
 
 (defn ^:no-doc vector-tree-for [success text]
   (r/transform success text transformations))
