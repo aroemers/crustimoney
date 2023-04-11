@@ -460,7 +460,7 @@ Here is an example:
 ```
 
 If the parse result is not a success, the `transform` returns it as is.
-Otherwise it applies the transformation functions, which are functions that receives the full text and a node.
+Otherwise it applies the transformation functions.
 
 The `coerce` macro creates such a transformer, by applying a function to the node's matched text.
 Instead of a function, `coerce` can also take a binding vector and a body.
@@ -469,6 +469,18 @@ It could also be written without the macro as `(fn [node text] (parse-long (succ
 
 The `collect` macro creates a transformation function, by applying a function to the node's children, as seen with the `nil` (root node) transformer above.
 Instead of a function, `collect` can also take a binding vector and a body, as seen with the `:operation` transformer.
+
+## Experimental combinators
+
+Lastly, there are a couple of experimental combinators.
+Being experimental, they may get promoted, or changed, or dismissed.
+
+- `range`, like a `repeat`, requiring a minimum of matches and stops after a maximum of matches
+- `stream*` and `stream+`, like `repeat*`/`repeat+`, but does not keep its children
+- `recover`, like a `choice`, capturing errors of the first choice, including soft-cuts
+- `with-callback`, fires (success) result of a parser to a callback function
+
+These can be found in the `experimental.combinators` namespace, including more documentation on them.
 
 ## Writing your own combinator
 
@@ -500,18 +512,6 @@ It receives the text and the original index, but also the result of the pushed p
 Now it can decide whether to return a success, a set of errors, or again a push.
 
 Before you write your own combinator, do realise that the provided combinators are complete in the sense that they can parse any structured text.
-
-## Experimental combinators
-
-Lastly, there are a couple of experimental combinators.
-Being experimental, they may get promoted, or changed, or dismissed.
-
-- `range`, like a `repeat`, requiring a minimum of matches and stops after a maximum of matches
-- `stream*` and `stream+`, like `repeat*`/`repeat+`, but does not keep its children
-- `recover`, like a `choice`, capturing errors of the first choice, including soft-cuts
-- `with-callback`, fires (success) result of a parser to a callback function
-
-These can be found in the `experimental.combinators` namespace, including more documentation on them.
 
 _That's it. As always, have fun!_ 🚀
 
