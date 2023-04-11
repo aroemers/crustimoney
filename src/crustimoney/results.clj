@@ -174,14 +174,16 @@
         success))))
 
 (defmacro coerce
-  "Evaluates to a transformation function. It applies function `f` to
-  the matched text of the success node, or takes a `binding` vector,
-  where the matched text is bound to, available for use in the `body`.
-  For example:
+  "Evaluates to function that takes a success node and the full parsed
+  text. It applies function `f` to the matched text of the success
+  node, or it binds the matched text to the `binding` vector and
+  executes `body`. For example:
 
       (coerce parse-long)
 
-      (coerce [s] (-> s upper-case reverse str))"
+      (coerce [s] (-> s upper-case reverse str))
+
+  Can be used with `transform`."
   {:clj-kondo/lint-as 'clojure.core/fn}
   ([f]
    `(fn [success# text#]
@@ -192,13 +194,16 @@
         ~@body))))
 
 (defmacro collect
-  "Evaluates to a transformation function. It applies function `f` to
-  the children of the success node, or takes a `binding` vector, where
-  the children are bound to, for use in the `body`. For example:
+  "Evaluates to function that takes a success node and the full parsed
+  text. It applies function `f` to the children of the success node,
+  or it binds the children to the `binding` vector and executes
+  `body`. For example:
 
       (collect first)
 
-      (collect [[val1 op val2]] (op val1 val2))"
+      (collect [[val1 op val2]] (op val1 val2))
+
+  Can be used with `transform`."
   {:clj-kondo/lint-as 'clojure.core/fn}
   ([f]
    `(fn [success# _#]
