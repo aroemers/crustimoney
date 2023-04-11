@@ -40,7 +40,7 @@
 
 (defn success->text
   "Returns the matched text of a success, given the full text."
-  [^CharSequence text success]
+  [success ^CharSequence text]
   (.subSequence text (success->start success) (success->end success)))
 
 (defn ^:no-doc with-success-children
@@ -114,7 +114,7 @@
 
 ;;; Line and columns for errors
 
-(defn- indices->line-columns [text indices]
+(defn- indices->line-columns [indices text]
   (loop [indices   (sort (distinct indices))
          line-cols {}
          cursor    0
@@ -131,9 +131,75 @@
       line-cols)))
 
 (defn errors->line-column
-  "Returns the errors with `:line` and `:column` entries added."
-  [text errors]
-  (let [grouped   (group-by error->index errors)
-        line-cols (indices->line-columns text (keys grouped))]
-    (->> (map #(merge %1 (line-cols (error->index %1))) errors)
-         (set))))
+  "If `result` is a set of errors, each error gets a `:line` and
+  `:column` entry added. Otherwise, the `result` is returned as is."
+  [result text]
+  (if (set? result)
+    (let [grouped   (group-by error->index result)
+          line-cols (indices->line-columns (keys grouped) text)]
+      (->> (map #(merge %1 (line-cols (error->index %1))) result)
+           (set)))
+    result))
+
+;;; Transformation helpers
+
+(defn- postwalk [result f]
+  (let [inner (fn inner [success]
+                (let [children (map inner (success->children success))]
+                  (f (with-success-children success children))))]
+    (cond-> result (success? result) inner)))
+
+(defn transform
+  "If `result` is a success, it applies the map of `transformations`
+  functions in postwalk order based on the node's name. A
+  transformation function receives the node and the full `text`. See
+  also `coerce` and `collect` for helpers, for example:
+
+      (-> (parse ... text)
+          (transform text
+            {:number    (coerce parse-long)
+             :operand   (coerce {\"+\" + \"-\" - \"*\" * \"/\" /})
+             :operation (collect [[v1 op v2]] (op v1 v2))
+             nil        (collect first)}))
+
+  If `result` is not a success, it is returned as is."
+  [result text transformations]
+  (postwalk result
+    (fn [success]
+      (if-let [f (get transformations (success->name success))]
+        (f success text)
+        success))))
+
+(defmacro coerce
+  "Transformer for use with `transform`. It applies function `f` to the
+  matched text of the success node, or it binds the matched text to
+  the `binding` vector and executes `body`. For example:
+
+      (coerce parse-long)
+
+      (coerce [s] (-> s upper-case reverse str))"
+  {:clj-kondo/lint-as 'clojure.core/fn}
+  ([f]
+   `(fn [success# text#]
+      (~f (success->text success# text#))))
+  ([binding & body]
+   `(fn [success# text#]
+      (let [~(first binding) (success->text success# text#)]
+        ~@body))))
+
+(defmacro collect
+  "Transformer for use with `transform`. It applies function `f` to the
+  children of the success node, or it binds the children to the
+  `binding` vector and executes `body`. For example:
+
+      (collect first)
+
+      (collect [[val1 op val2]] (op val1 val2))"
+  {:clj-kondo/lint-as 'clojure.core/fn}
+  ([f]
+   `(fn [success# _#]
+      (~f (success->children success#))))
+  ([binding & body]
+   `(fn [success# _#]
+      (let [~(first binding) (success->children success#)]
+        ~@body))))

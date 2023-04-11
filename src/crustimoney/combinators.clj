@@ -162,7 +162,7 @@
 
     ([text index result _state]
      (if (r/success? result)
-       #{(r/->error :unexpected-match index {:text (r/success->text text result)})}
+       #{(r/->error :unexpected-match index {:text (r/success->text result text)})}
        (r/->success index index)))))
 
 ;;; Extra combinators

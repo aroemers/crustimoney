@@ -8,9 +8,9 @@
             [crustimoney.results :as r]
             [crustimoney.string-grammar :as string-grammar]))
 
-(defn- success->texts [text success]
+(defn- success->texts [success text]
   ((fn inner [success]
-     (into [(r/success->name success) (r/success->text text success)]
+     (into [(r/success->name success) (r/success->text success text)]
            (map inner (r/success->children success))))
    success))
 
@@ -37,4 +37,4 @@
                                   (data-grammar/create-parser definition))})
         result (core/parse (:root rules) text)]
     (when (r/success? result)
-      (success->texts text result))))
+      (success->texts result text))))

@@ -137,6 +137,7 @@ For example:
 
 To work with these successes and errors, the functions in the `results` namespace can be used.
 These allow you to get the text of a success node for example, or add `:line` and `:column` keys to the errors.
+It also contains tools to walk and transform the tree (see [built-in transformer](#built-in-transformer)).
 
 ## Recursive grammars
 
@@ -436,6 +437,38 @@ This map can be used as a basis for your own grammar, by passing it along to `gr
   root <- (space? (:name word) blank (:id natural) space?)* $
 "))
 ```
+
+## Built-in transformer
+
+The `results` namespace contains mostly basic functions for dealing with the parse results.
+These include functions as `success->text` to get the matched text of a node, and `success->children` to get its children.
+While not necessary (as the results tree is made of plain vectors), it does increase readability.
+
+Writing your own parse tree processor is easy, as again, it's just data.
+That said, the `results` namespace has a `transform` function.
+This performs a postwalk, transforming the nodes based on their name, using a function that receives the node and the full text.
+Two accompanying helper macros are available, called `coerce` and `collect`.
+Here is an example:
+
+```clj
+(-> (parse ... text)
+    (transform text
+      {:number    (coerce parse-long)
+       :operand   (coerce {"+" + "-" - "*" * "/" /})
+       :operation (collect [[v1 op v2]] (op v1 v2))
+       nil        (collect first)}))
+```
+
+If the parse result is not a success, the `transform` returns it as is.
+Otherwise it applies the transformation functions, which are functions that receives the full text and a node.
+
+The `coerce` macro creates such a transformer, by applying a function to the node's matched text.
+Instead of a function, `coerce` can also take a binding vector and a body.
+So the `:number` transformation above could be written as `(coerce [s] (parse-long s))`.
+It could also be written without the macro as `(fn [node text] (parse-long (success->text node text)))`.
+
+The `collect` macro creates a transformation function, by applying a function to the node's children, as seen with the `nil` (root node) transformer above.
+Instead of a function, `collect` can also take a binding vector and a body, as seen with the `:operation` transformer.
 
 ## Writing your own combinator
 

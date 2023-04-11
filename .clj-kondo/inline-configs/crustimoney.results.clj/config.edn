@@ -1,0 +1,1 @@
+{:lint-as {crustimoney.results/coerce clojure.core/fn, crustimoney.results/collect clojure.core/fn}}

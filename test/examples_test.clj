@@ -79,7 +79,7 @@
     (testing "string grammar"
       (let [parser (from-peg "string-grammar.peg")
             result (core/parse (:root parser) input)
-            vtree  (string-grammar/vector-tree-for input result)
+            vtree  (string-grammar/vector-tree-for result input)
             parser (vector-grammar/create-parser vtree)
             result (core/parse (:root parser) input)]
         (is (r/success? result))))
@@ -87,7 +87,7 @@
     (testing "data grammar"
       (let [parser (from-clj "string-grammar.clj")
             result (core/parse (:root parser) input)
-            vtree  (string-grammar/vector-tree-for input result)
+            vtree  (string-grammar/vector-tree-for result input)
             parser (vector-grammar/create-parser vtree)
             result (core/parse (:root parser) input)]
         (is (r/success? result))))))
