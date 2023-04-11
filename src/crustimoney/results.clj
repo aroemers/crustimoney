@@ -155,7 +155,7 @@
 (defn transform
   "If `result` is a success, it applies the map of `transformations`
   functions in postwalk order based on the node's name. A
-  transformation function receives the full `text` and the node. See
+  transformation function receives the node and the full `text`. See
   also `coerce` and `unite` for helpers, for example:
 
       (-> (parse ... text)
