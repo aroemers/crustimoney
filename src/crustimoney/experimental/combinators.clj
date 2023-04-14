@@ -13,8 +13,17 @@
          \"root= <- stream
           expr= <- '{' [0-9]+ '}'\")
        {:stream (e/stream*
-                 (e/with-callback handle-expr
-                   (e/recover (ref :expr) (regex \".*?}\")))})"
+                 (chain
+                   (e/with-callback handle-expr
+                     (e/recover (ref :expr) (regex \".*?}\")))
+                   :hard-cut))})
+
+  Above example also shows how to setup a streaming parser. The
+  `stream*` ensures that the result tree does not grow, the
+  `with-callback` passes chunks of results to a function, before it is
+  hard-cut. The hard-cut ensures both the packrat cache and the
+  streaming reader buffer (if used, see `reader` namespace) are kept
+  small."
   (:refer-clojure :exclude [range])
   (:require [crustimoney.experimental.results :as er]
             [crustimoney.results :as r]))
