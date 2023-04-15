@@ -120,24 +120,26 @@
 (defn range
   "Like a repeat, but the times the wrapped `parser` is matched must lie
   within the given range. It will not try to parse more than `max`
-  times."
-  [parser min max]
-  (assert (<= 0 min max) "min must at least be 0, and max must at least be min")
+  times. If `max` is not supplied, there is no maximum."
+  ([parser min]
+   (range parser min Long/MAX_VALUE))
+  ([parser min max]
+   (assert (<= 0 min max) "min must at least be 0, and max must at least be min")
 
-  (fn
-    ([_text index]
-     (if (< 0 max)
-       (r/->push parser index [])
-       (r/->success index index)))
+   (fn
+     ([_text index]
+      (if (< 0 max)
+        (r/->push parser index [])
+        (r/->success index index)))
 
-    ([_text index result state]
-     (if (r/success? result)
-       (let [children (conj state result)]
-         (if (= (count children) max)
-           (r/->success index (-> children last r/success->end) children)
-           (r/->push parser (r/success->end result) children)))
-       (let [children state]
-         (if (< (count children) min)
-           result
-           (let [end (or (some-> children last r/success->end) index)]
-             (r/->success index end children))))))))
+     ([_text index result state]
+      (if (r/success? result)
+        (let [children (conj state result)]
+          (if (= (count children) max)
+            (r/->success index (-> children last r/success->end) children)
+            (r/->push parser (r/success->end result) children)))
+        (let [children state]
+          (if (< (count children) min)
+            result
+            (let [end (or (some-> children last r/success->end) index)]
+              (r/->success index end children)))))))))

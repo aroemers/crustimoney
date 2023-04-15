@@ -98,4 +98,13 @@
       (is (= (r/->success 0 3) (core/parse p "xxxy"))))
 
     (testing "not more than max matches"
-      (is (= (r/->success 0 3) (core/parse p "xxxx"))))))
+      (is (= (r/->success 0 3) (core/parse p "xxxx"))))
+
+    (testing "no max given"))
+
+  (let [p (ec/range (c/literal "x") 3)]
+    (testing "no max given"
+      (is (= (r/->success 0 3) (core/parse p "xxx")))
+      (is (= (r/->success 0 6) (core/parse p "xxxxxx")))
+      (is #{(r/->error :expected-literal 2 {:literal "x"})}
+          (core/parse p "xx")))))
