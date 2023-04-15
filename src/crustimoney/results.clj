@@ -3,14 +3,19 @@
 
 ;;; Success functions
 
+(defn ^:no-doc success->depth
+  [success]
+  (-> success second :depth))
+
 (defn ->success
   "Create a success result, given a start index (inclusive) and end
   index (exclusive). Optionally a collection of success children can
   be given. The name of the success is nil."
   ([start end]
-   [nil {:start start :end end}])
+   [nil {:start start, :end end, :depth 0}])
   ([start end children]
-   (into (->success start end) children)))
+   (let [depth (or (some->> children seq (map success->depth) (apply max) inc) 0)]
+     (into [nil {:start start, :end end, :depth depth}] children))))
 
 (defn success?
   "Returns obj if obj is a success value, nil otherwise."
@@ -46,8 +51,9 @@
 (defn ^:no-doc with-success-children
   "Set the children of a success."
   [success children]
-  (let [[name attrs] success]
-    (-> (into [name attrs] children)
+  (let [[name attrs] success
+        depth (or (some->> children seq (map success->depth) (apply max) inc) 0)]
+    (-> (into [name (assoc attrs :depth depth)] children)
         (with-meta (meta success)))))
 
 (defn ^:no-doc with-success-name
