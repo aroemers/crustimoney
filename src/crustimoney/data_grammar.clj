@@ -152,11 +152,8 @@
 ;;; Parser creation
 
 (defn create-parser
-  "Create a parser based on a datagrammar definition. If a map with
-  rules is supplied, a map of parsers is returned. Otherwise a single
-  parser is returned.
-
-  See namespace documentation for the data-grammar format."
+  "Create a parser based on a datagrammar definition. See namespace
+  documentation for the data-grammar format."
   [data]
   (-> (vector-tree data)
       (vector-grammar/create-parser)))

@@ -277,7 +277,7 @@
       (let [result (swap! *parsers* merge (auto-capture (f)))]
         (if-let [unknown-refs (seq (remove result (keys result)))]
           (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unknown-refs}))
-          result)))))
+          (or (:root result) (throw (IllegalArgumentException. "Missing :root entry in grammar"))))))))
 
 (defmacro grammar
   "Takes one or more maps, in which the entries can refer to each other

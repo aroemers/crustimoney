@@ -168,15 +168,30 @@
   (testing "simple grammar"
     (let [p (c/grammar {:root (c/ref :foo)
                         :foo  (c/literal "foo")})]
-      (is (= (r/->success 0 3) (parse (:root p) "foo")))))
+      (is (= (r/->success 0 3) (parse p "foo")))))
 
   (testing "auto-capture rules"
     (let [p (c/grammar {:root (c/ref :foo)
                         :foo= (c/literal "foo")})]
       (is (= (r/with-success-name :foo (r/->success 0 3))
-             (parse (:root p) "foo")))))
+             (parse p "foo")))))
 
   (testing "missing references"
     (let [thrown (try (c/grammar {:root (c/ref :foo)}) (catch Exception e e))]
       (is (= "Detected unknown keys in refs" (.getMessage thrown)))
-      (is (= {:unknown-keys [:foo]} (ex-data thrown))))))
+      (is (= {:unknown-keys [:foo]} (ex-data thrown)))))
+
+  (testing "missing :root entry"
+    (let [thrown (try (c/grammar {:not-root (c/literal "whut")}) (catch Exception e e))]
+      (is (= "Missing :root entry in grammar" (.getMessage thrown)))))
+
+  (testing "set root"
+    (let [p (c/grammar {:foo (c/literal "foo")}
+                       {:root (c/ref :foo)})]
+      (is (r/success? (parse p "foo")))))
+
+  (testing "override root"
+    (let [p (c/grammar {:root (c/literal "foo")
+                        :bar  (c/literal "bar")}
+                       {:root (c/ref :bar)})]
+      (is (r/success? (parse p "bar"))))))

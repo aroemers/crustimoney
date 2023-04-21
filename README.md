@@ -52,7 +52,8 @@ The instructions for the latest version can be found here: [![Clojars Project](h
 
 While the library is suitable for complex grammars, you may only want a simple parser where a regular expression just doesn't cut it.
 For this there is the `crustimoney.quick/parse` function.
-It takes a string- or data-driven parser definition and a string, creates a parser internally, tries to parse the string, and returns the result if it matched.
+It takes a string- or data-driven parser definition and a text, creates a parser on the fly internally, tries to parse the text, and returns the result if it matched.
+The result is processed such that the matched strings are directly in the tree.
 For example:
 
 ```clj
@@ -169,12 +170,13 @@ For example:
     :bax  (regex "ba(r|z)")}))
 ```
 
-This will return a normal map, where the refs have been bound to the rules in the grammar.
+This will return a parser, where the refs have been bound to the rules in the grammar.
 The macro will ensure that all references resolve correctly.
+It expects at least a `:root` entry, which is the starting rule.
 This grammar can be used as follows:
 
 ```clj
-(core/parse (:root my-grammar) "foobaz")
+(core/parse my-grammar "foobaz")
 => [nil {:start 0, :end 6}]
 ```
 
@@ -183,7 +185,7 @@ The macro can also be nested, where it is the most outer one that does the actua
 
 ## Auto-named rules
 
-The example above shows that all success nodes are filtered out, except the root node, as they are nameless.
+The example above shows that all success nodes are filtered out, since they are nameless.
 The parsers could be wrapped with `with-name`, but the names would probably be the same as the rule names in this case.
 Appending an `=` to the rule name will automatically wrap the parser with `with-name`.
 This would update the grammar to:
