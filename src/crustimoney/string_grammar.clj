@@ -126,10 +126,8 @@
       (vector-tree-for result text))))
 
 (defn create-parser
-  "Create a parser based on a string-based grammar definition. If the
-  definition contains multiple rules, a map of parsers is returned.
-
-  See the namespace documentation for the string format."
+  "Create a parser based on a string-based grammar definition. See the
+  namespace documentation for the string format."
   [text]
   (-> (vector-tree text)
       (vector-grammar/create-parser)))

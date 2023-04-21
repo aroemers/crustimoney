@@ -31,9 +31,9 @@
 
   Each vector is expanded into the combinator invocation, referenced
   by the first keyword. If the keyword does not have a namespace,
-  `crustimoney.combinators` is assumed. Maps are walked as well,
-  wrapped in `crustimoney.combinators/grammar`. Other data is left
-  as-is."
+  `crustimoney.combinators` is assumed. The outer map is walked as
+  well, wrapped in `crustimoney.combinators/grammar`. Other data is
+  left as-is."
   [tree]
   (if (map? tree)
     (c/grammar (update-vals tree create-parser*))
