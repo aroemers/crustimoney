@@ -119,7 +119,7 @@
   `crustimoney.vector-grammar` for more on this format. This can be
   useful for debugging."
   [text]
-  (let [result (-> (core/parse (:root grammar) text)
+  (let [result (-> (core/parse grammar text)
                    (r/errors->line-column text))]
     (if (set? result)
       (throw (ex-info "Failed to parse grammar" {:errors result}))

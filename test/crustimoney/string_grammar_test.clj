@@ -70,13 +70,13 @@
              (core/parse p "foobarfoobar")))))
 
   (testing "recursive grammars"
-    (let [p (create-parser "expr <- foo bar, foo <- 'foo'\nbar <- 'bar'")]
-      (is (r/success? (core/parse (:expr p) "foobar")))))
+    (let [p (create-parser "root <- foo bar, foo <- 'foo'\nbar <- 'bar'")]
+      (is (r/success? (core/parse p "foobar")))))
 
   (testing "auto-named rule"
-    (let [p (create-parser "expr= <- 'foo' $")]
-      (is (= (r/with-success-name :expr (r/->success 0 3))
-             (core/parse (:expr p) "foo")))))
+    (let [p (create-parser "root= <- 'foo' $")]
+      (is (= (r/with-success-name :root (r/->success 0 3))
+             (core/parse p "foo")))))
 
   (testing "star quantifier"
     (let [p (create-parser "'foo'*")]
@@ -126,7 +126,7 @@
   (testing "extra rules"
     (let [p (c/grammar (create-parser "root <- foo")
                        {:foo (create-parser "'foo'")})]
-      (is (r/success? (core/parse (:root p) "foo")))))
+      (is (r/success? (core/parse p "foo")))))
 
   (testing "report grammar errors"
     (let [thrown (try (create-parser "(foo") (catch Exception e e))]

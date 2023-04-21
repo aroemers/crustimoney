@@ -23,20 +23,20 @@
              (core/parse p "foobar" {:keep-nameless? true})))))
 
   (testing "resiliency against infinite loops"
-    (let [grammar (c/grammar {:a (c/ref :b), :b (c/ref :c), :c (c/ref :a)})]
+    (let [grammar (c/grammar {:root (c/ref :b), :b (c/ref :c), :c (c/ref :root)})]
       (is (thrown-with-msg? Exception #"Infinite parsing loop detected"
-                            (core/parse (:a grammar) "anything"))))
+                            (core/parse grammar "anything"))))
 
-    (let [grammar (c/grammar {:a (c/chain (c/choice (c/maybe (c/repeat* (c/ref :b)))))
-                              :b (c/ref :a)})]
+    (let [grammar (c/grammar {:root (c/chain (c/choice (c/maybe (c/repeat* (c/ref :b)))))
+                              :b    (c/ref :root)})]
       (is (thrown-with-msg? Exception #"Infinite parsing loop detected"
-                            (core/parse (:a grammar) "anything")))))
+                            (core/parse grammar "anything")))))
 
   (testing "resiliency against stack overflow"
-    (let [grammar   (c/grammar {:a (c/choice (c/chain (c/literal "a") (c/ref :a))
-                                             (c/literal "a"))})
+    (let [grammar   (c/grammar {:root (c/choice (c/chain (c/literal "a") (c/ref :root))
+                                                (c/literal "a"))})
           long-text (apply str (repeat 10000 "a"))]
-      (is (r/success? (core/parse (:a grammar) long-text)))))
+      (is (r/success? (core/parse grammar long-text)))))
 
   (testing "report unknown parser function result"
     (let [thrown (try (core/parse (constantly :whut) "anything") (catch Exception e e))]

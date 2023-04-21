@@ -31,10 +31,10 @@
 
   When the result is an error, nil is returned."
   [definition text]
-  (let [rules (c/grammar built-ins/all
-                         {:root (if (string? definition)
-                                  (string-grammar/create-parser definition)
-                                  (data-grammar/create-parser definition))})
-        result (core/parse (:root rules) text)]
+  (let [parser (c/grammar built-ins/all
+                          {:root (if (string? definition)
+                                   (string-grammar/create-parser definition)
+                                   (data-grammar/create-parser definition))})
+        result (core/parse parser text)]
     (when (r/success? result)
       (success->texts result text))))

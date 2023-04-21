@@ -17,19 +17,19 @@
   (testing "map of vectors with refs"
     (let [p (create-parser {:root [:chain [:literal "foo"] [:ref :bax]]
                             :bax  [:regex "ba(r|z)"]})]
-      (is (= (r/->success 0 6) (core/parse (:root p) "foobaz")))))
+      (is (= (r/->success 0 6) (core/parse p "foobaz")))))
 
   (testing "map of vectors with = postfix keys"
     (let [p (create-parser {:root [:chain [:literal "foo"] [:ref :bax]]
                             :bax= [:regex "ba(r|z)"]})]
       (is (= (r/->success 0 6 [(r/with-success-name :bax (r/->success 3 6))])
-             (core/parse (:root p) "foobaz")))))
+             (core/parse p "foobaz")))))
 
   (testing "arbitrary values"
     (let [p (create-parser {:root [:chain [:literal "foo"] [:with-name :bax [:ref :bax]]]
                             :bax  (c/regex "ba(r|z)")})]
       (is (= (r/->success 0 6 [(r/with-success-name :bax (r/->success 3 6))])
-             (core/parse (:root p) "foobaz")))))
+             (core/parse p "foobaz")))))
 
   (testing "custom combinator"
     #_{:clj-kondo/ignore [:inline-def]}
