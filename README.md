@@ -67,9 +67,24 @@ If that's what you need - _right now!_ - you could skip directly to [string-base
 However, this is only suitable for basic non-recursive grammars.
 For all other usecases, read on!
 
+## Main namespaces and functions
+
+The functionality is split over various namespaces, each with its own clear purpose and domain.
+While some are full of small functions, don't be overwhelmed.
+Below is a small list of the namespaces and functions that you will use the most.
+
+- `crustimoney.core/parse`, receives a parser and a text, and returns the parse result.
+- `crustimoney.data-grammar/create-parser`, to create a parser from a data-based definition.
+- `crustimoney.string-grammar/create-parser`, to create a parser from a string-based definition.
+- `crustimoney.results/transform`, `coerce` and `collect`, to perform a postwalk over the parse result.
+- `crustimoney.combinators/grammar`, in combination with `crustimoney.built-ins/all`, for using the built-in grammar rules.
+
+This should give you a feel of where to look.
+Now, let's see how it all works.
+
 ## The combinators
 
-The combinators are at the heart of the library.
+The combinators are at the heart of the library, and can be found in the `crustimoney.combinators` namespace.
 Even if you decide to never use them directly, it is a good starting point.
 Below is a list of available combinators.
 
