@@ -1,16 +1,29 @@
 (ns crustimoney.core-new
   (:refer-clojure :exclude [compile])
-  (:require [crustimoney.core :as core]))
+  (:require [crustimoney.core :as core]
+            [clojure.string :as str]))
 
 (defn- keyword-to-combinator [key]
   (requiring-resolve (symbol (or (namespace key) "crustimoney.combinators-new")
                              (name key))))
 
+(def ^:private auto-capture-re #"=$")
+
+(defn- auto-capture [grammar]
+  (reduce-kv (fn [a k v]
+               (let [rule-name     (name k)
+                     auto-capture? (re-find auto-capture-re rule-name)
+                     rule-key      (keyword (str/replace rule-name auto-capture-re ""))
+                     rule-expr     (cond->> v auto-capture? (conj [:with-name {:key rule-key}]))]
+                 (assoc a rule-key rule-expr)))
+             {} grammar))
+
 (defn- compile-scoped [scope parser]
   ((fn inner-compile [parser]
      (cond (map? parser)
            (let [new-scope (atom nil)
-                 compiled  (update-vals parser (partial compile-scoped new-scope))
+                 compiled  (-> (auto-capture parser)
+                               (update-vals (partial compile-scoped new-scope)))
                  grammar   (swap! new-scope merge compiled)]
              (if-let [unknown-refs (seq (remove grammar (keys grammar)))]
                (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unknown-refs}))
@@ -22,7 +35,9 @@
                                    [(first more) (rest more)]
                                    [{} more])
                  combinator      (keyword-to-combinator key)]
-             (apply combinator (with-meta args {:scope scope}) (map inner-compile children)))
+             (if combinator
+               (apply combinator (with-meta args {:scope scope}) (map inner-compile children))
+               (throw (ex-info (str "Could not resolve combinator key " key) {:combinator key}))))
 
            :else parser))
    parser))
@@ -65,6 +80,9 @@
 
 (defn negate [_ parser]
   (c/negate parser))
+
+(defn with-name [{:keys [key]} parser]
+  (c/with-name key parser))
 
 ;;;-----------------------------------------------------------
 
