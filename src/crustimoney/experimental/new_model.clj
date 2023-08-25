@@ -68,9 +68,7 @@
 
 ;;;-----------------------------------------------------------
 
-(ns crustimoney.combinator-grammar
-  (:require [crustimoney.combinators :as c]
-            [crustimoney.core :as core]))
+(ns crustimoney.combinator-grammar)
 
 (defn- keyword-as-ref [parser]
   (if (keyword? parser) [:ref {:to parser}] parser))
