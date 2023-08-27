@@ -1,10 +1,24 @@
 (ns crustimoney.core
   "The main parsing functions."
-  (:require [crustimoney.caches :as caches]
+  (:refer-clojure :exclude [compile])
+  (:require [clojure.string :as str]
+            [crustimoney.caches :as caches]
             [crustimoney.experimental.reader :as reader]
-            [crustimoney.results :as r]))
+            [crustimoney.results :as r]
+            [crustimoney.vector-grammar :as vector-grammar]))
 
-;;; Internals
+(defn compile
+  "Compile a parser model to its combinator function. This way the
+  `parse` function can skip this step (speeding it up) and can the
+  model be checked at compile time.
+
+  For more information on the model, see the `vector-grammar`
+  namespace."
+  [model]
+  (vector-grammar/compile model))
+
+
+;;; Parse internals
 
 (defn- named-self-or-children
   "Returns a sequence with `child` if it has a name, otherwise a
@@ -62,18 +76,14 @@
 
   - `:infinite-check?`, check for infinite loops during parsing.
   Default is true. Setting it to false yields a small performance
-  boost.
-
-  - `:keep-nameless?`, set this to true if nameless success nodes
-  should be kept in the parse result. This can be useful for
-  debugging. Defaults to false."
+  boost."
   ([parser text]
    (parse parser text nil))
   ([parser text opts]
    ;; Options parsing
-   (let [start-index     (:index opts 0)
+   (let [compiled        (compile parser)
+         start-index     (:index opts 0)
          cache           (or (:cache opts (caches/treemap-cache)) caches/noop-cache)
-         post-success    (if (:keep-nameless? opts) identity keep-named-children)
          infinite-check? (:infinite-check? opts true)]
 
      ;; Main parsing loop
@@ -88,18 +98,9 @@
                state' (r/push->state stack-item)
 
                ;; Call the parser
-               result
-               (cond
-                 ;; Backtrack further on a soft-cut error result, when the parser is
-                 ;; not tagged as recovering
-                 (and (some-> result meta :soft-cut) (not (-> parser meta :recovering)))
-                 result
-                 ;; Handle backtracking a result
-                 result
-                 (parser text index result state)
-                 ;; Handle a push
-                 :else
-                 (parser text index))]
+               result (if result
+                        (parser text index result state)
+                        (parser text index))]
 
            ;; Handle the parse result
            (cond
@@ -118,7 +119,7 @@
 
              ;; Handle a success result
              (r/success? result)
-             (let [processed (post-success result)]
+             (let [processed (keep-named-children result)]
                ;; Check if it was a hard-cut success
                (if (-> result meta :hard-cut)
                  (do (caches/cut cache (r/success->end result))
@@ -130,7 +131,7 @@
 
              ;; Handle a set of errors
              (set? result)
-             (if-not (< index cut-at)
+             (if-not (or (-> result meta :soft-cut) (< index cut-at))
                (recur (pop stack) result state' cut-at)
                result)
 

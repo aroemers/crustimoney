@@ -43,10 +43,12 @@
 
 (defn literal
   "A parser that matches an exact literal string."
-  [s]
-  (fn [text index]
-    (or (reader/match-literal text index s)
-        #{(r/->error :expected-literal index {:literal s})})))
+  [{:keys [text]}]
+  (assert (string? text) "Literal must be a String")
+  (let [s text]
+    (fn [text index]
+      (or (reader/match-literal text index s)
+          #{(r/->error :expected-literal index {:literal s})}))))
 
 (defn chain
   "Chain multiple consecutive parsers.
@@ -92,7 +94,7 @@
 
   Soft cuts do not influence the packrat caches, so they do not help
   performance wise. A hard cut is implicitly also a soft cut."
-  [& parsers]
+  [_ & parsers]
   (assert (not (#{:soft-cut :hard-cut} (first parsers)))
     "Cannot place a cut in first posision of a chain")
   (assert (empty? (remove #{:soft-cut :hard-cut} (filter keyword? parsers)))
@@ -123,7 +125,7 @@
 
 (defn choice
   "Match the first of the ordered parsers that is successful."
-  [& parsers]
+  [_ & parsers]
   (fn
     ([_text index]
      (if-let [parser (first parsers)]
@@ -140,7 +142,7 @@
 
 (defn repeat*
   "Eagerly try to match the given parser as many times as possible."
-  [parser]
+  [_ parser]
   (fn
     ([_text index]
      (r/->push parser index {:children []}))
@@ -155,7 +157,7 @@
 (defn negate
   "Negative lookahead for the given parser, i.e. this succeeds if the
   parser does not."
-  [parser]
+  [_ parser]
   (fn
     ([_text index]
      (r/->push parser index))
@@ -170,8 +172,8 @@
 (defn regex
   "A parser that matches the given regular expression (string or
   pattern)."
-  [re]
-  (let [pattern (re-pattern re)]
+  [{:keys [pattern]}]
+  (let [pattern (re-pattern pattern)]
     (fn [text index]
       (or (reader/match-pattern text index pattern)
           #{(r/->error :expected-match index {:regex pattern})}))))
@@ -179,7 +181,7 @@
 (defn repeat+
   "Eagerly try to match the parser as many times as possible, expecting
   at least one match."
-  [parser]
+  [_ parser]
   (fn
     ([_text index]
      (r/->push parser index {:children []}))
@@ -194,7 +196,7 @@
 (defn lookahead
   "Lookahead for the given parser, i.e. succeed if the parser does,
   without advancing the parsing position."
-  [parser]
+  [_ parser]
   (fn
     ([_text index]
      (r/->push parser index))
@@ -206,7 +208,7 @@
 
 (defn maybe
   "Try to parse the given parser, but succeed anyway."
-  [parser]
+  [_ parser]
   (fn
     ([_text index]
      (r/->push parser index))
@@ -217,7 +219,7 @@
 
 (defn eof
   "Succeed only if the entire text has been parsed."
-  []
+  [_]
   (negate (regex ".|\\n")))
 
 ;;; Result wrappers
@@ -226,7 +228,7 @@
   "Wrap the parser, assigning a name to the (success) result of the
   parser. Nameless parsers are filtered out by default during
   parsing."
-  [key parser]
+  [{:keys [key]} parser]
   (fn [& args]
     (let [result (apply parser args)]
       (cond->> result (r/success? result) (r/with-success-name key)))))
@@ -234,7 +236,7 @@
 (defn with-error
   "Wrap the parser, replacing any errors with a single error with the
   supplied error key."
-  [key parser]
+  [{:keys [key]} parser]
   (fn [text index & args]
     (let [result (apply parser text index args)]
       (if (set? result)
@@ -243,72 +245,27 @@
 
 ;;; Recursive grammar definition
 
-(def ^:dynamic ^:no-doc *parsers*)
-
 (defn ref
   "Wrap another parser function, which is referred to by the given key.
-  Needs to be called within the lexical scope of `grammar`."
-  [key]
-  (assert (bound? #'*parsers*)
-    "Cannot use ref function outside grammar macro")
+  Only valid inside recursive grammars, for example:
 
-  (swap! *parsers* assoc key nil)
-  (let [parsers *parsers*
-        parser  (delay (get @parsers key))]
+      {:foo  (literal {:text \"foo\"})
+       :root (ref {:to :foo})}"
+  [{:keys [to] :as args}]
+  (let [scope  (or (-> args meta :scope)
+                   (throw (ex-info "Cannot use ref outside a recursive grammar" args)))
+        parser (delay (get @scope to))]
+    (swap! scope assoc to nil)
     (fn
       ([_ index]
        (r/->push @parser index))
       ([_ _ result _]
        result))))
 
-(defn- auto-capture [m]
-  (reduce-kv (fn [a k v]
-               (let [rule-name     (name k)
-                     auto-capture? (= (last rule-name) \=)
-                     rule-key      (keyword (cond-> rule-name auto-capture? (subs 0 (dec (count rule-name)))))
-                     rule-expr     (cond->> v auto-capture? (with-name rule-key))]
-                 (assoc a rule-key rule-expr)))
-             {} m))
 
-(defn ^:no-doc grammar* [f]
-  (if (bound? #'*parsers*)
-    (f)
-    (binding [*parsers* (atom nil)]
-      (let [result (swap! *parsers* merge (auto-capture (f)))]
-        (if-let [unknown-refs (seq (remove result (keys result)))]
-          (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unknown-refs}))
-          result)))))
+;;; Explicit failure in model
 
-(defmacro grammar
-  "Takes one or more maps, in which the entries can refer to each other
-  using the `ref` function. In other words, a recursive map. For
-  example:
-
-      (grammar {:foo  (literal \"foo\")
-                :root (chain (ref :foo) \"bar\")})
-
-  The `grammar` macro can be nested, where the most-outer one will
-  perform the final `ref` resolving. This way, multiple (partial)
-  grammars can be combined.
-
-  A rule's name key can be postfixed with `=`. The rule's parser is
-  then wrapped with `with-name` (without the postfix). A `ref` to such
-  rule is also without the postfix.
-
-  However, it is encouraged to be very intentional about which nodes
-  should be captured and when. For example, the following (string)
-  grammar ensures that the `:prefixed` node is only in the result when
-  applicable.
-
-      root=    <- prefixed (' ' prefixed)*
-      prefixed <- (:prefixed '!' body) / body
-      body=    <- [a-z]+
-
-  Parsing \"foo !bar\" would result in the following result tree:
-
-      [:root {:start 0, :end 8}
-       [:body {:start 0, :end 3}]
-       [:prefixed {:start 4, :end 8}
-        [:body {:start 5, :end 8}]]]"
-  [& maps]
-  `(grammar* (fn [] (merge ~@maps))))
+(defn- ^:no-doc fail-to-compile
+  "Internal combinator which fails to compile."
+  [{:keys [error info]}]
+  (throw (ex-info error info)))
