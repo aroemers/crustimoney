@@ -1,9 +1,15 @@
 (ns crustimoney.combinator-grammar
-  "This grammar allows you to create a parser model using functions.
+  "This grammar allows you to create a parser (vector) model using
+  functions.
 
-  The functions are in direct relation to the actual `combinators`
-  they compile to, except for `ref`. To refer to other parsers in a
-  recursive grammar, you simply use its keyword. For example:
+  Each combinator functions creates a parser model that is suitable
+  for use with core's main parse function, and many take other parser
+  functions as their argument; they are composable.
+
+  The functions in this namespace are in direct relation to the actual
+  `crustimoney.combinators` they compile to, except for `ref`. To
+  refer to other parsers in a recursive grammar, you simply use its
+  keyword. For example:
 
       {:root (chain (literal \"foo\") :bax)
        :bax  (choice (literal \"bar\")

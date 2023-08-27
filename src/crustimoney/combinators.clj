@@ -1,13 +1,15 @@
 (ns crustimoney.combinators
-  "Parsers combinator functions.
+  "Parsers combinator implementation functions.
 
-  Each combinator functions creates a parser function that is suitable
-  for use with core's main parse function, and many take other parser
-  functions as their argument; they are composable.
+  Although these functions can be used directly, the namespace
+  `crustimoney.combinator-grammar` offers a nicer API. The
+  documentation for the each of the combinators can be found there as
+  well.
 
   If you want to implement your own parser combinator, read on.
-  Otherwise, just look at the docstrings of the combinators
-  themselves.
+
+  Each combinator here receives at least one argument, a property map.
+  The rest of the arguments are the child parsers.
 
   The parsers returned by the combinators do not call other parsers
   directly, as this could lead to stack overflows. So next to a
@@ -51,49 +53,7 @@
           #{(r/->error :expected-literal index {:literal s})}))))
 
 (defn chain
-  "Chain multiple consecutive parsers.
-
-  The chain combinator supports cuts. At least one normal parser must
-  precede a cut. That parser must consume input, which no other
-  parser (via a choice) up in the combinator tree could also consume
-  at that point.
-
-  Two kinds of cuts are supported. A \"hard\" cut and a \"soft\" cut,
-  which can be inserted in the chain using `:hard-cut` or `:soft-cut`.
-  Both types of cuts improve error messages, as they limit
-  backtracking.
-
-  With a hard cut, the parser is instructed to never backtrack before
-  the end of this chain. A well placed hard cut has a major benefit,
-  next to better error messages. It allows for substantial memory
-  optimization, since the packrat caches can evict everything before
-  the cut. This can turn memory requirements from O(n) to O(1). Since
-  PEG parsers are memory hungry, this can be a big deal.
-
-  With a soft cut, backtracking can still happen outside the chain,
-  but errors will not escape inside the chain after a soft cut. The
-  advantage of a soft cut over a hard cut, is that they can be used at
-  more places without breaking the grammar.
-
-  For example, the following parser benefits from a soft-cut:
-
-      (choice (chain (maybe (chain (literal \"{\")
-                                   :soft-cut
-                                   (literal \"foo\")
-                                   (literal \"}\")))
-                     (literal \"bar\"))
-              (literal \"baz\")))
-
-  When parsing \"{foo\", it will nicely report that a \"}\" is
-  missing. Without the soft-cut, it would report that \"bar\" or
-  \"baz\" are expected, ignoring the more likely error.
-
-  When parsing \"{foo}eve\", it will nicely report that \"bar\" or
-  \"baz\" is missing. Placing a hard cut would only report \"bar\"
-  missing, as it would never backtrack to try the \"baz\" choice.
-
-  Soft cuts do not influence the packrat caches, so they do not help
-  performance wise. A hard cut is implicitly also a soft cut."
+  "Chain multiple consecutive parsers."
   [_ & parsers]
   (assert (not (#{:soft-cut :hard-cut} (first parsers)))
     "Cannot place a cut in first posision of a chain")
