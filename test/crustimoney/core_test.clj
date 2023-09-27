@@ -1,7 +1,7 @@
 (ns crustimoney.core-test
   (:require [clojure.test :refer [deftest is testing]]
             [crustimoney.core :as core]
-            [crustimoney.combinators :as c]
+            [crustimoney.combinator-grammar :as c]
             [crustimoney.results :as r]))
 
 (deftest parse-test
@@ -13,30 +13,21 @@
     (let [p (c/literal "foo")]
       (is (r/success? (core/parse p "foobar" {:cache nil})))))
 
-  (testing "keeping nameless nodes"
-    (let [p (c/chain (c/literal "foo") (c/literal "bar"))]
-      (is (= [nil {:start 0 :end 6}]
-             (core/parse p "foobar" {:keep-nameless? false})))
-      (is (= [nil {:start 0 :end 6}
-              [nil {:start 0 :end 3}]
-              [nil {:start 3 :end 6}]]
-             (core/parse p "foobar" {:keep-nameless? true})))))
-
   (testing "resiliency against infinite loops"
-    (let [grammar (c/grammar {:a (c/ref :b), :b (c/ref :c), :c (c/ref :a)})]
+    (let [grammar {:root (c/chain :b), :b (c/chain :c), :c (c/chain :root)}]
       (is (thrown-with-msg? Exception #"Infinite parsing loop detected"
-                            (core/parse (:a grammar) "anything"))))
+                            (core/parse grammar "anything"))))
 
-    (let [grammar (c/grammar {:a (c/chain (c/choice (c/maybe (c/repeat* (c/ref :b)))))
-                              :b (c/ref :a)})]
+    (let [grammar {:root (c/chain (c/choice (c/maybe (c/repeat* :b))))
+                   :b    (c/chain :root)}]
       (is (thrown-with-msg? Exception #"Infinite parsing loop detected"
-                            (core/parse (:a grammar) "anything")))))
+                            (core/parse grammar "anything")))))
 
   (testing "resiliency against stack overflow"
-    (let [grammar   (c/grammar {:a (c/choice (c/chain (c/literal "a") (c/ref :a))
-                                             (c/literal "a"))})
+    (let [grammar   {:root (c/choice (c/chain (c/literal "a") :root)
+                                     (c/literal "a"))}
           long-text (apply str (repeat 10000 "a"))]
-      (is (r/success? (core/parse (:a grammar) long-text)))))
+      (is (r/success? (core/parse grammar long-text)))))
 
   (testing "report unknown parser function result"
     (let [thrown (try (core/parse (constantly :whut) "anything") (catch Exception e e))]

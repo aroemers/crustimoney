@@ -1,7 +1,7 @@
 (ns crustimoney.data-grammar
-  "Create a parser based on a data grammar. The data is translated into
-  a parser (or map of parsers). The following example shows what a
-  data grammar looks like:
+  "Create a parser (model) based on a data grammar. The data is
+  translated into a single parser or map of parsers. The following
+  example shows what a data grammar looks like:
 
       {;; terminals
        literal            \"foo\"

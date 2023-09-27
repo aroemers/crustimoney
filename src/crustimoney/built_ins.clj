@@ -9,7 +9,7 @@
         root <- (space? (:name word) blank (:id natural) space?)* $
       \"))"
   (:refer-clojure :exclude [newline float])
-  (:require [crustimoney.combinators :as c]))
+  (:require [crustimoney.combinator-grammar :as c]))
 
 (def space
   "Parse one or more whitespace characters, including newlines."

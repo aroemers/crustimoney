@@ -180,7 +180,7 @@
 (defn eof
   "Succeed only if the entire text has been parsed."
   [_]
-  (negate (regex ".|\\n")))
+  (negate nil (regex {:pattern ".|\\n"})))
 
 ;;; Result wrappers
 

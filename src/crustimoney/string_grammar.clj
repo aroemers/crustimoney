@@ -42,8 +42,7 @@
   (:require [clojure.string :as str]
             [crustimoney.core :as core]
             [crustimoney.data-grammar :as data-grammar]
-            [crustimoney.results :as r]
-            [crustimoney.vector-grammar :as vector-grammar]))
+            [crustimoney.results :as r]))
 
 ;;; Value transformers
 
@@ -53,44 +52,45 @@
 ;;; Grammar definition
 
 (def ^:private grammar
-  (data-grammar/create-parser
-   '{space #"[\s,]*"
+  (-> '{space #"[\s,]*"
 
-     non-terminal=    #"[a-zA-Z_-]+"
-     literal          ("'" > (:literal #"(\\'|[^'])*") "'")
-     character-class= ("[" > #"(\\]|[^]])*" "]" #"[?*+]?")
-     regex=           ("#" > literal)
-     end-of-file=     "$"
+        non-terminal=    #"[a-zA-Z_-]+"
+        literal          ("'" > (:literal #"(\\'|[^'])*") "'")
+        character-class= ("[" > #"(\\]|[^]])*" "]" #"[?*+]?")
+        regex=           ("#" > literal)
+        end-of-file=     "$"
 
-     ref (non-terminal !"=" space !"<-")
+        ref (non-terminal !"=" space !"<-")
 
-     group-name (":" > (:group-name #"[a-zA-Z_-]+"))
-     group=     ("(" > group-name ? space choice space ")")
+        group-name (":" > (:group-name #"[a-zA-Z_-]+"))
+        group=     ("(" > group-name ? space choice space ")")
 
-     expr (ref / group / literal / character-class / end-of-file / regex)
+        expr (ref / group / literal / character-class / end-of-file / regex)
 
-     quantified ((:quantified expr (:operand #"[?+*]")) / expr)
-     lookahead  ((:lookahead (:operand #"[&!]") > quantified) / quantified)
+        quantified ((:quantified expr (:operand #"[?+*]")) / expr)
+        lookahead  ((:lookahead (:operand #"[&!]") > quantified) / quantified)
 
-     cut= (">>" / ">")
+        cut= (">>" / ">")
 
-     chain  ((:chain lookahead (space (cut / lookahead))+) / lookahead)
-     choice ((:choice chain (space "/" space chain)+) / chain)
+        chain  ((:chain lookahead (space (cut / lookahead))+) / lookahead)
+        choice ((:choice chain (space "/" space chain)+) / chain)
 
-     rule= ((:rule-name non-terminal "="?) space "<-" >> space choice)
-     root= ((:rules (space rule space)+) / (:no-rules space choice space) $)}))
+        rule= ((:rule-name non-terminal "="?) space "<-" >> space choice)
+        root= ((:rules (space rule space)+) / (:no-rules space choice space) $)}
+      data-grammar/create-parser
+      core/compile))
 
 ;;; Parse result processing
 
 (def ^:private transformations
-  {:non-terminal    (r/coerce [s] [:ref (keyword s)])
-   :literal         (r/coerce [s] [:literal (unescape-quotes s)])
-   :character-class (r/coerce [s] [:regex s])
-   :regex           (r/collect [[literal]] [:regex (second literal)])
+  {:non-terminal    (r/coerce [s] [:ref {:to (keyword s)}])
+   :literal         (r/coerce [s] [:literal {:text (unescape-quotes s)}])
+   :character-class (r/coerce [s] [:regex {:pattern s}])
+   :regex           (r/collect [[[_ {literal :text}]]] [:regex {:pattern literal}])
    :end-of-file     (r/coerce [_] [:eof])
 
    :group-name (r/coerce keyword)
-   :group      (r/collect [[child1 child2]] (if child2 [:with-name child1 child2] child1))
+   :group      (r/collect [[child1 child2]] (if child2 [:with-name {:key child1} child2] child1))
 
    :operand    (r/coerce {"!" :negate "&" :lookahead "?" :maybe "+" :repeat+ "*" :repeat*})
    :quantified (r/collect [[expr operand]] [operand expr])
@@ -113,23 +113,15 @@
 
 ;;; Public namespace API
 
-(defn vector-tree
-  "Low-level function which translates the string grammar into an
-  intermediary vector-based representation. See
-  `crustimoney.vector-grammar` for more on this format. This can be
-  useful for debugging."
+(defn create-parser
+  "Create a parser (model) based on a string-based grammar definition.
+  If the definition contains multiple rules, a map of parsers is
+  returned.
+
+  See the namespace documentation for the string format."
   [text]
-  (let [result (-> (core/parse (:root grammar) text)
+  (let [result (-> (core/parse grammar text)
                    (r/errors->line-column text))]
     (if (set? result)
       (throw (ex-info "Failed to parse grammar" {:errors result}))
       (vector-tree-for result text))))
-
-(defn create-parser
-  "Create a parser based on a string-based grammar definition. If the
-  definition contains multiple rules, a map of parsers is returned.
-
-  See the namespace documentation for the string format."
-  [text]
-  (-> (vector-tree text)
-      (vector-grammar/create-parser)))

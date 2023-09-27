@@ -44,15 +44,16 @@
 
     (testing "string grammar"
       (let [p (from-peg "calc.peg")]
-        (is (= expected (core/parse (:sum p) input)))))
+        (clojure.pprint/pprint p)
+        (is (= expected (core/parse p input)))))
 
     (testing "data grammar"
       (let [p (from-clj "calc.clj")]
-        (is (= expected (core/parse (:sum p) input)))))
+        (is (= expected (core/parse p input)))))
 
     (testing "edn grammar"
       (let [p (from-edn "calc.edn")]
-        (is (= expected (core/parse (:sum p) input)))))))
+        (is (= expected (core/parse p input)))))))
 
 (deftest json-test
   (let [input    "[{\"bool\": true, \"not bool\":false ,\"int\": -83.4,
@@ -68,26 +69,24 @@
 
     (testing "string grammar"
       (let [p (from-peg "json.peg")]
-        (is (= expected (core/parse (:root p) input)))))
+        (is (= expected (core/parse p input)))))
 
     (testing "data grammar"
       (let [p (from-clj "json.clj")]
-        (is (= expected (core/parse (:root p) input)))))))
+        (is (= expected (core/parse p input)))))))
 
 (deftest string-grammar-test
   (let [input (from "string-grammar.peg")]
     (testing "string grammar"
       (let [parser (from-peg "string-grammar.peg")
-            result (core/parse (:root parser) input)
-            vtree  (string-grammar/vector-tree-for result input)
-            parser (vector-grammar/create-parser vtree)
-            result (core/parse (:root parser) input)]
+            result (core/parse parser input)
+            parser (string-grammar/vector-tree-for result input)
+            result (core/parse parser input)]
         (is (r/success? result))))
 
     (testing "data grammar"
       (let [parser (from-clj "string-grammar.clj")
-            result (core/parse (:root parser) input)
-            vtree  (string-grammar/vector-tree-for result input)
-            parser (vector-grammar/create-parser vtree)
-            result (core/parse (:root parser) input)]
+            result (core/parse parser input)
+            parser (string-grammar/vector-tree-for result input)
+            result (core/parse parser input)]
         (is (r/success? result))))))

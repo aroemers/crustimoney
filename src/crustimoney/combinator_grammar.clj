@@ -101,7 +101,7 @@
 (defn repeat*
   "Eagerly try to match the given parser as many times as possible."
   [parser]
-  [:repeat (keyword-as-ref )parser])
+  [:repeat* (keyword-as-ref parser)])
 
 (defn negate
   "Negative lookahead for the given parser, i.e. this succeeds if the

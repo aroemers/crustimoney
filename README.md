@@ -50,9 +50,10 @@ The instructions for the latest version can be found here: [![Clojars Project](h
 
 ## Quick!
 
-While the library is suitable for complex grammars, you may only want a simple parser where a regular expression just doesn't cut it.
-For this there is the `crustimoney.quick/parse` function.
-It takes a string- or data-driven parser definition and a string, creates a parser internally, tries to parse the string, and returns the result if it matched.
+In a hurry, and you just need to parse a small text where a regular expression just doesn't cut it?
+For this there's the `crustimoney.quick/parse` function.
+It takes a string- or data-driven parser definition and a text, compiles it to a parser internally, tries to parse the text, and returns the result if it matched.
+The definition can use the [built-in parsers](#built-in-parsers).
 For example:
 
 ```clj
@@ -63,9 +64,9 @@ For example:
     [:who "eve"]]
 ```
 
-If that's what you need - _right now!_ - you could skip directly to [string-based grammar](#string-based-grammar) or [data-based grammar](#data-based-grammar).
-However, this is only suitable for basic non-recursive grammars.
-For all other usecases, read on!
+As you can see, the captured texts are directly availabe in the result.
+If this is what you need - _right now!_ - you could skip directly to [string-based grammar](#string-based-grammar) or [data-based grammar](#data-based-grammar).
+For all the other details, read on!
 
 ## Main namespaces and functions
 
@@ -73,11 +74,10 @@ The functionality is split over various namespaces, each with its own clear purp
 While some are full of small functions, don't be overwhelmed.
 Below is a small list of the namespaces and functions that you will use the most.
 
-- `crustimoney.core/parse`, receives a parser and a text, and returns the parse result.
-- `crustimoney.data-grammar/create-parser`, to create a parser from a data-based definition.
-- `crustimoney.string-grammar/create-parser`, to create a parser from a string-based definition.
-- `crustimoney.results/transform`, `coerce` and `collect`, to perform a postwalk over the parse result.
-- `crustimoney.combinators/grammar`, in combination with `crustimoney.built-ins/all`, for using the built-in grammar rules.
+- `crustimoney.core/parse`, takes a parser and a text, and returns the parse result.
+- `crustimoney.data-grammar/create-parser`, creates a parser from a data-based definition.
+- `crustimoney.string-grammar/create-parser`, creates a parser from a string-based definition.
+- `crustimoney.results/transform`, `coerce` and `collect`, performs a postwalk over the parse result.
 
 This should give you a feel of where to look.
 Now, let's see how it all works.

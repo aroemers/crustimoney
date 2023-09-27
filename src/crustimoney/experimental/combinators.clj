@@ -71,52 +71,6 @@
          (r/->success index end)
          result)))))
 
-(defn recover
-  "Like a `choice`, capturing errors of the first choice, including
-  soft-cuts in its scope.
-
-  If the first `parser` fails, the `recovery` parser is tried. If it
-  succeeds, it results in a success node like this:
-
-      [:crusti/recovered {:start .., :end .., :errors #{..}}]
-
-  The errors are those of the first parser, and can be extracted using
-  `success->recovered-errors`. If recovery parser fails, the result
-  will also be the errors of first parser.
-
-  Example usage:
-
-      (repeat* (recover (with-name :content
-                          (chain (literal \"{\")
-                                 (regex #\"\\d+\")
-                                 (literal \"}\")))
-                        (regex \".*?}\")))
-
-  Parsing something like `{42}{nan}{100}` would result in:
-
-      [nil {:start 0, :end 14}
-       [:content {:start 0, :end 4}]
-       [:crusti/recovered {:start 4, :end 9, :errors #{{:key :expected-match, :at 5, ...}}}]
-       [:content {:start 9, :end 14}]]"
-  [parser recovery]
-  (with-meta
-    (fn
-      ([_text index]
-       (r/->push parser index))
-
-      ([_text index result state]
-       (if-let [errors (:errors state)]
-         ;; It was the result of the recovery parser
-         (if (r/success? result)
-           (r/with-success-name :crusti/recovered
-             (er/with-success-recovered-errors errors
-               result))
-           errors)
-         ;; It was the result of the first parser
-         (or (r/success? result)
-             (r/->push recovery index {:errors result})))))
-    {:recovering true}))
-
 (defn range
   "Like a repeat, but the times the wrapped `parser` is matched must lie
   within the given range. It will not try to parse more than `max`

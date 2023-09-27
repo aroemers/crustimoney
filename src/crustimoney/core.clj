@@ -87,7 +87,7 @@
          infinite-check? (:infinite-check? opts true)]
 
      ;; Main parsing loop
-     (loop [stack  [(r/->push parser start-index)]
+     (loop [stack  [(r/->push compiled start-index)]
             result nil
             state  nil
             cut-at 0]

@@ -16,8 +16,7 @@
 
 (defn parse
   "Quickly parse `text` using the string- or data parser `definition`.
-  The definition cannot be recursive. The predefined parsers in the
-  `built-ins` namespace are available.
+  The predefined parsers in the `built-ins` namespace are available.
 
   A success result is transformed such that the matched texts are
   directly available. For example:
@@ -31,10 +30,11 @@
 
   When the result is an error, nil is returned."
   [definition text]
-  (let [rules (c/grammar built-ins/all
-                         {:root (if (string? definition)
-                                  (string-grammar/create-parser definition)
-                                  (data-grammar/create-parser definition))})
-        result (core/parse (:root rules) text)]
+  (let [rules (merge built-ins/all
+                     (let [result (if (string? definition)
+                                    (string-grammar/create-parser definition)
+                                    (data-grammar/create-parser definition))]
+                       (if (map? result) result {:root result})))
+        result (core/parse rules text)]
     (when (r/success? result)
       (success->texts result text))))
