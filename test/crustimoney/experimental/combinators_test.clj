@@ -1,9 +1,8 @@
 (ns crustimoney.experimental.combinators-test
   (:require [clojure.test :refer [deftest testing is]]
             [crustimoney.combinators :as c]
-            [crustimoney.experimental.combinators :as ec]
-            [crustimoney.experimental.results :as er]
             [crustimoney.core :as core]
+            [crustimoney.experimental.combinators :as ec]
             [crustimoney.results :as r]))
 
 (deftest with-callback-test
