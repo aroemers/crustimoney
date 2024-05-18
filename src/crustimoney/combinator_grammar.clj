@@ -90,24 +90,30 @@
   Soft cuts do not influence the packrat caches, so they do not help
   performance wise. A hard cut is implicitly also a soft cut."
   [& parsers]
-  (into [:chain] (replace {soft-cut :soft-cut, hard-cut :hard-cut}
-                          (keywords-as-refs parsers))))
+  (into (if (map? (first parsers)) [:chain {}] [:chain])
+        (replace {soft-cut :soft-cut, hard-cut :hard-cut}
+                 (keywords-as-refs parsers))))
 
 (defn choice
   "Match the first of the ordered parsers that is successful."
   [& parsers]
-  (into [:choice] (keywords-as-refs parsers)))
+  (into (if (map? (first parsers)) [:choice {}] [:choice])
+        (keywords-as-refs parsers)))
 
 (defn repeat*
   "Eagerly try to match the given parser as many times as possible."
   [parser]
-  [:repeat* (keyword-as-ref parser)])
+  (if (map? parser)
+    [:repeat* {} parser]
+    [:repeat* (keyword-as-ref parser)]))
 
 (defn negate
   "Negative lookahead for the given parser, i.e. this succeeds if the
   parser does not."
   [parser]
-  [:negate (keyword-as-ref parser)])
+  (if (map? parser)
+    [:negate {} parser]
+    [:negate (keyword-as-ref parser)]))
 
 ;;; Extra combinators
 
@@ -121,18 +127,24 @@
   "Eagerly try to match the parser as many times as possible, expecting
   at least one match."
   [parser]
-  [:repeat+ (keyword-as-ref parser)])
+  (if (map? parser)
+    [:repeat+ {} parser]
+    [:repeat+ (keyword-as-ref parser)]))
 
 (defn lookahead
   "Lookahead for the given parser, i.e. succeed if the parser does,
   without advancing the parsing position."
   [parser]
-  [:lookahead (keyword-as-ref parser)])
+  (if (map? parser)
+    [:lookahead {} parser]
+    [:lookahead (keyword-as-ref parser)]))
 
 (defn maybe
   "Try to parse the given parser, but succeed anyway."
   [parser]
-  [:maybe (keyword-as-ref parser)])
+  (if (map? parser)
+    [:maybe {} parser]
+    [:maybe (keyword-as-ref parser)]))
 
 (defn eof
   "Succeed only if the entire text has been parsed."

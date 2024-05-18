@@ -24,8 +24,7 @@
        [:prefixed {:start 4, :end 8}
         [:body {:start 5, :end 8}]]]"
   (:refer-clojure :exclude [compile])
-  (:require [clojure.string :as str]
-            [crustimoney.combinators :as combinators]))
+  (:require [crustimoney.combinators :as combinators]))
 
 ;;; Utilities
 

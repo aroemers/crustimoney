@@ -5,7 +5,7 @@
             [crustimoney.results :as r]
             [crustimoney.vector-grammar :as vg]))
 
-(deftest create-parser-test
+(deftest compile-test
   (testing "simple literal vector"
     (let [p (vg/compile [:literal {:text "foo"}])]
       (is (= (r/->success 0 3) (core/parse p "foo")))))
@@ -43,4 +43,8 @@
 
   (testing "missing custom combinator"
     (is (thrown-with-msg? Exception #"Could not resolve combinator key :missing"
-          (vg/compile [:missing])))))
+          (vg/compile [:missing]))))
+
+  (testing "missing :root rule"
+    (is (thrown-with-msg? Exception #"Missing :root rule in grammar"
+          (vg/compile {:foo [:literal {:text "foo"}]})))))

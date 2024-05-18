@@ -231,7 +231,7 @@
 
   This returns the scope's body, where the `ref`s are bound the other
   parsers."
-  [{:keys [to] :as args}]
+  [{:keys [to]}]
   (assert *scope* "Cannot use ref without a scope")
   (let [scope  *scope*
         parser (delay (get @scope to))]
@@ -263,7 +263,7 @@
 
 ;;; Explicit failure in model
 
-(defn- ^:no-doc fail-to-compile
+(defn ^:no-doc fail-to-compile
   "Internal combinator which fails to compile."
   [{:keys [error info]}]
   (throw (ex-info error info)))

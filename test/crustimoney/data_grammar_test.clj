@@ -1,6 +1,5 @@
 (ns crustimoney.data-grammar-test
   (:require [clojure.test :refer [deftest testing is]]
-            [crustimoney.combinators :as c]
             [crustimoney.core :as core]
             [crustimoney.results :as r]
             [crustimoney.data-grammar :refer [create-parser]]))

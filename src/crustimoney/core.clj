@@ -1,8 +1,7 @@
 (ns crustimoney.core
   "The main parsing functions."
   (:refer-clojure :exclude [compile])
-  (:require [clojure.string :as str]
-            [crustimoney.caches :as caches]
+  (:require [crustimoney.caches :as caches]
             [crustimoney.experimental.reader :as reader]
             [crustimoney.results :as r]
             [crustimoney.vector-grammar :as vector-grammar]))
@@ -13,7 +12,8 @@
   model be checked at compile time.
 
   For more information on the model, see the `vector-grammar`
-  namespace."
+  namespace. Note that the `string-grammar`, `data-grammar` and
+  `combinator-grammar` all return vector models."
   [model]
   (vector-grammar/compile model))
 

@@ -195,3 +195,13 @@
                    (catch Exception e e))]
       (is (= "Detected unknown keys in refs" (.getMessage thrown)))
       (is (= {:unknown-keys [:foo]} (ex-data thrown))))))
+
+;;; Failure model
+
+(deftest fail-to-compile-test
+  (testing "a combinator that fails to be created"
+    (let [thrown (try
+                   (c/fail-to-compile {:error "BOOM!", :info {:it :broke}})
+                   (catch Exception e e))]
+      (is (= "BOOM!" (.getMessage thrown)))
+      (is (= {:it :broke} (ex-data thrown))))))

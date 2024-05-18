@@ -4,8 +4,7 @@
             [crustimoney.core :as core]
             [crustimoney.data-grammar :as data-grammar]
             [crustimoney.results :as r]
-            [crustimoney.string-grammar :as string-grammar]
-            [crustimoney.vector-grammar :as vector-grammar]))
+            [crustimoney.string-grammar :as string-grammar]))
 
 ;;; Read input
 
