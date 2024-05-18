@@ -176,6 +176,23 @@ This grammar can be used as follows:
 
 Such a map requires a `:root` rule to be present.
 
+### Nested recursive grammars
+
+An advanced feature is lexically-scoped nested recursive grammars.
+A contrived example of this is:
+
+```clj
+{:foo    (literal "foo")
+ :bar    (literal "wrong")
+ :foobar {:root (chain :foo :bar)
+          :bar  (literal "bar")}
+ :root   (ref :foobar)}
+```
+
+Inner maps can refer to rules in its own scope and the enclosing scopes.
+Inner rules take precedence over outer rules with the same name.
+Outer scopes can not refer to inner scopes.
+
 ## Compiling the grammar
 
 Note that the grammar model is compiled on-the-fly by `core/parse`.
@@ -416,6 +433,8 @@ The first keyword in the vector determines the combinator.
 If it is without a namespace, `crustimoney.combinators` is assumed (so not `crustimoney.combinator-grammar`!).
 The other arguments are left as-is, except those tagged with `#crusti/parser`.
 With that tag, the data is processed again as a parser definition.
+
+Another possible benefit of the data-based grammar over the string-based one, is that is supports [nested grammars](#nested-recursive-grammars).
 
 ### EDN support
 

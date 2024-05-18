@@ -61,6 +61,15 @@
     (let [p (create-parser '{root (foo bar), foo "foo", bar "bar"})]
       (is (r/success? (core/parse p "foobar")))))
 
+  (testing "nested recursive grammar"
+    (let [p (create-parser
+             '{foo    "foo"
+               bar    "baz"
+               foobar {root  (foo bar)
+                       bar   "bar"}
+               root   foobar})]
+      (is (= (r/->success 0 6) (core/parse p "foobar")))))
+
   (testing "auto-named rule"
     (let [p (create-parser '{root= ("foo" $)})]
       (is (= (r/with-success-name :root (r/->success 0 3))

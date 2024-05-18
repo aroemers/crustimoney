@@ -180,14 +180,24 @@
     (let [p (c/with-scope
               {:root (c/ref {:to :foo})
                :foo  (c/literal {:text "foo"})})]
-      (is (= (r/->success 0 3) (parse (:root p) "foo")))))
+      (is (= (r/->success 0 3) (parse p "foo")))))
+
+  (testing "nested grammar"
+    (let [p (c/with-scope
+              {:foo    (c/literal {:text "foo"})
+               :bar    (c/literal {:text "baz"})
+               :foobar (:root (c/with-scope
+                                {:root (c/chain {} (c/ref {:to :foo}) (c/ref {:to :bar}))
+                                 :bar  (c/literal {:text "bar"})}))
+               :root   (c/ref {:to :foobar})})]
+      (is (= (r/->success 0 6) (core/parse p "foobar")))))
 
   (testing "auto-capture rules"
     (let [p (c/with-scope
               {:root (c/ref {:to :foo})
                :foo= (c/literal {:text "foo"})})]
       (is (= (r/with-success-name :foo (r/->success 0 3))
-             (core/parse (:root p) "foo")))))
+             (core/parse p "foo")))))
 
   (testing "missing references"
     (let [thrown (try

@@ -219,7 +219,8 @@
 
 ;;; Recursive grammar definition
 
-(def ^:dynamic ^:no-doc *scope* nil)
+(def ^:dynamic ^:no-doc *scopes* nil)
+(def ^:dynamic ^:no-doc *refs* nil)
 
 (defn ref
   "Refer to another parser, by its key in a recursive grammar. Only
@@ -229,13 +230,13 @@
         {:foo  (literal {:text \"foo\"})
          :root (ref {:to :foo})})
 
-  This returns the scope's body, where the `ref`s are bound the other
-  parsers."
+  The `ref` is now bound to the referred parser. Updating the map does
+  not update the binding!"
   [{:keys [to]}]
-  (assert *scope* "Cannot use ref without a scope")
-  (let [scope  *scope*
-        parser (delay (get @scope to))]
-    (swap! scope assoc to nil)
+  (assert *scopes* "Cannot use ref without a scope")
+  (let [scopes *scopes*
+        parser (delay (get (apply merge (map deref scopes)) to))]
+    (swap! *refs* conj [to parser])
     (fn
       ([_ index]
        (r/->push @parser index))
@@ -243,13 +244,18 @@
        result))))
 
 (defn ^:no-doc with-scope* [f]
-  (binding [*scope* (atom nil)]
-    (let [scoped (f)]
-      (assert (or (nil? scoped) (map? scoped)) "Body of scope must be a map")
-      (let [auto-captured (auto-capture scoped)]
-        (if-let [refs (seq (remove (set (keys auto-captured)) (keys @*scope*)))]
-          (throw (ex-info "Detected unknown keys in refs" {:unknown-keys refs}))
-          (reset! *scope* auto-captured))))))
+  (let [scope  (atom nil)
+        outer? (not *scopes*)]
+    (binding [*scopes* (conj (or *scopes* []) scope)
+              *refs*   (or *refs* (atom nil))]
+      (let [scoped (f)]
+        (assert (or (nil? scoped) (map? scoped)) "Body of scope must be a map")
+        (let [auto-captured (auto-capture scoped)]
+          (reset! scope auto-captured)
+          (when outer?
+            (when-let [unresolved (seq (keep (fn [[to parser]] (when-not @parser to)) @*refs*))]
+              (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unresolved}))))
+          auto-captured)))))
 
 (defmacro with-scope
   "Takes a grammar map, defining a scope for the `ref` function. Returns
@@ -259,7 +265,9 @@
   As with any recursive grammar, you can auto-capture a rule's parser
   by adding the `=` postfix to its name.
 
-  Throws an error when a `ref` points to a non-existent rule."
+  Throws an error when a `ref` points to a non-existent rule.
+
+  Scopes can be nested, where lexical scoping applies."
   [& body]
   `(with-scope* (fn [] ~@body)))
 
