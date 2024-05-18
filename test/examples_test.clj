@@ -44,7 +44,6 @@
 
     (testing "string grammar"
       (let [p (from-peg "calc.peg")]
-        (clojure.pprint/pprint p)
         (is (= expected (core/parse p input)))))
 
     (testing "data grammar"

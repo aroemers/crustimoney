@@ -2,11 +2,10 @@
   "A namespace for those quick \"I need something better than a
   regex\"-moments."
   (:require [crustimoney.built-ins :as built-ins]
-            [crustimoney.combinators :as c]
             [crustimoney.core :as core]
-            [crustimoney.data-grammar :as data-grammar]
+            [crustimoney.data-grammar :as dg]
             [crustimoney.results :as r]
-            [crustimoney.string-grammar :as string-grammar]))
+            [crustimoney.string-grammar :as sg]))
 
 (defn- success->texts [success text]
   ((fn inner [success]
@@ -32,8 +31,8 @@
   [definition text]
   (let [rules (merge built-ins/all
                      (let [result (if (string? definition)
-                                    (string-grammar/create-parser definition)
-                                    (data-grammar/create-parser definition))]
+                                    (sg/create-parser definition)
+                                    (dg/create-parser definition))]
                        (if (map? result) result {:root result})))
         result (core/parse rules text)]
     (when (r/success? result)

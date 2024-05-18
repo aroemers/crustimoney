@@ -24,52 +24,14 @@
        [:prefixed {:start 4, :end 8}
         [:body {:start 5, :end 8}]]]"
   (:refer-clojure :exclude [compile])
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [crustimoney.combinators :as combinators]))
 
-;;; Auto-capture mechanics
-
-(def ^:private auto-capture-re #"=$")
-
-(defn- auto-capture [grammar]
-  (reduce-kv (fn [a k v]
-               (let [rule-name     (name k)
-                     auto-capture? (re-find auto-capture-re rule-name)
-                     rule-key      (keyword (str/replace rule-name auto-capture-re ""))
-                     rule-expr     (cond->> v auto-capture? (conj [:with-name {:key rule-key}]))]
-                 (assoc a rule-key rule-expr)))
-             {} grammar))
-
-
-;;; Compiling vector model
+;;; Utilities
 
 (defn- keyword-to-combinator [key]
   (requiring-resolve (symbol (or (namespace key) "crustimoney.combinators")
                              (name key))))
-
-(defn- compile-scoped [scope parser]
-  ((fn inner-compile [parser]
-     (cond (map? parser)
-           (let [new-scope (atom nil)
-                 compiled  (-> (auto-capture parser)
-                               (update-vals (partial compile-scoped new-scope)))
-                 grammar   (swap! new-scope merge compiled)]
-             (if-let [unknown-refs (seq (remove grammar (keys grammar)))]
-               (throw (ex-info "Detected unknown keys in refs" {:unknown-keys unknown-refs}))
-               (or (:root compiled) (throw (ex-info "Missing :root rule in grammar" {})))))
-
-           (vector? parser)
-           (let [[key & more]    parser
-                 [args children] (if (map? (first more))
-                                   [(first more) (rest more)]
-                                   [{} more])
-                 combinator      (keyword-to-combinator key)]
-             (if combinator
-               (apply combinator (with-meta args {:scope scope}) (map inner-compile children))
-               (throw (ex-info (str "Could not resolve combinator key " key) {:combinator key}))))
-
-           :else parser))
-   parser))
-
 
 ;;; Parser creation
 
@@ -78,18 +40,33 @@
   For example:
 
       {:root= [:chain [:ref {:to :foo}] [:ref {:to :bar}]]
-       :foo     [:literal {:text \"foo\"}]
-       :bar     [:with-name {:key :bax}
-                 [:choice [:literal {:text \"bar\"}]
-                          [:literal {:text \"baz\"}]]]}
+       :foo   [:literal {:text \"foo\"}]
+       :bar   [:with-name {:key :bax}
+               [:choice [:literal {:text \"bar\"}]
+                        [:literal {:text \"baz\"}]]]}
 
   Each vector yields a combinator invocation, referenced
   by the first keyword. If the keyword does not have a namespace,
   `crustimoney.combinators` is assumed.
 
-  Maps are walked as well, applying auto-captures and processing all
-  values. A map must have a `:root` entry.
+  Maps are walked as well (using `with-scope`), applying auto-captures
+  and processing all values. A map must have a `:root` entry.
 
   Other data is left as-is, including compiled parser functions."
   [model]
-  (compile-scoped nil model))
+  (cond (map? model)
+        (let [compiled (combinators/with-scope
+                         (update-vals model compile))]
+          (or (:root compiled) (throw (ex-info "Missing :root rule in grammar" {}))))
+
+        (vector? model)
+        (let [[key & more]    model
+              [args children] (if (map? (first more))
+                                [(first more) (rest more)]
+                                [{} more])
+              combinator      (keyword-to-combinator key)]
+          (if combinator
+            (apply combinator args (map compile children))
+            (throw (ex-info (str "Could not resolve combinator key " key) {:combinator key}))))
+
+        :else model))

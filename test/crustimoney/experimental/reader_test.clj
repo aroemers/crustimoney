@@ -1,6 +1,6 @@
 (ns crustimoney.experimental.reader-test
   (:require [clojure.test :refer [deftest testing is]]
-            [crustimoney.combinators :as c]
+            [crustimoney.combinator-grammar :as cg]
             [crustimoney.core :as core]
             [crustimoney.experimental.reader :as reader]
             [crustimoney.results :as r])
@@ -39,7 +39,7 @@
              (.charAt r 2)))))
 
   (testing "via hard-cut during parsing"
-    (let [p (c/chain (c/literal "foo") :hard-cut)
+    (let [p (cg/chain (cg/literal "foo") cg/hard-cut)
           r (reader/wrap-reader (StringReader. "foobar") 2)]
       (is (= (r/->success 0 3) (core/parse p r)))
       (is (= "bar" (.subSequence r 3 6)))

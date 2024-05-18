@@ -13,7 +13,7 @@
       (reset! result [text success]))
 
     (testing "with-callback invocation on success"
-      (let [p (ec/with-callback callback
+      (let [p (ec/with-callback {:callback callback}
                 (c/with-name {:key :x}
                   (c/literal {:text "x"})))]
         (is (= (r/with-success-name :x (r/->success 0 1))
@@ -24,7 +24,7 @@
 
     (testing "resolving with-callback function"
       (reset! result nil)
-      (let [p (ec/with-callback `callback
+      (let [p (ec/with-callback {:callback `callback}
                 (c/with-name {:key :x}
                   (c/literal {:text "x"})))]
         (core/parse p "x")
@@ -41,39 +41,39 @@
 
 (deftest stream*-test
   (testing "zero matches"
-    (let [p (ec/stream* (c/literal "x"))]
+    (let [p (ec/stream* {} (c/literal {:text "x"}))]
       (is (= (r/->success 0 0) (core/parse p "not-x")))))
 
   (testing "multiple matches, no children"
-    (let [p (ec/stream* (c/with-name :x (c/literal "x")))]
+    (let [p (ec/stream* {} (c/with-name {:key :x} (c/literal {:text "x"})))]
       (is (= (r/->success 0 3) (core/parse p "xxx"))))))
 
 (deftest stream+-test
   (testing "zero matches"
-    (let [p (ec/stream+ (c/literal "x"))]
+    (let [p (ec/stream+ {} (c/literal {:text "x"}))]
       (is (= #{(r/->error :expected-literal 0 {:literal "x"})}
              (core/parse p "not-x")))))
 
   (testing "multiple matches, no children"
-    (let [p (ec/stream+ (c/with-name :x (c/literal "x")))]
+    (let [p (ec/stream+ {} (c/with-name {:key :x} (c/literal {:text "x"})))]
       (is (= (r/->success 0 3) (core/parse p "xxx"))))))
 
 (deftest range-test
   (testing "illegal ranges"
     (is (thrown-with-msg? AssertionError #"min must at least be 0, and max must at least be min"
-          (ec/range (c/literal {:text "x"}) -1 5)))
+          (ec/range {:min -1 :max 5} (c/literal {:text "x"}))))
     (is (thrown-with-msg? AssertionError #"min must at least be 0, and max must at least be min"
-          (ec/range (c/literal {:text "x"}) 5 3))))
+          (ec/range {:min 5 :max 3} (c/literal {:text "x"})))))
 
   (testing "max range of 0"
-    (let [p (ec/range (c/literal {:text "x"}) 0 0)]
+    (let [p (ec/range {:min 0 :max 0} (c/literal {:text "x"}))]
       (is (= (r/->success 0 0) (core/parse p "xxx")))))
 
   (testing "min range of 0"
-    (let [p (ec/range (c/literal {:text "x"}) 0 2)]
+    (let [p (ec/range {:min 0 :max 2} (c/literal {:text "x"}))]
       (is (= (r/->success 0 0) (core/parse p "yyy")))))
 
-  (let [p (ec/range (c/literal {:text "x"}) 1 3)]
+  (let [p (ec/range {:min 1 :max 3} (c/literal {:text "x"}))]
     (testing "not enough matches"
       (is (= #{(r/->error :expected-literal 0 {:literal "x"})}
              (core/parse p "not-x"))))
@@ -90,7 +90,7 @@
     (testing "not more than max matches"
       (is (= (r/->success 0 3) (core/parse p "xxxx")))))
 
-  (let [p (ec/range (c/literal {:text "x"}) 3)]
+  (let [p (ec/range {:min 3} (c/literal {:text "x"}))]
     (testing "no max given"
       (is (= (r/->success 0 3) (core/parse p "xxx")))
       (is (= (r/->success 0 6) (core/parse p "xxxxxx")))

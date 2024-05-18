@@ -17,7 +17,7 @@
 
   As with any recursive grammar, you can auto-capture a rule's parser
   by adding the `=` postfix to its name."
-  (:refer-clojure :exclude [>]))
+  (:refer-clojure :exclude [> ref]))
 
 ;;; Keywords as refs
 
@@ -152,3 +152,25 @@
   supplied error key."
   [key parser]
   [:with-error {:key key} (keyword-as-ref parser)])
+
+;;; Recursive grammar definition
+
+(defn ref
+  "Refer to another parser by its key in the grammar. Only valid inside
+  recursive grammars, for example:
+
+      {:foo  (literal {:text \"foo\"})
+       :root (ref :foo)}
+
+  Note that this function is generally not needed, as all other
+  functions in this namespace transform keywords in parser position
+  automatically to refs. It can aid in readability though, for example:
+
+      (with-error :error :rule)
+
+  vs
+
+      (with-error :error
+        (ref :rule))"
+  [key]
+  [:ref {:to key}])

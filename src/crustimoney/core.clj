@@ -76,7 +76,11 @@
 
   - `:infinite-check?`, check for infinite loops during parsing.
   Default is true. Setting it to false yields a small performance
-  boost."
+  boost.
+
+  - `:keep-nameless?`, set this to true if nameless success nodes
+  should be kept in the parse result. This can be useful for
+  debugging. Defaults to false."
   ([parser text]
    (parse parser text nil))
   ([parser text opts]
@@ -84,6 +88,7 @@
    (let [compiled        (compile parser)
          start-index     (:index opts 0)
          cache           (or (:cache opts (caches/treemap-cache)) caches/noop-cache)
+         post-success    (if (:keep-nameless? opts) identity keep-named-children)
          infinite-check? (:infinite-check? opts true)]
 
      ;; Main parsing loop
@@ -119,7 +124,7 @@
 
              ;; Handle a success result
              (r/success? result)
-             (let [processed (keep-named-children result)]
+             (let [processed (post-success result)]
                ;; Check if it was a hard-cut success
                (if (-> result meta :hard-cut)
                  (do (caches/cut cache (r/success->end result))

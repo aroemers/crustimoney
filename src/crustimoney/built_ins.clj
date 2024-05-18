@@ -71,5 +71,5 @@
 (def all
   "A map with the built-in parsers."
   (reduce-kv (fn [m k v]
-               (cond-> m (fn? @v) (assoc (keyword k) @v)))
+               (cond-> m (vector? @v) (assoc (keyword k) @v)))
              {} (ns-publics *ns*)))

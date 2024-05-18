@@ -38,7 +38,8 @@
   Before you write your own combinator, do realise that the provided
   combinators are complete in the sense that they can parse any text."
   (:refer-clojure :exclude [ref])
-  (:require [crustimoney.experimental.reader :as reader]
+  (:require [clojure.string :as str]
+            [crustimoney.experimental.reader :as reader]
             [crustimoney.results :as r]))
 
 ;;; Primitives
@@ -203,17 +204,36 @@
         #{(r/->error key index)}
         result))))
 
+;;; Auto-capture mechanics
+
+(def ^:private auto-capture-re #"=$")
+
+(defn- auto-capture [grammar]
+  (reduce-kv (fn [a k v]
+               (let [rule-name     (name k)
+                     auto-capture? (re-find auto-capture-re rule-name)
+                     rule-key      (keyword (str/replace rule-name auto-capture-re ""))
+                     rule-expr     (cond->> v auto-capture? (with-name {:key rule-key}))]
+                 (assoc a rule-key rule-expr)))
+             {} grammar))
+
 ;;; Recursive grammar definition
 
-(defn ref
-  "Wrap another parser function, which is referred to by the given key.
-  Only valid inside recursive grammars, for example:
+(def ^:dynamic ^:no-doc *scope* nil)
 
-      {:foo  (literal {:text \"foo\"})
-       :root (ref {:to :foo})}"
+(defn ref
+  "Refer to another parser, by its key in a recursive grammar. Only
+  valid inside a `with-scope`, for example:
+
+      (with-scope
+        {:foo  (literal {:text \"foo\"})
+         :root (ref {:to :foo})})
+
+  This returns the scope's body, where the `ref`s are bound the other
+  parsers."
   [{:keys [to] :as args}]
-  (let [scope  (or (-> args meta :scope)
-                   (throw (ex-info "Cannot use ref outside a recursive grammar" args)))
+  (assert *scope* "Cannot use ref without a scope")
+  (let [scope  *scope*
         parser (delay (get @scope to))]
     (swap! scope assoc to nil)
     (fn
@@ -222,6 +242,24 @@
       ([_ _ result _]
        result))))
 
+(defn ^:no-doc with-scope* [f]
+  (binding [*scope* (atom nil)]
+    (let [scoped (f)]
+      (assert (or (nil? scoped) (map? scoped)) "Body of scope must be a map")
+      (let [auto-captured (auto-capture scoped)]
+        (if-let [refs (seq (remove (set (keys auto-captured)) (keys @*scope*)))]
+          (throw (ex-info "Detected unknown keys in refs" {:unknown-keys refs}))
+          (reset! *scope* auto-captured))))))
+
+(defmacro with-scope
+  "Takes a grammar map, defining a scope for the `ref` function.
+
+  As with any recursive grammar, you can auto-capture a rule's parser
+  by adding the `=` postfix to its name.
+
+  Throws an error when a `ref` points to a non-existent rule."
+  [& body]
+  `(with-scope* (fn [] ~@body)))
 
 ;;; Explicit failure in model
 
