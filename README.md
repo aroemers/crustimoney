@@ -298,7 +298,7 @@ However, soft and hard cuts can be combined in a grammar.
 We could for instance extend the grammar a bit more:
 
 ```clj
-(repeat+ (chain example :hard-cut))
+(repeat+ (chain example hard-cut))
 ```
 
 This effectively says that after each finished `example`, we won't backtrack, that part is done.
@@ -413,7 +413,7 @@ It works the same way in supporting both recursive and non-recursive parsers, it
 
 It does have an extra feature: direct combinator calls, using vectors.
 The first keyword in the vector determines the combinator.
-If it is without a namespace, `crustimoney.combinators` is assumed.
+If it is without a namespace, `crustimoney.combinators` is assumed (so not `crustimoney.combinator-grammar`!).
 The other arguments are left as-is, except those tagged with `#crusti/parser`.
 With that tag, the data is processed again as a parser definition.
 
