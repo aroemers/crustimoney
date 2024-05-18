@@ -252,7 +252,9 @@
           (reset! *scope* auto-captured))))))
 
 (defmacro with-scope
-  "Takes a grammar map, defining a scope for the `ref` function.
+  "Takes a grammar map, defining a scope for the `ref` function. Returns
+  the same map, where `ref`s have been bound. Updating the map
+  afterwards does not update the `ref` bindings!
 
   As with any recursive grammar, you can auto-capture a rule's parser
   by adding the `=` postfix to its name.
