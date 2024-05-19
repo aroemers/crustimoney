@@ -11,7 +11,7 @@
   :plugins [[lein-pprint "1.3.2"]
             [lein-cloverage "1.2.4"]
             [com.roomkey/lein-v "7.2.0"]
-            [com.github.clj-kondo/lein-clj-kondo "0.2.4"]]
+            [com.github.clj-kondo/lein-clj-kondo "2024.03.13"]]
 
   :deploy-repositories [["clojars" {:username      :env/CLOJARS_USERNAME
                                     :password      :env/CLOJARS_TOKEN
