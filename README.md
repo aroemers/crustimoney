@@ -112,7 +112,7 @@ The result is a "hiccup"-style parse tree, for example:
 ```
 
 To capture a node during parsing, it must be "named", such as `:node` or `:child-node` in above example.
-This is done by wrapping a parser with `combinators/with-name` (or by other means, depending on the grammar type).
+This is done by wrapping a parser with `with-name` (or by other means, depending on the grammar type).
 Results without a name are filtered out, though its named children are kept.
 The root node can be nameless (`nil`).
 
@@ -124,7 +124,7 @@ On failed parses, a set of errors is returned, which has the following structure
   {:key :unexpected-match, :at 8, :detail {:text "eve"}}}
 ```
 
-If you want to override the default key of an error, a parser can be wrapped with `combinators/with-error`.
+If you want to override the default key of an error, a parser can be wrapped with `with-error`.
 For example:
 
 ```clj
