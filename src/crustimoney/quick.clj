@@ -7,18 +7,23 @@
             [crustimoney.results :as r]
             [crustimoney.string-grammar :as sg]))
 
-(defn- success->texts [success text]
-  ((fn inner [success]
-     (into [(r/success->name success) (r/success->text success text)]
-           (map inner (r/success->children success))))
-   success))
+(defn transform-success
+  "Transform a success result to the 'quick' format, nil otherwise."
+  [result text]
+  (when (r/success? result)
+    ((fn inner [node]
+       (let [base     {(r/success->name node) (r/success->text node text)}
+             children (r/success->children node)]
+         (cond-> base (seq children) (assoc nil (map inner children)))))
+     result)))
 
 (defn parse
   "Quickly parse `text` using the string- or data parser `definition`.
   The predefined parsers in the `built-ins` namespace are available.
 
-  A success result is transformed such that the matched texts are
-  directly available. For example:
+  A success result is transformed such that each node is a map, where
+  the node's name contains the matched text and the `nil` key contains
+  its children. For example:
 
       (parse \"'alice' (' and ' (:who word))+\"
              \"alice and bob and eve\")
@@ -35,5 +40,4 @@
                                     (dg/create-parser definition))]
                        (if (map? result) result {:root result})))
         result (core/parse rules text)]
-    (when (r/success? result)
-      (success->texts result text))))
+    (transform-success result text)))

@@ -51,19 +51,19 @@ The instructions for the latest version can be found here: [![Clojars Project](h
 
 In a hurry, and you just need to parse a small text where a regular expression just doesn't cut it?
 For this there's the `crustimoney.quick/parse` function.
-It takes a string- or data-driven parser definition and a text, compiles it to a parser internally, tries to parse the text, and returns the result if it matched.
+It takes a string- or data-driven parser definition plus a text and returns a conveniently transformed result if it matched.
 The definition can use the [built-in parsers](#built-in-parsers).
 For example:
 
 ```clj
 (quick/parse '("alice" (" and " (:who word))+)
              "alice and bob and eve")
-=> [nil "alice and bob and eve"
-    [:who "bob"]
-    [:who "eve"]]
+=> {nil ({:who "bob"} {:who "eve"})}
 ```
 
 As you can see, the captured texts are directly availabe in the result.
+Each success node is a map, where the node's name contains the matched text and the `nil` key contains the children (if any).
+
 If this is what you need - _right now!_ - you could skip directly to [string-based grammar](#string-based-grammar) or [data-based grammar](#data-based-grammar).
 For all the other details, read on!
 
