@@ -7,7 +7,7 @@
             [crustimoney.results :as r]
             [crustimoney.string-grammar :as sg]))
 
-(defn transform-success
+(defn transform
   "Transform a success result to the 'quick' format, nil otherwise."
   [result text]
   (when (r/success? result)
@@ -40,4 +40,4 @@
                                     (dg/create-parser definition))]
                        (if (map? result) result {:root result})))
         result (core/parse rules text)]
-    (transform-success result text)))
+    (transform result text)))
