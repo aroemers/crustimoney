@@ -62,11 +62,10 @@ For example:
 
 => [nil "alice and bob and eve"
     [:who "bob"]
-	[:who "eve"]]
+    [:who "eve"]]
 ```
 
 As you can see, the captured texts are directly availabe in the result.
-Each success node is a map, where the node's name contains the matched text and the `nil` key contains the children (if any).
 
 If this is what you need - _right now!_ - you could skip directly to [string-based grammar](#string-based-grammar) or [data-based grammar](#data-based-grammar).
 For all the other details, read on!
