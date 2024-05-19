@@ -1,11 +1,17 @@
 (ns crustimoney.data-grammar-test
   (:require [clojure.test :refer [deftest testing is]]
-            [crustimoney.combinators :as c]
             [crustimoney.core :as core]
             [crustimoney.results :as r]
-            [crustimoney.data-grammar :refer [create-parser vector-tree]]))
+            [crustimoney.data-grammar :refer [create-parser]]))
 
 (deftest create-parser-test
+  (testing "creating a vector model"
+    (is (= [:choice [:chain
+                     [:literal {:text "foo"}]
+                     [:literal {:text "bar"}]]
+            [:literal {:text "eve"}]]
+           (create-parser '("foo" "bar" / "eve")))))
+
   (testing "simple literal"
     (let [p (create-parser "foo")]
       (is (= (r/->success 0 3) (core/parse p "foo")))
@@ -52,13 +58,22 @@
              (core/parse p "foobarfoobar")))))
 
   (testing "recursive grammars"
-    (let [p (create-parser '{expr (foo bar), foo "foo", bar "bar"})]
-      (is (r/success? (core/parse (:expr p) "foobar")))))
+    (let [p (create-parser '{root (foo bar), foo "foo", bar "bar"})]
+      (is (r/success? (core/parse p "foobar")))))
+
+  (testing "nested recursive grammar"
+    (let [p (create-parser
+             '{foo    "foo"
+               bar    "baz"
+               foobar {root  (foo bar)
+                       bar   "bar"}
+               root   foobar})]
+      (is (= (r/->success 0 6) (core/parse p "foobar")))))
 
   (testing "auto-named rule"
-    (let [p (create-parser '{expr= ("foo" $)})]
-      (is (= (r/with-success-name :expr (r/->success 0 3))
-             (core/parse (:expr p) "foo")))))
+    (let [p (create-parser '{root= ("foo" $)})]
+      (is (= (r/with-success-name :root (r/->success 0 3))
+             (core/parse p "foo")))))
 
   (testing "star quantifier"
     (let [p (create-parser '("foo"*))]
@@ -106,14 +121,10 @@
              (core/parse p "foobaz")))))
 
   (testing "extra rules"
-    (let [p (c/grammar (create-parser '{root foo})
-                       {:foo (create-parser "foo")})]
-      (is (r/success? (core/parse (:root p) "foo")))))
+    (let [p (merge (create-parser '{root foo})
+                   {:foo (create-parser "foo")})]
+      (is (r/success? (core/parse p "foo")))))
 
   (testing "unknown type"
     (is (thrown-with-msg? Exception #"Unknown data type"
           (create-parser (range))))))
-
-(deftest vector-tree-test
-  (is (= [:choice [:chain [:literal "foo"] [:literal "bar"]] [:literal "eve"]]
-         (vector-tree '("foo" "bar" / "eve")))))

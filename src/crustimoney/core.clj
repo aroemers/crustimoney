@@ -1,10 +1,24 @@
 (ns crustimoney.core
   "The main parsing functions."
+  (:refer-clojure :exclude [compile])
   (:require [crustimoney.caches :as caches]
             [crustimoney.experimental.reader :as reader]
-            [crustimoney.results :as r]))
+            [crustimoney.results :as r]
+            [crustimoney.vector-grammar :as vector-grammar]))
 
-;;; Internals
+(defn compile
+  "Compile a parser model to its combinator function. This way the
+  `parse` function can skip this step (speeding it up) and the
+  model can be checked at compile time.
+
+  For more information on the model, see the `vector-grammar`
+  namespace. Note that the `string-grammar`, `data-grammar` and
+  `combinator-grammar` all return vector models."
+  [model]
+  (vector-grammar/compile model))
+
+
+;;; Parse internals
 
 (defn- named-self-or-children
   "Returns a sequence with `child` if it has a name, otherwise a
@@ -71,13 +85,14 @@
    (parse parser text nil))
   ([parser text opts]
    ;; Options parsing
-   (let [start-index     (:index opts 0)
+   (let [compiled        (compile parser)
+         start-index     (:index opts 0)
          cache           (or (:cache opts (caches/treemap-cache)) caches/noop-cache)
          post-success    (if (:keep-nameless? opts) identity keep-named-children)
          infinite-check? (:infinite-check? opts true)]
 
      ;; Main parsing loop
-     (loop [stack  [(r/->push parser start-index)]
+     (loop [stack  [(r/->push compiled start-index)]
             result nil
             state  nil
             cut-at 0]
@@ -88,18 +103,9 @@
                state' (r/push->state stack-item)
 
                ;; Call the parser
-               result
-               (cond
-                 ;; Backtrack further on a soft-cut error result, when the parser is
-                 ;; not tagged as recovering
-                 (and (some-> result meta :soft-cut) (not (-> parser meta :recovering)))
-                 result
-                 ;; Handle backtracking a result
-                 result
-                 (parser text index result state)
-                 ;; Handle a push
-                 :else
-                 (parser text index))]
+               result (if result
+                        (parser text index result state)
+                        (parser text index))]
 
            ;; Handle the parse result
            (cond
@@ -130,7 +136,7 @@
 
              ;; Handle a set of errors
              (set? result)
-             (if-not (< index cut-at)
+             (if-not (or (-> result meta :soft-cut) (< index cut-at))
                (recur (pop stack) result state' cut-at)
                result)
 

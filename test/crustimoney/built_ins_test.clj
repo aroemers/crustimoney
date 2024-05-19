@@ -71,3 +71,7 @@
   (is (= (r/->success 0 10) (core/parse b/squote "'foo\\'bar'")))
   (is (= #{(r/->error :expected-single-qoute-string 0)}
          (core/parse b/squote "'foo"))))
+
+(deftest all-test
+  (is (= #{:space :float :natural :squote :integer :blank :word :space? :blank? :newline :dquote}
+         (set (keys b/all)))))

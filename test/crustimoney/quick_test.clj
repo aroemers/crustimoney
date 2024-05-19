@@ -4,12 +4,12 @@
 
 (deftest parse-test
   (testing "string grammar"
-    (is (= [nil "alice and bob and eve" [:who "bob"] [:who "eve"]]
+    (is (= '{nil ({:who "bob"} {:who "eve"})}
            (quick/parse "'alice' (' and ' (:who word))+"
                         "alice and bob and eve"))))
 
   (testing "data grammar"
-    (is (= [nil "alice and bob and eve" [:who "bob"] [:who "eve"]]
+    (is (= '{nil ({:who "bob"} {:who "eve"})}
            (quick/parse '("alice" (" and " (:who word))+)
                         "alice and bob and eve"))))
 

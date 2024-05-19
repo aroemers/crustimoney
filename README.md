@@ -45,48 +45,34 @@ Let's parse those long words from Owl.
 
 ## Add to project
 
-First, add this library to your dependencies.
 The instructions for the latest version can be found here: [![Clojars Project](https://img.shields.io/clojars/v/nl.functionalbytes/crustimoney.svg)](https://clojars.org/nl.functionalbytes/crustimoney)
 
 ## Quick!
 
-While the library is suitable for complex grammars, you may only want a simple parser where a regular expression just doesn't cut it.
-For this there is the `crustimoney.quick/parse` function.
-It takes a string- or data-driven parser definition and a string, creates a parser internally, tries to parse the string, and returns the result if it matched.
+In a hurry, and you just need to parse a small text where a regular expression just doesn't cut it?
+For this there's the `crustimoney.quick/parse` function.
+It takes a string- or data-driven parser definition plus a text.
+The definition can use the [built-in parsers](#built-in-parsers).
+It returns a conveniently transformed result if it matched.
 For example:
 
 ```clj
 (quick/parse '("alice" (" and " (:who word))+)
              "alice and bob and eve")
-=> [nil "alice and bob and eve"
-    [:who "bob"]
-    [:who "eve"]]
+=> {nil ({:who "bob"} {:who "eve"})}
 ```
 
-If that's what you need - _right now!_ - you could skip directly to [string-based grammar](#string-based-grammar) or [data-based grammar](#data-based-grammar).
-However, this is only suitable for basic non-recursive grammars.
-For all other usecases, read on!
+As you can see, the captured texts are directly availabe in the result.
+Each success node is a map, where the node's name contains the matched text and the `nil` key contains the children (if any).
 
-## Main namespaces and functions
+If this is what you need - _right now!_ - you could skip directly to [string-based grammar](#string-based-grammar) or [data-based grammar](#data-based-grammar).
+For all the other details, read on!
 
-The functionality is split over various namespaces, each with its own clear purpose and domain.
-While some are full of small functions, don't be overwhelmed.
-Below is a small list of the namespaces and functions that you will use the most.
+## Combinator grammar
 
-- `crustimoney.core/parse`, receives a parser and a text, and returns the parse result.
-- `crustimoney.data-grammar/create-parser`, to create a parser from a data-based definition.
-- `crustimoney.string-grammar/create-parser`, to create a parser from a string-based definition.
-- `crustimoney.results/transform`, `coerce` and `collect`, to perform a postwalk over the parse result.
-- `crustimoney.combinators/grammar`, in combination with `crustimoney.built-ins/all`, for using the built-in grammar rules.
-
-This should give you a feel of where to look.
-Now, let's see how it all works.
-
-## The combinators
-
-The combinators are at the heart of the library, and can be found in the `crustimoney.combinators` namespace.
-Even if you decide to never use them directly, it is a good starting point.
-Below is a list of available combinators.
+The combinators are at the heart of the library.
+Even though you may never use them directly, it is a good starting point.
+Below is a list of available combinators, found in the `crustimoney.combinator-grammar` namespace.
 
 The essentials:
 
@@ -105,7 +91,7 @@ But more combinators are provided, for ease of use, nicer result trees and bette
 - `maybe`, try the given parser, succeed anyway
 - `eof`, succeed if there is no more input
 
-Each combinator returns a parser.
+Each combinator returns a parser (model).
 Some combinators take one or more parsers, making them composable.
 For example:
 
@@ -126,11 +112,11 @@ The result is a "hiccup"-style parse tree, for example:
 ```
 
 To capture a node during parsing, it must be "named", such as `:node` or `:child-node` in above example.
-This is done by wrapping a parser with `combinators/with-name` (or by other means, depending on the grammar type).
+This is done by wrapping a parser with `with-name` (or by other means, depending on the grammar type).
 Results without a name are filtered out, though its named children are kept.
 The root node can be nameless (`nil`).
 
-On unsuccessful parses, a set of errors is returned, which has the following structure:
+On failed parses, a set of errors is returned, which has the following structure:
 
 ```clj
 #{{:key :expected-literal, :at 10, :detail {:literal "foo"}}
@@ -138,7 +124,7 @@ On unsuccessful parses, a set of errors is returned, which has the following str
   {:key :unexpected-match, :at 8, :detail {:text "eve"}}}
 ```
 
-If you want to override the default key of an error, a parser can be wrapped with `combinators/with-error`.
+If you want to override the default key of an error, a parser can be wrapped with `with-error`.
 For example:
 
 ```clj
@@ -158,44 +144,64 @@ It also contains tools to walk and transform the tree (see [built-in transformer
 
 Composing a single parser can be enough in some cases.
 More complex texts need or are better expressed with a recursive grammar, i.e. named parsers that can refer to each other.
-For this the `grammar` macro and `ref` function is used.
 For example:
 
 ```clj
 (def my-grammar
-  (grammar
-   {:root (repeat+ (choice (ref :foo) (ref :bax)))
+   {:root (repeat+ (choice :foo :bax))
     :foo  (literal "foo")
-    :bax  (regex "ba(r|z)")}))
+    :bax  (regex "ba(r|z)")})
 ```
 
-This will return a normal map, where the refs have been bound to the rules in the grammar.
-The macro will ensure that all references resolve correctly.
 This grammar can be used as follows:
 
 ```clj
-(core/parse (:root my-grammar) "foobaz")
+(core/parse my-grammar "foobaz")
 => [nil {:start 0, :end 6}]
 ```
 
-The `grammar` macro can take multiple maps, which are merged.
-The macro can also be nested, where it is the most outer one that does the actual resolving.
+Such a map requires a `:root` rule to be present.
+
+### Nested recursive grammars
+
+An advanced feature is lexically-scoped nested recursive grammars.
+A contrived example of this is:
+
+```clj
+{:foo    (literal "foo")
+ :bar    (literal "wrong")
+ :foobar {:root (chain :foo :bar)
+          :bar  (literal "bar")}
+ :root   (ref :foobar)}
+```
+
+Inner maps can refer to rules in its own scope and the enclosing scopes.
+Inner rules take precedence over outer rules with the same name.
+Outer scopes can not refer to inner scopes.
+
+## Compiling the grammar
+
+Note that the grammar model is compiled on-the-fly by `core/parse`.
+This will check for a `:root` rule and dangling references.
+
+To do this compiling beforehand, you can use `core/compile`.
+It is recommended to do this in production code, as it speeds up consecutive parse calls considerably.
 
 ## Auto-named rules
 
-The example above shows that all success nodes are filtered out, except the root node, as they are nameless.
+The example above shows that all success nodes are filtered out, except the root node.
+This is because the results were nameless.
 The parsers could be wrapped with `with-name`, but the names would probably be the same as the rule names in this case.
 Appending an `=` to the rule name will automatically wrap the parser with `with-name`.
 This would update the grammar to:
 
 ```clj
-(grammar
- {:root= (repeat+ (choice (ref :foo) (ref :bax)))
-  :foo=  (literal "foo")
-  :bax=  (regex "ba(r|z)")})
+{:root= (repeat+ (choice :foo :bax))
+ :foo=  (literal "foo")
+ :bax=  (regex "ba(r|z)")})
 ```
 
-Note that the `ref` keys are still without the postfix.
+Note that the refernce keys are still without the postfix.
 Parsing it again would yield the following result:
 
 ```clj
@@ -228,7 +234,7 @@ Crustimoney expands on this by differentiating between _hard_ cuts and _soft_ cu
 
 ### Hard cuts
 
-A hard cut tells the parser that it should never backtrack beyond the position where it encountered a hard cut.
+A hard cut tells the parser that it should never backtrack beyond the position where it is encountered.
 This has two major benefits.
 The first is better and more localized error messages.
 The following example shows this, and also how to add a hard cut in the `chain` combinator.
@@ -236,7 +242,7 @@ The following example shows this, and also how to add a hard cut in the `chain` 
 ```clj
 (def example
   (maybe (chain (literal "(")
-                :hard-cut
+                hard-cut
                 (regex #"\d+")
                 (literal ")"))))
 
@@ -254,7 +260,9 @@ It will never need this again.
 This behaviour makes that well placed hard cuts can - especially when parsing repeating structures - alleviate the memory requirements to be constant.
 
 Note that a cut can only be used within a `chain`, and never as the first element.
-The preceding parser(s) should consume some input, and that input should only be valid for that chain of parser(s) at that point.
+The preceding elements should consume some input, and that input should only be valid for element at that point in the text.
+
+An alias for the `hard-cut` is `>>`.
 
 ### Soft cuts
 
@@ -270,7 +278,7 @@ Consider the expansion of the previous example:
   (choice (chain
             ;; --- same as before, but now with soft-cut
             (maybe (chain (literal "(")
-                          :soft-cut
+                          soft-cut
                           (regex #"\d+")
                           (literal ")")))
             ;; ---
@@ -285,7 +293,7 @@ Consider the expansion of the previous example:
      {:key :expected-literal, :at 0, :detail {:literal "bar"}}}
 ```
 
-The `:hard-cut` has been replaced with a `:soft-cut`.
+The `hard-cut` has been replaced with a `soft-cut`, of which the alias would be `>`.
 As shown, this still shows a localized error for the missing `")"`, yet it also allows backtracking to try the `"bar"` choice.
 
 Since backtracking before the soft cut is still allowed outside of the chain's scope, the cache is not affected.
@@ -293,15 +301,16 @@ However, soft and hard cuts can be combined in a grammar.
 We could for instance extend the grammar a bit more:
 
 ```clj
-(repeat+ (chain example :hard-cut))
+(repeat+ (chain example hard-cut))
 ```
 
 This effectively says that after each finished `example`, we won't backtrack, that part is done.
-Many of such consecutive `example`s can be parsed, without memory requirements growing (except for the growing parse result tree).
+Many of such consecutive `example`s can be parsed, without memory requirements growing.
+The parse tree does grow of course, though there is an experimental [`stream+`](#experimental-combinators) combinator.
 
 The significance of cuts in PEGs must not be underestimated.
 Try to use them in your grammar on somewhat larger inputs.
-The overhead is small, and is actually countered by faster cache lookups.
+The computing overhead is small, and is countered by faster cache lookups.
 
 ## String-based grammar
 
@@ -334,7 +343,7 @@ soft-cut  <- >
 hard-cut  <- >>
 ```
 
-The function `string-grammar/create-parser` is used to create a parser out of such a string.
+The function `create-parser` in the `crustimoney.string-grammar` is used to create a parser out of such a string.
 Note that above "example" has rules and thus describes a recursive grammar.
 Therefore a map is returned by `create-parser`.
 However, it is perfectly valid to define a single parser, such as:
@@ -346,10 +355,10 @@ However, it is perfectly valid to define a single parser, such as:
 The syntax is flexible regarding whitespace.
 Multiple lines can be on the same line, and a `,` is also seen as whitespace.
 
-Also remember that `grammar` takes multiple maps, which can be used like so:
+Multiple grammars can be merged, which can come in handy for parsers that are easier expressed in a different way:
 
 ```clj
-(grammar
+(merge
  (create-parser "root <- 'Hello ' email")
  {:email (regex #"...")})
 ```
@@ -396,20 +405,22 @@ It is very similar to the string-based grammar.
   soft-cut   >
   hard-cut   >>
 
-  combinator-call   [:with-error :fail #crusti/parser ("fooba" #"r|z")]
+  combinator-call   [:with-error {:key :fail} #crusti/parser ("fooba" #"r|z")]
   custom-combinator [:my.app/my-combinator ...]}
 ```
 
-The function `data-grammar/create-parser` is used to create a parser out of such a definition.
+The function `create-parser` in the `crustimoney.data-grammar` is used to create a parser out of such a definition.
 
 The data-based definition shares many properties with the string-based one.
 It works the same way in supporting both recursive and non-recursive parsers, it also has auto-naming (the `=` postfix), and can be used as part of a bigger grammar.
 
 It does have an extra feature: direct combinator calls, using vectors.
 The first keyword in the vector determines the combinator.
-If it is without a namespace, `crustimoney.combinators` is assumed.
+If it is without a namespace, `crustimoney.combinators` is assumed (so not `crustimoney.combinator-grammar`!).
 The other arguments are left as-is, except those tagged with `#crusti/parser`.
 With that tag, the data is processed again as a parser definition.
+
+Another possible benefit of the data-based grammar over the string-based one, is that is supports [nested grammars](#nested-recursive-grammars).
 
 ### EDN support
 
@@ -422,22 +433,18 @@ The following code makes it work:
 ```
 
 Note that regular expressions are not supported in plain EDN.
-For this you can use the `#crusti/regex` tag (see above example), although it could also be written as `[:regex ".."]`.
+For this you can use the `#crusti/regex` tag (see above example), although it could also be written as `[:regex {:pattern ".."}]`.
 
 ## Vector-based grammar
 
 The former section on data-based grammars describes that a vector is a valid data type, and that these translate to combinator calls.
 That means that it is possible to write the entire grammar using vectors.
-Thing is, _this is actually what both the string-based and data-based parser generators do_.
-Both generators use it as an intermediary format, and use `vector-grammar/create-parser` to actually turn it into combinators calls.
-While it is not intended for direct use, this approach has some benefits.
-
-One benefit of this is that the generators output can be debugged.
-To see what combinator tree would be formed by a string- or data-based definition, you can call `string-grammar/vector-tree` or `data-grammar/vector-tree`.
-This will show the entire combinator tree in vector format.
+Thing is, _this is actually what the combinator-based, string-based and data-based parser generators do_.
+They all use such vector model as their output format.
+This allows the easy combining of multiple grammars and they can be debugged easily.
 
 Another benefit is that the data-grammar can easily be extended.
-The function `data-grammar/vector-tree` is actually a protocol function.
+The function `data-grammar/vector-tree` is from the `DataGrammar` protocol.
 This makes it possible to add support for other data types, using Clojure's `extend-type`.
 The implementation simply returns a vector, possibly pointing to your own combinator (see further down below).
 
@@ -445,10 +452,10 @@ The implementation simply returns a vector, possibly pointing to your own combin
 
 The library provides a couple of predefined parsers in the `built-ins` namespace, for parsing things like spaces, numbers, words and strings.
 It also contains a map called `all`, containing all of the built-in parsers.
-This map can be used as a basis for your own grammar, by passing it along to `grammar`.
+This map can be used as a basis for your own grammar, by merging them:
 
 ```clj
-(grammar built-ins/all (create-parser "
+(merge built-ins/all (create-parser "
   root <- (space? (:name word) blank (:id natural) space?)* $
 "))
 ```
@@ -460,8 +467,8 @@ These include functions as `success->text` to get the matched text of a node, an
 While not necessary (as the results tree is made of plain vectors), it does increase readability.
 
 Writing your own parse tree processor is easy, as again, it's just data.
-That said, the `results` namespace has a `transform` function.
-This performs a postwalk, transforming the nodes based on their name, using a function that receives the node and the full text.
+That said, the `results` namespace has a `transform` function you can use.
+This performs a postwalk, transforming the nodes based on their name, applying a function that receives the node and the full text.
 Two accompanying helper macros are available, called `coerce` and `collect`.
 Here is an example:
 
@@ -474,15 +481,14 @@ Here is an example:
        nil        (collect first)}))
 ```
 
-If the parse result is not a success, the `transform` returns it as is.
-Otherwise it applies the transformation functions.
+If the parse result is not a success, the `transform` returns the result as is.
 
-The `coerce` macro creates such a transformer, by applying a function to the node's matched text.
+The `coerce` macro creates a transformer, by applying a function to the node's matched text.
 Instead of a function, `coerce` can also take a binding vector and a body.
 So the `:number` transformation above could be written as `(coerce [s] (parse-long s))`.
 It could also be written without the macro as `(fn [node text] (parse-long (success->text node text)))`.
 
-The `collect` macro creates a transformation function, by applying a function to the node's children, as seen with the `nil` (root node) transformer above.
+The `collect` macro also creates a transformation function, by applying a function to the node's children, as seen with the `nil` (root node) transformer above.
 Instead of a function, `collect` can also take a binding vector and a body, as seen with the `:operation` transformer.
 
 ## Experimental combinators
@@ -492,10 +498,10 @@ Being experimental, they may get promoted, or changed, or dismissed.
 
 - `range`, like a `repeat`, requiring a minimum of matches and stops after a maximum of matches
 - `stream*` and `stream+`, like `repeat*`/`repeat+`, but does not keep its children
-- `recover`, like a `choice`, capturing errors of the first choice, including soft-cuts
 - `with-callback`, fires (success) result of a parser to a callback function
 
 These can be found in the `experimental.combinators` namespace, including more documentation on them.
+Note that these experimental combinators compile directly to a parser function, not to the vector model.
 
 ## Writing your own combinator
 

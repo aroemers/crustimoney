@@ -1,5 +1,6 @@
 (ns crustimoney.results
-  "Result constructors, accessors and predicates")
+  "Result constructors, accessors and predicates. Includes
+  transformation utilities.")
 
 ;;; Success functions
 

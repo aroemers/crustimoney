@@ -1,4 +1,6 @@
-{sum ((:sum product sum-op > sum) / product)
+{root sum
+
+ sum ((:sum product sum-op > sum) / product)
 
  product ((:product value product-op > product) / value)
 
