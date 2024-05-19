@@ -28,9 +28,7 @@
       (parse \"'alice' (' and ' (:who word))+\"
              \"alice and bob and eve\")
 
-      => [nil \"alice and bob and eve\"
-          [:who \"bob\"]
-          [:who \"eve\"]]
+      => {nil ({:who \"bob\"} {:who \"eve\"})}
 
   When the result is an error, nil is returned."
   [definition text]
