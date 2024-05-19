@@ -59,7 +59,10 @@ For example:
 ```clj
 (quick/parse '("alice" (" and " (:who word))+)
              "alice and bob and eve")
-=> {nil ({:who "bob"} {:who "eve"})}
+
+=> [nil "alice and bob and eve"
+    [:who "bob"]
+	[:who "eve"]]
 ```
 
 As you can see, the captured texts are directly availabe in the result.

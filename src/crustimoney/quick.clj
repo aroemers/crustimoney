@@ -12,23 +12,24 @@
   [result text]
   (when (r/success? result)
     ((fn inner [node]
-       (let [base     {(r/success->name node) (r/success->text node text)}
-             children (r/success->children node)]
-         (cond-> base (seq children) (assoc nil (map inner children)))))
+       (r/with-success-children
+         [(r/success->name node) (r/success->text node text)]
+         (map inner (r/success->children node))))
      result)))
 
 (defn parse
   "Parse `text` using the string- or data parser `definition`.
   The predefined parsers from the `built-ins` namespace are available.
 
-  A success result is transformed such that each node is a map, where
-  the node's name contains the matched text and the `nil` key contains
-  its children (if any). For example:
+  A success result is transformed such that the attributes of each
+  node are replaced by the matched string. For example:
 
       (parse \"'alice' (' and ' (:who word))+\"
              \"alice and bob and eve\")
 
-      => {nil ({:who \"bob\"} {:who \"eve\"})}
+      => [nil \"alice and bob and eve\"
+          [:who \"bob\"]
+          [:who \"eve\"]]
 
   When the result is an error, nil is returned."
   [definition text]
