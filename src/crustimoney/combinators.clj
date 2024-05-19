@@ -2,11 +2,11 @@
   "Parsers combinator implementation functions.
 
   Although these functions can be used directly, the namespace
-  `crustimoney.combinator-grammar` offers a nicer API. The
-  documentation for the each of the combinators can be found there as
-  well.
+  `crustimoney.combinator-grammar` offers a far better API. The most
+  extensive documentation for the each of the combinators can be found
+  there as well.
 
-  If you want to implement your own parser combinator, read on.
+  If you want to implement your own parser combinator though, read on.
 
   Each combinator here receives at least one argument, a property map.
   The rest of the arguments are the child parsers.
@@ -262,12 +262,12 @@
   the same map, where `ref`s have been bound. Updating the map
   afterwards does not update the `ref` bindings!
 
-  As with any recursive grammar, you can auto-capture a rule's parser
-  by adding the `=` postfix to its name.
+  As with any recursive grammar, you can auto-capture a rule by adding
+  the `=` postfix to its name.
 
   Throws an error when a `ref` points to a non-existent rule.
 
-  Scopes can be nested, where lexical scoping applies."
+  Scopes can be nested, applying lexical scoping for the `ref`s."
   [& body]
   `(with-scope* (fn [] ~@body)))
 

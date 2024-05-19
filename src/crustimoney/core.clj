@@ -8,8 +8,8 @@
 
 (defn compile
   "Compile a parser model to its combinator function. This way the
-  `parse` function can skip this step (speeding it up) and can the
-  model be checked at compile time.
+  `parse` function can skip this step (speeding it up) and the
+  model can be checked at compile time.
 
   For more information on the model, see the `vector-grammar`
   namespace. Note that the `string-grammar`, `data-grammar` and

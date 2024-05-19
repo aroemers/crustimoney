@@ -1,28 +1,40 @@
 (ns crustimoney.vector-grammar
   "A basic vector-driven parser generator. This type of parser generator
   is not intended to be used directly, though you can. It is used as
-  an intermediary format for other formats, such as the string-based
-  and data-based grammars.
+  an intermediary format for other formats, such as the string-based,
+  data-based and combinator grammars.
+
+  The format of the vector model is in hiccup-style. For example:
+
+      [:chain [:literal {:text \"foo\"}] [:literal {:text \"bar\"}]]
+
+  The first element in a vector is the name of the combinator. These
+  are in direct relation to those in the `crustimoney.combinators`
+  namespace. To use another namespace, simply use a namespaced
+  keyword.
+
+  The combinator implementation is called with at least a parameter
+  map, and then any children it may have. So above model would lead to
+  the following calls:
+
+      (chain {} (literal {:text \"foo\"}) (literal {:text \"bar\"}))
+
+  For recursive grammars, plain maps are used:
+
+      {:root   [:ref {:to :foobar}]
+       :foobar [literal {:text \"foobar\"}]}
+
+  A map must have a `:root` entry, so the parser knows where to start.
 
   A rule's name key can be postfixed with `=`. The rule's parser is
   then wrapped with `with-name` (without the postfix). A `ref` to such
   rule is also without the postfix.
 
-  However, it is encouraged to be very intentional about which nodes
-  should be captured and when. For example, the following (string)
-  grammar ensures that the `:prefixed` node is only in the result when
-  applicable.
+  Maps are processed inside a `with-scope`, binding all the `ref`
+  calls. These maps can be nested, applying lexical scoping for the
+  references.
 
-      root=    <- prefixed (' ' prefixed)*
-      prefixed <- (:prefixed '!' body) / body
-      body=    <- [a-z]+
-
-  Parsing \"foo !bar\" would result in the following result tree:
-
-      [:root {:start 0, :end 8}
-       [:body {:start 0, :end 3}]
-       [:prefixed {:start 4, :end 8}
-        [:body {:start 5, :end 8}]]]"
+  Anything other than a map of vector is left as-is."
   (:refer-clojure :exclude [compile])
   (:require [crustimoney.combinators :as combinators]))
 

@@ -1,7 +1,7 @@
 (ns crustimoney.string-grammar
   "Create a parser based on a string grammar. The grammar is translated
-  into a parser (or map of parsers). The following definition
-  describes the string grammar syntax in itself:
+  into a parser model. The following definition describes the string
+  grammar syntax in itself:
 
       space            <- [\\s,]*
 

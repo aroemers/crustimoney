@@ -51,8 +51,9 @@ The instructions for the latest version can be found here: [![Clojars Project](h
 
 In a hurry, and you just need to parse a small text where a regular expression just doesn't cut it?
 For this there's the `crustimoney.quick/parse` function.
-It takes a string- or data-driven parser definition plus a text and returns a conveniently transformed result if it matched.
+It takes a string- or data-driven parser definition plus a text.
 The definition can use the [built-in parsers](#built-in-parsers).
+It returns a conveniently transformed result if it matched.
 For example:
 
 ```clj

@@ -1,22 +1,21 @@
 (ns crustimoney.combinator-grammar
-  "This grammar allows you to create a parser (vector) model using
-  functions.
+  "This grammar allows you to create a parser model using functions.
 
-  Each combinator functions creates a parser model that is suitable
-  for use with core's main parse function, and many take other parser
-  functions as their argument; they are composable.
+  Each combinator creates a parser model that is suitable for use with
+  core's main `parse` (and `compile`) function, and many take other
+  parser combinators as their argument; they are composable.
 
-  The functions in this namespace are in direct relation to the actual
-  `crustimoney.combinators` they compile to, except for `ref`. To
-  refer to other parsers in a recursive grammar, you simply use its
-  keyword. For example:
+  The functions in this namespace are in direct relation to the
+  `crustimoney.combinators` they compile to, except that `ref` is
+  optional. To refer to other parsers in a recursive grammar, you
+  simply use its keyword. For example:
 
       {:root (chain (literal \"foo\") :bax)
        :bax  (choice (literal \"bar\")
                      (literal \"baz\"))}
 
-  As with any recursive grammar, you can auto-capture a rule's parser
-  by adding the `=` postfix to its name."
+  As with any recursive grammar, you can auto-capture a rule by adding
+  the `=` postfix to its name."
   (:refer-clojure :exclude [> ref]))
 
 ;;; Keywords as refs

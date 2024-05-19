@@ -18,12 +18,12 @@
      result)))
 
 (defn parse
-  "Quickly parse `text` using the string- or data parser `definition`.
-  The predefined parsers in the `built-ins` namespace are available.
+  "Parse `text` using the string- or data parser `definition`.
+  The predefined parsers from the `built-ins` namespace are available.
 
   A success result is transformed such that each node is a map, where
   the node's name contains the matched text and the `nil` key contains
-  its children. For example:
+  its children (if any). For example:
 
       (parse \"'alice' (' and ' (:who word))+\"
              \"alice and bob and eve\")

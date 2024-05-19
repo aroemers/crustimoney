@@ -2,10 +2,9 @@
   "A collection of common parsers.
 
   A map called `all` is also defined, which contain all the parsers in
-  this namespace. This can be used as an extra parameter to the
-  `grammar` macro for example:
+  this namespace. This can be merged with other grammars for example:
 
-      (grammar built-ins/all (create-parser \"
+      (merge built-ins/all (create-parser \"
         root <- (space? (:name word) blank (:id natural) space?)* $
       \"))"
   (:refer-clojure :exclude [newline float])
