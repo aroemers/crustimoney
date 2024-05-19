@@ -67,26 +67,11 @@ Each success node is a map, where the node's name contains the matched text and 
 If this is what you need - _right now!_ - you could skip directly to [string-based grammar](#string-based-grammar) or [data-based grammar](#data-based-grammar).
 For all the other details, read on!
 
-## Main namespaces and functions
-
-The functionality is split over various namespaces, each with its own clear purpose and domain.
-While some are full of small functions, don't be overwhelmed.
-Below is a small list of the namespaces and functions that you will use the most.
-
-- `crustimoney.core/parse`, takes a parser and a text, and returns the parse result.
-- `crustimoney.data-grammar/create-parser`, creates a parser from a [data-based definition](#data-based-grammar).
-- `crustimoney.string-grammar/create-parser`, creates a parser from a [string-based definition](#string-based-grammar).
-- `crustimoney.combinator-grammar/create-parser`, creates a parser from [combinator](#combinator-grammar) function calls.
-- `crustimoney.results/transform`, `coerce` and `collect`, performs a postwalk over the parse result.
-
-This should give you a feel of where to look.
-Now, let's see how it all works.
-
 ## Combinator grammar
 
 The combinators are at the heart of the library.
 Even though you may never use them directly, it is a good starting point.
-Below is a list of available combinators.
+Below is a list of available combinators, found in the `crustimoney.combinator-grammar` namespace.
 
 The essentials:
 
@@ -357,7 +342,7 @@ soft-cut  <- >
 hard-cut  <- >>
 ```
 
-The function `string-grammar/create-parser` is used to create a parser out of such a string.
+The function `create-parser` in the `crustimoney.string-grammar` is used to create a parser out of such a string.
 Note that above "example" has rules and thus describes a recursive grammar.
 Therefore a map is returned by `create-parser`.
 However, it is perfectly valid to define a single parser, such as:
@@ -423,7 +408,7 @@ It is very similar to the string-based grammar.
   custom-combinator [:my.app/my-combinator ...]}
 ```
 
-The function `data-grammar/create-parser` is used to create a parser out of such a definition.
+The function `create-parser` in the `crustimoney.data-grammar` is used to create a parser out of such a definition.
 
 The data-based definition shares many properties with the string-based one.
 It works the same way in supporting both recursive and non-recursive parsers, it also has auto-naming (the `=` postfix), and can be used as part of a bigger grammar.
