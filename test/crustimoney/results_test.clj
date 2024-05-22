@@ -19,13 +19,8 @@
 
   (testing "no transformer"
     (let [node [:foo {:start 0, :end 3}]]
-      (is (= node (r/transform node "" nil)))))
-
-  (testing "only children have transformer"
-    (let [node [:foo {:start 0, :end 3}
-                [:bar {:start 0, :end 3}]]]
-      (is (= [:foo {:start 0, :end 3} "child"]
-             (r/transform node "bar" {:bar (constantly "child")})))))
+      (is (thrown-with-msg? Exception #"Missing transformation rule for"
+            (r/transform node "" nil)))))
 
   (testing "postwalk order"
     (let [node [:plus {:start 0, :end 2}

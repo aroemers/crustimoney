@@ -493,6 +493,9 @@ It could also be written without the macro as `(fn [node text] (parse-long (succ
 The `collect` macro also creates a transformation function, by applying a function to the node's children, as seen with the `nil` (root node) transformer above.
 Instead of a function, `collect` can also take a binding vector and a body, as seen with the `:operation` transformer.
 
+If a transformer is missing, an exception is thrown.
+For generic transformations (not rule-based), there's a `postwalk` function.
+
 ## Experimental combinators
 
 Lastly, there are a couple of experimental combinators.

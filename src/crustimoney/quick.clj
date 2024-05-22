@@ -11,11 +11,7 @@
   "Transform a success result to the 'quick' format, nil otherwise."
   [result text]
   (when (r/success? result)
-    ((fn inner [node]
-       (r/with-success-children
-         [(r/success->name node) (r/success->text node text)]
-         (map inner (r/success->children node))))
-     result)))
+    (r/postwalk (fn [node] (assoc node 1 (r/success->text node text))) result)))
 
 (defn parse
   "Parse `text` using the string- or data parser `definition`.

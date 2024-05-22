@@ -144,7 +144,10 @@
 
 ;;; Transformation helpers
 
-(defn- postwalk [result f]
+(defn postwalk
+  "If the result is a success, perform a postwalk on its children and
+  itself. If the result is not a success, it is returned as is."
+  [f result]
   (let [inner (fn inner [success]
                 (let [children (map inner (success->children success))]
                   (f (with-success-children success children))))]
@@ -163,13 +166,19 @@
              :operation (collect [[v1 op v2]] (op v1 v2))
              nil        (collect first)}))
 
+  The `transformations` map can contain a `*` entry, which acts as a
+  default. If a node has no transformer and there is no default, the
+  node is left untouched.
+
   If `result` is not a success, it is returned as is."
   [result text transformations]
-  (postwalk result
+  (postwalk
     (fn [success]
-      (if-let [f (get transformations (success->name success))]
-        (f success text)
-        success))))
+      (let [name (success->name success)]
+        (if-let [f (get transformations name)]
+          (f success text)
+          (throw (ex-info (str "Missing transformation rule for " name) {:key name})))))
+    result))
 
 (defmacro coerce
   "Transformer for use with `transform`. It applies function `f` to the
