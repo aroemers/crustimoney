@@ -1,5 +1,5 @@
 [![Clojars Project](https://img.shields.io/clojars/v/nl.functionalbytes/crustimoney.svg)](https://clojars.org/nl.functionalbytes/crustimoney)
-[![cljdoc badge](https://cljdoc.org/badge/nl.functionalbytes/crustimoney)](https://cljdoc.org/d/nl.functionalbytes/crustimoney/CURRENT)
+[![cljdoc badge](https://cljdoc.org/badge/nl.functionalbytes/crustimoney)](https://cljdoc.org/d/nl.functionalbytes/crustimoney/CURRENT/api/crustimoney)
 [![Clojure CI](https://github.com/aroemers/crustimoney/actions/workflows/build.yml/badge.svg)](https://github.com/aroemers/crustimoney/actions/workflows/build.yml)
 [![Changelog](https://img.shields.io/badge/change-log-informational)](https://github.com/aroemers/crustimoney/releases)
 <!-- [![Clojars Project](https://img.shields.io/clojars/dt/nl.functionalbytes/crustimoney?color=blue)](https://clojars.org/nl.functionalbytes/crustimoney) -->
