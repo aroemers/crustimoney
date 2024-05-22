@@ -13,5 +13,10 @@
            (quick/parse '("alice" (" and " (:who word))+)
                         "alice and bob and eve"))))
 
+  (testing "recursive grammar"
+    (is (= [nil "foobar"]
+           (quick/parse '{root (foo bar), foo "foo", bar "bar"}
+                        "foobar"))))
+
   (testing "no match"
     (is (= nil (quick/parse "'foobar'" "foobaz")))))
