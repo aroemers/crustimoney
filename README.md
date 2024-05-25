@@ -14,7 +14,7 @@ A Clojure library for PEG parsing, supporting various grammars, packrat caching 
 ## Motivation
 
 The first version of crustimoney was my first library in Clojure, a long time ago.
-Simply put, this version is the mental excercise of making it better.
+Simply put, this version is the mental exercise of making it better.
 I like to think it turned out well.
 Maybe you like it too.
 
