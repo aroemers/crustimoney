@@ -7,7 +7,7 @@
 
 # 📙 crustimoney
 
-A Clojure library for PEG parsing, supporting various grammars, packrat caching and cuts.
+A Clojure library for PEG parsing, supporting various grammars, packrat caching and... _cuts_?
 
 ![Banner](images/banner.png)
 
