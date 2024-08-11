@@ -446,7 +446,7 @@ They all use such vector model as their output format.
 This allows the easy combining of multiple grammars and they can be debugged easily.
 
 Another benefit is that the data-grammar can easily be extended.
-The function `data-grammar/vector-tree` is from the `DataGrammar` protocol.
+The function `data-grammar/vector-model` is from the `DataGrammar` protocol.
 This makes it possible to add support for other data types, using Clojure's `extend-type`.
 The implementation simply returns a vector, possibly pointing to your own combinator (see further down below).
 
