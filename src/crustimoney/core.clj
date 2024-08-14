@@ -74,6 +74,10 @@
   - `:cache`, the packrat cache to use, see the caches namespace.
   Default is treemap-cache. To disable caching, use nil.
 
+  - `:cache-depth`, the depth a tree node must have for it to be
+  cached, defaut 0. Increasing this means trading speed for less
+  memory usage. Try hard-cuts first in your grammar.
+
   - `:infinite-check?`, check for infinite loops during parsing.
   Default is true. Setting it to false yields a small performance
   boost.
@@ -88,6 +92,7 @@
    (let [compiled        (compile parser)
          start-index     (:index opts 0)
          cache           (or (:cache opts (caches/treemap-cache)) caches/noop-cache)
+         cache-depth     (:cache-depth opts 0)
          post-success    (if (:keep-nameless? opts) identity keep-named-children)
          infinite-check? (:infinite-check? opts true)]
 
@@ -131,7 +136,8 @@
                      (when (satisfies? reader/CutSupport text)
                        (reader/cut text (r/success->end result)))
                      (recur (pop stack) processed state' (r/success->end result)))
-                 (do (caches/store cache parser index processed)
+                 (do (when (<= cache-depth (r/success->depth processed))
+                       (caches/store cache parser index processed))
                      (recur (pop stack) processed state' cut-at))))
 
              ;; Handle a set of errors
