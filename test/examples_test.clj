@@ -27,31 +27,34 @@
 
 ;;; Examples tests
 
+(def ^:private calc-input "1+2-(42*8)")
+
+(def ^:private calc-expected
+  [nil {:start 0, :end 10}
+   [:sum {:start 0, :end 10}
+    [:number {:start 0, :end 1}]
+    [:operation {:start 1, :end 2}]
+    [:sum {:start 2, :end 10}
+     [:number {:start 2, :end 3}]
+     [:operation {:start 3, :end 4}]
+     [:product {:start 5, :end 9}
+      [:number {:start 5, :end 7}]
+      [:operation {:start 7, :end 8}]
+      [:number {:start 8, :end 9}]]]]])
+
 (deftest calc-test
-  (let [input    "1+2-(42*8)"
-        expected [nil {:start 0, :end 10}
-                  [:sum {:start 0, :end 10}
-                   [:number {:start 0, :end 1}]
-                   [:operation {:start 1, :end 2}]
-                   [:sum {:start 2, :end 10}
-                    [:number {:start 2, :end 3}]
-                    [:operation {:start 3, :end 4}]
-                    [:product {:start 5, :end 9}
-                     [:number {:start 5, :end 7}]
-                     [:operation {:start 7, :end 8}]
-                     [:number {:start 8, :end 9}]]]]]]
+  (testing "string grammar"
+    (let [p (from-peg "calc.peg")]
+      (is (= calc-expected (core/parse p calc-input)))))
 
-    (testing "string grammar"
-      (let [p (from-peg "calc.peg")]
-        (is (= expected (core/parse p input)))))
+  (testing "data grammar"
+    (let [p (from-clj "calc.clj")]
+      (is (= calc-expected (core/parse p calc-input))))))
 
-    (testing "data grammar"
-      (let [p (from-clj "calc.clj")]
-        (is (= expected (core/parse p input)))))
-
-    (testing "edn grammar"
-      (let [p (from-edn "calc.edn")]
-        (is (= expected (core/parse p input)))))))
+(deftest ^:jvm-only calc-edn-test
+  (testing "edn grammar"
+    (let [p (from-edn "calc.edn")]
+      (is (= calc-expected (core/parse p calc-input))))))
 
 (deftest json-test
   (let [input    "[{\"bool\": true, \"not bool\":false ,\"int\": -83.4,

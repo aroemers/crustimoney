@@ -39,10 +39,19 @@
   [success]
   (first success))
 
+(defprotocol TextSupport
+  (sub-text [this start end]
+    "Returns the text from `start` (inclusive) to `end` (exclusive)."))
+
+(extend-type java.lang.CharSequence
+  TextSupport
+  (sub-text [this start end]
+    (.subSequence this start end)))
+
 (defn success->text
   "Returns the matched text of a success, given the full text."
-  [success ^CharSequence text]
-  (.subSequence text (success->start success) (success->end success)))
+  [success text]
+  (sub-text text (success->start success) (success->end success)))
 
 (defn ^:no-doc with-success-children
   "Set the children of a success."
