@@ -46,6 +46,9 @@
 
 ;;; Caching reader implementation
 
+(defmacro ^:private if-bb [then else]
+  (if (System/getProperty "babashka.version") then else))
+
 (defn- read-chunk [{:keys [^Reader reader ^StringBuilder buffer chunk-size hit-end?]}]
   (when-not @hit-end?
     (let [carr (char-array chunk-size)
@@ -54,53 +57,97 @@
         (reset! hit-end? true)
         (.append buffer carr 0 read)))))
 
+(defn- rb-length [{:keys [^StringBuilder buffer cut-at]}]
+  (+ (.length buffer) @cut-at))
+
 (defn- fill-buffer-to-index [{:keys [hit-end?] :as rb} index]
-  (while (and (<= (.length ^CharSequence rb) index) (not @hit-end?))
+  (while (and (<= (rb-length rb) index) (not @hit-end?))
     (read-chunk rb)))
 
-(defrecord ReaderBuffer [^Reader reader ^StringBuilder buffer chunk-size hit-end? cut-at]
-  CharSequence
-  (length [_]
-    (+ (count buffer) @cut-at))
+(defn- rb-char-at [{:keys [^StringBuilder buffer cut-at] :as rb} index]
+  (fill-buffer-to-index rb index)
+  (.charAt buffer (- index @cut-at)))
 
-  (charAt [this index]
-    (fill-buffer-to-index this index)
-    (.charAt buffer (- index @cut-at)))
+(defn- rb-sub-sequence [rb start end]
+  (let [sub-buffer (StringBuilder.)]
+    (doseq [i (range start end)]
+      (.append sub-buffer (rb-char-at rb i)))
+    (str sub-buffer)))
 
-  (subSequence [this start end]
-    (let [sub-buffer (StringBuilder.)]
-      (doseq [i (range start end)]
-        (.append sub-buffer (.charAt this i)))
-      (str sub-buffer)))
+(defn- rb-match-literal [rb index string]
+  (let [end (+ index (count string))]
+    (fill-buffer-to-index rb (dec end))
+    (when (and (<= end (rb-length rb))
+               (= (rb-sub-sequence rb index end) string))
+      (r/->success index end))))
 
-  (toString [_]
-    (str buffer))
+(defn- rb-match-pattern [{:keys [^StringBuilder buffer hit-end? cut-at] :as rb} index pattern]
+  (fill-buffer-to-index rb index)
+  (when (< index (rb-length rb))
+    (let [offset  @cut-at
+          matcher (re-matcher pattern buffer)]
+      (loop []
+        (.region matcher (- index offset) (.length buffer))
+        (let [found? (.lookingAt matcher)
+              more?  (and (.hitEnd matcher) (not @hit-end?))]
+          (if more?
+            (do (read-chunk rb) (recur))
+            (when found?
+              (r/->success index (+ offset (.end matcher))))))))))
 
-  MatchSupport
-  (match-literal [this index string]
-    (let [end (+ index (count string))]
-      (fill-buffer-to-index this (dec end))
-      (when (and (<= end (.length this))
-                 (= (.subSequence this index end) string))
-        (r/->success index end))))
+(defn- rb-cut [{:keys [^StringBuilder buffer cut-at]} index]
+  (.delete buffer 0 (int (- index @cut-at)))
+  (reset! cut-at index))
 
-  (match-pattern [this index pattern]
-    (fill-buffer-to-index this index)
-    (when (< index (.length this))
-      (let [matcher (re-matcher pattern this)]
-        (loop []
-          (.region matcher index (.length this))
-          (let [found? (.lookingAt matcher)
-                more?  (and (.hitEnd matcher) (not @hit-end?))]
-            (if more?
-              (do (read-chunk this) (recur))
-              (when found?
-                (r/->success index (.end matcher)))))))))
+(if-bb
+ (defrecord ReaderBuffer [reader buffer chunk-size hit-end? cut-at]
+   Object
+   (toString [_]
+     (str buffer))
 
-  CutSupport
-  (cut [_ index]
-    (.delete buffer 0 (int (- index @cut-at)))
-    (reset! cut-at index)))
+   r/TextSupport
+   (sub-text [this start end]
+     (rb-sub-sequence this start end))
+
+   MatchSupport
+   (match-literal [this index string]
+     (rb-match-literal this index string))
+
+   (match-pattern [this index pattern]
+     (rb-match-pattern this index pattern))
+
+   CutSupport
+   (cut [this index]
+     (rb-cut this index)))
+
+ (defrecord ReaderBuffer [^Reader reader ^StringBuilder buffer chunk-size hit-end? cut-at]
+   CharSequence
+   (length [this]
+     (rb-length this))
+
+   (charAt [this index]
+     (rb-char-at this index))
+
+   (subSequence [this start end]
+     (rb-sub-sequence this start end))
+
+   (toString [_]
+     (str buffer))
+
+   r/TextSupport
+   (sub-text [this start end]
+     (rb-sub-sequence this start end))
+
+   MatchSupport
+   (match-literal [this index string]
+     (rb-match-literal this index string))
+
+   (match-pattern [this index pattern]
+     (rb-match-pattern this index pattern))
+
+   CutSupport
+   (cut [this index]
+     (rb-cut this index))))
 
 (defn wrap-reader
   "Wrap a `Reader` to create a buffering `CharSequence` implementation

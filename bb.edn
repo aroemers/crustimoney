@@ -1,0 +1,17 @@
+{:paths ["src"]
+
+ :deps {io.github.cognitect-labs/test-runner
+        {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+
+ :tasks
+ {test:bb {:doc         "Run the tests that babashka supports."
+           :extra-paths ["test"]
+           :requires    ([cognitect.test-runner :as tr])
+           :task        (apply tr/-main
+                               (or (seq *command-line-args*)
+                                   ;; crustimoney.experimental.reader-test drives
+                                   ;; ReaderBuffer through CharSequence, which
+                                   ;; babashka does not support. Vars tagged
+                                   ;; :jvm-only need a JVM for other reasons.
+                                   ["-r" "^(?!crustimoney\\.experimental\\.reader-test$).*-test$"
+                                    "-e" "jvm-only"]))}}}

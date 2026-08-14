@@ -7,6 +7,7 @@ on:
       - "src/**"
       - "test/**"
       - "project.clj"
+      - "bb.edn"
       - ".github/**"
 
   pull_request:
@@ -36,6 +37,12 @@ jobs:
 
       - name: Run tests and check coverage
         run: lein cloverage
+
+      - name: Install babashka
+        run: bash <(curl https://raw.githubusercontent.com/babashka/babashka/master/install) --dev-build --dir .
+
+      - name: Run tests on babashka
+        run: ./bb test:bb
 
       - name: Lint source
         run: lein clj-kondo
